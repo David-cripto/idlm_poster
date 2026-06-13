@@ -2230,16 +2230,31 @@
     }
 
     .diff-node.dots {
-      align-self: center;
+      align-self: start;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.08in;
       padding-top: 0.84in;
+    }
+
+    .diff-node.dots::after {
+      content: none;
+    }
+
+    .diff-node.dots span {
       color: var(--quiet);
       font-size: 0.30in;
+      line-height: 1;
       font-weight: 900;
       letter-spacing: 0.04in;
     }
 
-    .diff-node.dots::after {
-      top: 0.86in;
+    .diff-node.dots b {
+      color: var(--peach);
+      font-size: 0.20in;
+      line-height: 1;
+      font-weight: 900;
     }
 
     .diff-node-label {
@@ -3539,7 +3554,7 @@
                   </div>
                   <span class="diff-model">Denoising model</span>
                 </div>
-                <div class="diff-node dots" aria-hidden="true">...</div>
+                <div class="diff-node dots" aria-hidden="true"><span>...</span><b>&gt;</b></div>
                 <div class="diff-node">
                   <span class="diff-node-label">Step T-1</span>
                   <div class="diff-token-board">
