@@ -2339,12 +2339,42 @@
 
     .jump-box img {
       width: 100%;
-      height: 2.12in;
+      height: 1.82in;
       object-fit: contain;
       object-position: center;
       border: 1px solid rgba(246, 251, 255, 0.12);
       border-radius: 0.08in;
       background: #061226;
+    }
+
+    .jump-eq {
+      display: grid;
+      place-items: center;
+      min-height: 0.62in;
+      margin-top: 0.09in;
+      border: 1px solid rgba(94, 217, 255, 0.20);
+      border-radius: 0.08in;
+      background: rgba(15, 22, 66, 0.70);
+      color: #dff7ff;
+      font-size: 0.165in;
+      line-height: 1.05;
+      font-weight: 900;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .jump-box:not(.safe) .jump-eq {
+      border-color: rgba(255, 143, 170, 0.34);
+      color: #ffd6e1;
+    }
+
+    .jump-box.safe .jump-eq {
+      border-color: rgba(181, 240, 124, 0.34);
+      color: #e7ffd7;
+    }
+
+    .jump-eq math {
+      max-width: 100%;
     }
 
     .break-eq {
@@ -3537,10 +3567,59 @@
               <div class="jump-box">
                 <strong>large discrete jump</strong>
                 <img src="idlm-factorization-large-step-last.png" alt="Final frame showing a large factorized text diffusion jump">
+                <div class="jump-eq">
+                  <math display="block">
+                    <semantics>
+                      <mrow>
+                        <msub><mi>p</mi><mi>&theta;</mi></msub>
+                        <mo>(</mo>
+                        <msubsup><mi>x</mi><mrow><mi>t</mi><mo>-</mo><mi>&Delta;</mi></mrow><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
+                        <mo>|</mo>
+                        <msubsup><mi>x</mi><mi>t</mi><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
+                        <mo>)</mo>
+                        <mo>&#x2249;</mo>
+                        <munderover><mo>&#x220F;</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>L</mi></munderover>
+                        <msub><mi>p</mi><mi>&theta;</mi></msub>
+                        <mo>(</mo>
+                        <msubsup><mi>x</mi><mrow><mi>t</mi><mo>-</mo><mi>&Delta;</mi></mrow><mrow><mo>(</mo><mi>i</mi><mo>)</mo></mrow></msubsup>
+                        <mo>|</mo>
+                        <msubsup><mi>x</mi><mi>t</mi><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
+                        <mo>)</mo>
+                        <mo>,</mo>
+                        <mspace width="0.18em"></mspace>
+                        <mi>&Delta;</mi><mo>&#x226B;</mo><mn>1</mn>
+                      </mrow>
+                      <annotation encoding="application/x-tex">p_\theta(x_{t-\Delta}^{1:L}\mid x_t^{1:L}) \not\approx \prod_{i=1}^{L} p_\theta(x_{t-\Delta}^{(i)}\mid x_t^{1:L}),\ \Delta \gg 1</annotation>
+                    </semantics>
+                  </math>
+                </div>
               </div>
               <div class="jump-box safe">
                 <strong>many small corrections</strong>
                 <img src="idlm-factorization-small-steps-last.png" alt="Final frame showing smaller denoising steps preserving structure">
+                <div class="jump-eq">
+                  <math display="block">
+                    <semantics>
+                      <mrow>
+                        <msub><mi>p</mi><mi>&theta;</mi></msub>
+                        <mo>(</mo>
+                        <msubsup><mi>x</mi><mrow><mi>t</mi><mo>-</mo><mn>1</mn></mrow><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
+                        <mo>|</mo>
+                        <msubsup><mi>x</mi><mi>t</mi><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
+                        <mo>)</mo>
+                        <mo>=</mo>
+                        <munderover><mo>&#x220F;</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>L</mi></munderover>
+                        <msub><mi>p</mi><mi>&theta;</mi></msub>
+                        <mo>(</mo>
+                        <msubsup><mi>x</mi><mrow><mi>t</mi><mo>-</mo><mn>1</mn></mrow><mrow><mo>(</mo><mi>i</mi><mo>)</mo></mrow></msubsup>
+                        <mo>|</mo>
+                        <msubsup><mi>x</mi><mi>t</mi><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
+                        <mo>)</mo>
+                      </mrow>
+                      <annotation encoding="application/x-tex">p_\theta(x_{t-1}^{1:L}\mid x_t^{1:L}) = \prod_{i=1}^{L} p_\theta(x_{t-1}^{(i)}\mid x_t^{1:L})</annotation>
+                    </semantics>
+                  </math>
+                </div>
               </div>
             </div>
             <div class="break-eq">
