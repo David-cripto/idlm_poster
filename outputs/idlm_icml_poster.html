@@ -2224,9 +2224,9 @@
       top: 0.86in;
       right: -0.145in;
       color: var(--peach);
-      font-size: 0.22in;
+      font-size: 0.2in;
       line-height: 1;
-      font-weight: 900;
+      font-weight: 90;
     }
 
     .diff-node.dots {
@@ -2424,38 +2424,6 @@
       background:
         repeating-linear-gradient(45deg, rgba(94, 217, 255, 0.22) 0 0.08in, rgba(184, 107, 255, 0.16) 0.08in 0.16in),
         rgba(1, 6, 22, 0.70);
-    }
-
-    .word-line {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.08in;
-    }
-
-    .word-line span {
-      min-width: 0.74in;
-      min-height: 0.39in;
-      display: grid;
-      place-items: center;
-      border: 1px solid rgba(94, 217, 255, 0.22);
-      border-radius: 0.08in;
-      background: rgba(94, 217, 255, 0.08);
-      color: #d9f7ff;
-      padding: 0.06in 0.1in;
-      font-size: 0.19in;
-      font-weight: 900;
-    }
-
-    .word-line .bad {
-      border-color: rgba(255, 149, 92, 0.50);
-      background: rgba(255, 149, 92, 0.16);
-      color: var(--peach);
-    }
-
-    .word-line .good {
-      border-color: rgba(181, 240, 124, 0.48);
-      background: rgba(181, 240, 124, 0.16);
-      color: #e7ffd7;
     }
 
     .mini-steps {
@@ -3569,12 +3537,10 @@
               <div class="jump-box">
                 <strong>large discrete jump</strong>
                 <img src="idlm-factorization-large-step.gif" alt="Blog visualization of a large factorized text diffusion jump">
-                <div class="word-line"><span>Cats</span><span class="bad">is</span><span>cute</span></div>
               </div>
               <div class="jump-box safe">
                 <strong>many small corrections</strong>
                 <img src="idlm-factorization-small-steps.gif" alt="Blog visualization of smaller denoising steps preserving structure">
-                <div class="word-line"><span class="good">Cats</span><span class="good">are</span><span class="good">cute</span></div>
               </div>
             </div>
             <div class="break-eq">
