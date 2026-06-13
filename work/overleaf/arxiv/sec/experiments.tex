@@ -1,0 +1,69 @@
+% !TEX root = ../main.tex
+\vspace{-2mm}
+\section{Experiments}
+\label{sec:exps}
+
+\reviewchange{This section demonstrates the applicability of our IDLM distillation method across several types of DLMs. We conduct the main experiments for MDLM and Duo. Although we focus on these two models, our theoretical formulation also covers the general SEDD setting. Therefore, we report an additional IDLM-SEDD evaluation in Appendix~\ref{app:sedd-experiments}. Representative generations are shown in Figure~\ref{fig:owt-qualitative}. Further implementation details, additional experimental results, and uncurated text samples are provided in Appendices~\ref{app: experimental details},~\ref{app:additional-experimental-results}, and~\ref{app: qualitative samples}, respectively.}
+
+\subsection{Unconditional Generation on OpenWebText}
+\label{sec:openwebtext-results}
+We use the suffix to indicate the teacher: IDLM-MDLM distills MDLM, IDLM-Duo distills the original Duo model, and IDLM-DCD distills the Duo-DCD model. We describe the calculation of all evaluation metrics used in this section in Appendix~\ref{app:metric-definitions}.
+
+\ecoparagraph{Teacher acceleration.}
+    Figure~\ref{fig:owt-main-results} summarizes how well IDLM distills teachers. For masked diffusion MDLM, IDLM-MDLM reduces the $1024$-step teacher to $16$ reverse steps, giving a ($64\times$) acceleration while preserving GenPPL and Entropy metrics. For Duo with the greedy sampler (\wasyparagraph\ref{sec:uniform process duo}), IDLM-Duo also reaches $16$ steps ($64\times$), while IDLM-DCD$^{\mathrm{g}}$ reaches $4$ steps ($256\times$). The corresponding ancestral Duo results are reported in Appendix~\ref{app:ancestral-sampling-results}, where IDLM-DCD$^{\mathrm{a}}$ is evaluated down to $4$ steps and gives its best speed-quality tradeoff at $8$ steps ($128\times$). Also, GenPPL and Entropy vs sampling-step curves are provided in Figure~\ref{fig:owt-genppl-steps}.
+
+\ecoparagraph{Comparison with baselines.}
+    The lower panels of Figure~\ref{fig:owt-main-results} compare IDLM against other baselines with GenPPL, MAUVE, Entropy, and GM where available. For absorbing-state distillation, IDLM-MDLM gives the best overall low-step tradeoff at $16$ steps, improving GenPPL while preserving diversity. For uniform-state distillation, IDLM-DCD$^{\mathrm{g}}$ is strongest in the $8$--$4$ step regime. The ancestral step curve in Figure~\ref{fig:owt-genppl-steps} and the detailed results in Table~\ref{tab:uniform-ancestral-expanded} show the same trend.
+
+\ecoparagraph{GenPPL--Entropy tradeoff.}
+    Recent evaluations of flow and diffusion language models show that GenPPL should be interpreted together with sample entropy: lowering entropy can substantially improve GenPPL without necessarily improving the underlying generative distribution. Figure~\ref{fig:owt-entropy-frontier} visualizes this tradeoff on OWT. IDLM-MDLM improves GenPPL at comparable entropy to the MDLM teacher, and IDLM-DCD remains competitive.
+
+\ecoparagraph{Scaling.}
+    We additionally test IDLM on an $0.9$B MDLM checkpoint from SDTT~\citep{deschenaux2024beyond}, the full scaling comparison with SDTT is reported in Table~\ref{tab:mdlm-scaling}. The same pattern persists at larger scale: IDLM improves the low-step GenPPL/Entropy tradeoff over SDTT.
+
+\ecoparagraph{Ablation study.}\phantomsection\label{sec:ablation}
+    We ablate the main IDLM design choices in Appendix~\ref{app:ablation-results}. The results indicate that the original masked-diffusion update gives the best early GenPPL--Entropy tradeoff, while the full IDLM-Duo update is more stable than its stop-gradient variant. Adding simple Gaussian input noise to IDLM-MDLM does not improve performance (Table~\ref{tab:gaussian-noise-control}).
+
+\subsection{Conditional Generation on TinyGSM}
+\label{sec:tinygsm}
+
+GenPPL and entropy measure unconditional sample quality, but they do not directly test whether a model preserves sequence-level correctness. We therefore follow the TinyGSM/GSM8K protocol used by~\citet{deschenaux2026language}. The results in Table~\ref{tab:tinygsm} show that IDLM improves steadily with more reverse steps and recovers teacher-level conditional generation with far fewer sampling steps. IDLM-MDLM reaches teacher-level accuracy $19.86\%$ with only $128$ steps, matching and slightly surpassing the $1024$-step MDLM teacher at $18.0\%$, corresponding to an ($8\times$) reduction in sampling steps. For Duo, IDLM-Duo already reaches comparable accuracy $19.03\%$ at $64$ steps relative to the $1024$-step Duo teacher at $17.2\%$, giving a ($16\times$) reduction. Overall, IDLM retains conditional generation with far fewer steps.
+
+\par\noindent
+\begin{minipage}{\columnwidth}
+\vspace{-1mm}
+\captionsetup{type=table}
+\centering
+\captionof{table}{\textbf{Conditional generation on GSM8K.} Baseline accuracies are reproduced from~\citet{deschenaux2026language}.}
+\label{tab:tinygsm}
+\scriptsize
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{0.94}
+\begin{tabular}{lcc}
+\toprule
+Model & Steps & Accuracy (\%) \\
+\midrule
+\multicolumn{3}{l}{\textit{Autoregressive}} \\
+Sample & \multirow{2}{*}{512} & 53.9 \\
+Greedy & & \textbf{63.3} \\
+\midrule
+\multicolumn{3}{l}{\textit{Diffusion}} \\
+MDLM (Teacher)~\citep{sahoo2024simple} & \multirow{4}{*}{1024} & \textbf{18.0} \\
+Duo (Teacher)~\citep{sahoo2025the} & & 17.2 \\
+FLM~\citep{lee2026flow} & & 0.3 \\
+S-FLM~\citep{deschenaux2026language} & & \textbf{18.0} \\
+\midrule
+\multicolumn{3}{l}{\textit{Distillation}} \\
+IDLM-MDLM (\textbf{Ours}) & \multirow{2}{*}{128} & 19.86 \\
+IDLM-Duo (\textbf{Ours}) & & \textbf{21.38} \\
+\midrule
+IDLM-MDLM (\textbf{Ours}) & \multirow{2}{*}{64} & 14.94 \\
+IDLM-Duo (\textbf{Ours}) & & \textbf{19.03} \\
+\midrule
+IDLM-MDLM (\textbf{Ours}) & \multirow{2}{*}{32} & 12.81 \\
+IDLM-Duo (\textbf{Ours}) & & \textbf{15.39} \\
+\bottomrule
+\end{tabular}
+\vspace{-1mm}
+\end{minipage}
+\par

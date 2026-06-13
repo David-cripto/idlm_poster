@@ -1,0 +1,416 @@
+\section{Proofs}
+\label{app: proofs}
+
+\paragraph{Notation and idealized assumptions.}
+Recall that
+\[
+    \VC=\{x\in\{0,1\}^N:\sum_{i=1}^N x_i=1\}
+\]
+is the set of one-hot tokens, and let \(D([0,T],\VC)\) be the Skorokhod space of
+cadlag paths with values in \(\VC\). For a path measure \(\mathbb Q\), write
+\(\mathbb Q_t\) for its marginal at time \(t\).
+
+We assume that the teacher exactly minimizes the expected loss and therefore
+induces the true reverse path measure, \(\PP^{f^*}=\PP^*\).
+We also assume that the minimization over \(f\) is performed over a sufficiently
+rich model class, so the exact reverse predictor is available for every clean
+distribution considered. We assume that the student path does not use
+transitions that are impossible under the teacher path. If
+\(\PP^\theta\not\ll\PP^*\), then
+\(\DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)=+\infty\), so the main theorem becomes
+immediate.
+
+\paragraph{Time convention.}
+For a clean distribution \(p\), let \(\PP^p\) denote the path measure associated
+with the fixed forward noising process, written in reverse-time coordinates so
+that the clean sample is the terminal marginal of \(\PP^p\). Its forward-time
+noised marginal at noise level \(t\) is
+\[
+    p_t(x_t)=\int q_t(x_t\mid x_0)\,p(dx_0).
+\]
+We write \(\PP^\theta=\PP^{p_\theta}\) and \(\PP^*=\PP^{p^*}\). Since time
+reversal is a deterministic reparameterization of paths, the KL divergence is
+unchanged by choosing either coordinate convention.
+
+\subsection{Connection with the main text}
+\label{app: connection with the main text}
+
+DLM training can be viewed as fitting the reverse-time path measure associated
+with a fixed forward noising process. Following the main text, we write this
+using expected losses of the form \(\LC(f,p)\), where \(p\) is a clean-sample
+distribution. For SEDD, Dynkin's formula~\citep{hanson2007applied,
+campbell2022continuous} gives the
+following distribution-level objective, up to terms independent of the optimized
+model:
+\begin{equation}
+\label{eq:sedd-distribution}
+\begin{aligned}
+    \LC_{\mathrm{SEDD}}(f,p)
+    =
+    \EE_{p(x_0),t,q_t}
+    \sum_{y\neq x_t}
+    \langle x_t,y\rangle_{Q_t}
+    \bigl(
+      \langle f(x_t,t),y\rangle
+      -
+      \langle s(x_t,t\mid x_0),y\rangle
+      \log \langle f(x_t,t),y\rangle
+    \bigr).
+\end{aligned}
+\end{equation}
+This is the SEDD instance of the unified loss \(\LC(f,p)\) used in
+Equation~\eqref{eq:sedd loss}. For a generic clean distribution \(p\), define
+\[
+    f^p=\arg\min_f \LC_{\mathrm{SEDD}}(f,p).
+\]
+At this minimizer,
+\begin{equation}
+\label{eq:posterior-score}
+    \langle f^p(x_t,t),y\rangle
+    =
+    \EE_{p(x_0\mid x_t)}
+    \langle s(x_t,t\mid x_0),y\rangle .
+\end{equation}
+In particular, \(f^*=f^{p^*}\) denotes the exact teacher and
+\(f^\theta=f^{p_\theta}\) denotes the exact fake model for the student
+distribution.
+
+\subsection{Proof of the theorem}
+\label{app: proof of the theorem}
+
+We prove the theorem in three steps. First, we show that the path KL equals the
+SEDD inverse-distillation gap. Second, we transfer the result to MDLM and the
+uniform objective, with Duo covered in the hard-token limit. Third, we use the
+chain rule to show that the path KL controls the clean-data KL.
+
+\begin{lemma}[SEDD path KL equals the inverse gap]
+\label{lem:sedd-path-kl-gap}
+Under the population assumptions above,
+\begin{equation}
+\label{eq:sedd-path-kl-gap}
+    \DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)
+    =
+    \LC_{\mathrm{SEDD}}(f^*,p_\theta)
+    -
+    \min_f \LC_{\mathrm{SEDD}}(f,p_\theta).
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+The relative entropy between two continuous-time jump-process path measures can
+be written as an integral over the relative jump-rate divergence. In the SEDD
+parameterization this gives
+\begin{equation}
+\label{eq:ctmc-kl}
+\begin{aligned}
+    \DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)
+    &=
+    \int_0^T
+    \EE_{p_t^\theta(x_t)}
+    \sum_{y\neq x_t}
+    \langle x_t,y\rangle_{Q_t}
+    \langle f^*(x_t,t),y\rangle
+    \phi
+    \left(
+      \frac{\langle f^\theta(x_t,t),y\rangle}
+           {\langle f^*(x_t,t),y\rangle}
+    \right)dt,
+\end{aligned}
+\end{equation}
+where \(\phi(r)=r\log r-r+1\). Following the linearization trick
+of~\citet{kornilov2025universal}, for the positive ratios used below,
+\[
+    \phi(r)=\max_l \{rl+1-\exp(l)\}.
+\]
+Using the parameterization
+\[
+    l(y,x_t,t)
+    =
+    \log
+    \frac{\langle f(x_t,t),y\rangle}
+         {\langle f^*(x_t,t),y\rangle},
+\]
+and taking the maximum over admissible \(f\), Equation~\eqref{eq:ctmc-kl}
+becomes
+\begin{equation}
+\label{eq:sedd-max}
+\begin{aligned}
+    \DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)
+    =
+    \max_f
+    \int_0^T
+    \EE_{p_t^\theta(x_t)}
+    \sum_{y\neq x_t}
+    \langle x_t,y\rangle_{Q_t}
+    \biggl[
+      &\langle f^\theta(x_t,t),y\rangle
+      \log
+      \frac{\langle f(x_t,t),y\rangle}
+           {\langle f^*(x_t,t),y\rangle}
+      \\
+      &+
+      \langle f^*(x_t,t)-f(x_t,t),y\rangle
+    \biggr]dt.
+\end{aligned}
+\end{equation}
+We now rewrite the expectation in Equation~\eqref{eq:sedd-max}. First,
+apply the posterior identity~\eqref{eq:posterior-score} with
+\(p=p_\theta\):
+\[
+    \langle f^\theta(x_t,t),y\rangle
+    =
+    \EE_{p_\theta(x_0\mid x_t)}
+    \langle s(x_t,t\mid x_0),y\rangle .
+\]
+After substituting this identity, the only term depending on \(x_0\) is
+\(\langle s(x_t,t\mid x_0),y\rangle\). The remaining term
+\(\langle f^*(x_t,t)-f(x_t,t),y\rangle\) depends only on \(x_t\), \(t\), and
+\(y\), so it can be placed inside the same conditional expectation:
+\[
+\begin{aligned}
+&\EE_{p_t^\theta(x_t)}
+\sum_{y\neq x_t}
+\langle x_t,y\rangle_{Q_t}
+\biggl[
+  \langle f^\theta(x_t,t),y\rangle
+  \log
+  \frac{\langle f(x_t,t),y\rangle}
+       {\langle f^*(x_t,t),y\rangle}
+  +
+  \langle f^*(x_t,t)-f(x_t,t),y\rangle
+\biggr]
+\\
+&=
+\EE_{p_t^\theta(x_t)}
+\EE_{p_\theta(x_0\mid x_t)}
+\sum_{y\neq x_t}
+\langle x_t,y\rangle_{Q_t}
+\biggl[
+  \langle s(x_t,t\mid x_0),y\rangle
+  \log
+  \frac{\langle f(x_t,t),y\rangle}
+       {\langle f^*(x_t,t),y\rangle}
+  +
+  \langle f^*(x_t,t)-f(x_t,t),y\rangle
+\biggr].
+\end{aligned}
+\]
+Finally, the joint law of \((x_0,x_t)\) can be written in two equivalent ways:
+\[
+    p_t^\theta(x_t)p_\theta(x_0\mid x_t)
+    =
+    p_\theta(x_0)q_t(x_t\mid x_0),
+\]
+so
+\[
+    \EE_{p_t^\theta(x_t)}
+    \EE_{p_\theta(x_0\mid x_t)}[\cdot]
+    =
+    \EE_{p_\theta(x_0),\,x_t\sim q_t(\cdot\mid x_0)}[\cdot].
+\]
+The maximization over \(f\) stays outside this change of variables. Therefore
+we obtain
+\begin{equation}
+\label{eq:sedd-population-recognition}
+\begin{aligned}
+    \DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)
+    =
+    \max_f
+    \EE_{p_\theta(x_0),t,q_t}
+    \sum_{y\neq x_t}
+    \langle x_t,y\rangle_{Q_t}
+    \biggl[
+      &\langle s(x_t,t\mid x_0),y\rangle
+      \log
+      \frac{\langle f(x_t,t),y\rangle}
+           {\langle f^*(x_t,t),y\rangle}
+      \\
+      &+
+      \langle f^*(x_t,t)-f(x_t,t),y\rangle
+    \biggr].
+\end{aligned}
+\end{equation}
+The right-hand side is exactly the population SEDD loss difference:
+\[
+    \max_f
+    \left\{
+      \LC_{\mathrm{SEDD}}(f^*,p_\theta)
+      -
+      \LC_{\mathrm{SEDD}}(f,p_\theta)
+    \right\}.
+\]
+Because the first term is independent of \(f\), this equals
+\[
+    \LC_{\mathrm{SEDD}}(f^*,p_\theta)
+    -
+    \min_f \LC_{\mathrm{SEDD}}(f,p_\theta).
+\]
+This proves the claim. Importantly, the maximum remains outside the population
+expectation throughout the argument.
+\end{proof}
+
+\begin{lemma}[Gap preservation under equivalent losses]
+\label{lem:gap-preservation}
+Suppose two losses satisfy
+\[
+    \LC_A(Tf,p)=\LC_B(f,p)+C(p),
+\]
+where \(C(p)\) is independent of the optimized model \(f\), and \(T\) maps the
+candidate class for \(\LC_B\) onto the corresponding candidate class for
+\(\LC_A\). Then their inverse gaps agree:
+\[
+    \LC_A(Tf^*,p)-\min_g \LC_A(g,p)
+    =
+    \LC_B(f^*,p)-\min_f \LC_B(f,p).
+\]
+\end{lemma}
+
+\begin{proof}
+The claim follows by cancellation of the model-independent constant:
+\[
+\begin{aligned}
+    \LC_A(Tf^*,p)-\min_g\LC_A(g,p)
+    &=
+    \LC_B(f^*,p)+C(p)
+    -
+    \min_f\{\LC_B(f,p)+C(p)\}
+    \\
+    &=
+    \LC_B(f^*,p)-\min_f\LC_B(f,p).
+\end{aligned}
+\]
+\end{proof}
+
+\paragraph{MDLM, UDLM, and Duo.}
+For the absorbing diffusion matrix \(Q_{\mathrm{abs}}\) in
+Equation~\eqref{eq: absorbing diffusion matrix}, the SEDD objective under the
+clean-token parameterization is equivalent to the MDLM loss
+\(\LC_{\mathrm{MDLM}}\) up to terms independent of the optimized predictor.
+Lemma~\ref{lem:gap-preservation} therefore gives
+\[
+    \DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)
+    =
+    \LC_{\mathrm{MDLM}}(f^*,p_\theta)
+    -
+    \min_f \LC_{\mathrm{MDLM}}(f,p_\theta).
+\]
+For the uniform diffusion matrix \(Q_{\mathrm{uni}}\) in
+Equation~\eqref{eq: uniform diffusion matrix}, the same argument transfers the
+SEDD gap to the hard-token UDLM objective. In distribution-level notation,
+\[
+    \LC_{\mathrm{UDLM}}(f,p)
+    \vcentcolon=
+    \EE_{p(x_0),t,x_t\sim q_t(\cdot\mid x_0)}
+    \bigl[
+      g_{\mathrm{UDLM}}\bigl(x_t,x_0,f(x_t,t)\bigr)
+    \bigr].
+\]
+Thus
+\[
+    \DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)
+    =
+    \LC_{\mathrm{UDLM}}(f^*,p_\theta)
+    -
+    \min_f \LC_{\mathrm{UDLM}}(f,p_\theta).
+\]
+Duo evaluates the same uniform-process objective on a Gaussian-relaxed input and
+recovers the hard-token UDLM objective as \(\tau\to0^+\). Hence the theorem
+applies to Duo in this hard-token limit, as stated in the main text. This
+argument does not claim exact uniqueness for finite-temperature Duo.
+
+\begin{theorem}[Unique solution]
+\label{thm:unique-solution-appendix}
+For SEDD, MDLM, and hard-token UDLM, and for Duo in the limit
+\(\tau\to0^+\), the IDLM loss satisfies
+\[
+    \LC_{\mathrm{IDLM}}(\theta)
+    =
+    \DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)
+    \geq
+    \DC_{\mathrm{KL}}(p_\theta\|p^*)
+    \geq 0.
+\]
+Moreover,
+\[
+    \LC_{\mathrm{IDLM}}(\theta)=0
+    \quad\Longleftrightarrow\quad
+    p_\theta=p^*.
+\]
+\end{theorem}
+
+\begin{proof}
+Disintegrate the path measures with respect to their clean-sample marginal:
+\[
+    \PP^\theta(dx,dw)=p_\theta(dx)\PP_x^\theta(dw),
+    \qquad
+    \PP^*(dx,dw)=p^*(dx)\PP_x^*(dw).
+\]
+The chain rule for relative entropy gives
+\[
+    \DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)
+    =
+    \DC_{\mathrm{KL}}(p_\theta\|p^*)
+    +
+    \EE_{x\sim p_\theta}
+    \DC_{\mathrm{KL}}(\PP_x^\theta\|\PP_x^*).
+\]
+The conditional KL term is nonnegative, so
+\[
+    \DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)
+    \geq
+    \DC_{\mathrm{KL}}(p_\theta\|p^*)
+    \geq 0.
+\]
+Now consider the zero-loss condition. From the previous part of the proof,
+\(\LC_{\mathrm{IDLM}}(\theta)=\DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)\). Therefore,
+if \(\LC_{\mathrm{IDLM}}(\theta)=0\), then
+\[
+    \DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)=0.
+\]
+Substituting this into the chain-rule decomposition gives
+\[
+    0
+    =
+    \DC_{\mathrm{KL}}(p_\theta\|p^*)
+    +
+    \EE_{x\sim p_\theta}
+    \DC_{\mathrm{KL}}(\PP_x^\theta\|\PP_x^*).
+\]
+Both terms on the right are nonnegative, so each term must be zero. In
+particular,
+\[
+    \DC_{\mathrm{KL}}(p_\theta\|p^*)=0.
+\]
+The KL divergence between two probability distributions is zero only when the
+two distributions are equal, hence \(p_\theta=p^*\).
+
+Conversely, assume \(p_\theta=p^*\). The forward noising process is fixed: once
+the clean distribution \(p\) is chosen, the whole path measure \(\PP^p\) is
+obtained by applying the same noising dynamics to samples from \(p\). Therefore,
+if the clean distributions are equal, the induced path measures are also equal:
+\[
+    \PP^\theta=\PP^{p_\theta}=\PP^{p^*}=\PP^*.
+\]
+Thus
+\[
+    \DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)=0,
+\]
+and using again
+\(\LC_{\mathrm{IDLM}}(\theta)=\DC_{\mathrm{KL}}(\PP^\theta\|\PP^*)\), we get
+\(\LC_{\mathrm{IDLM}}(\theta)=0\).
+\end{proof}
+
+\paragraph{Sequence-level extension.}
+\label{app:sequence-level-extension}
+The proof above is for one token. For a full sequence, the same proof works in
+an ideal setting where the whole sequence is treated as one state and the models
+describe the full reverse process over sequences. In that case, the IDLM loss is
+the KL divergence between the full sequence path measures, so it also controls
+the difference between \(p_\theta(x_0^{1:L})\) and \(p^*(x_0^{1:L})\). This is
+not exactly the loss used in experiments. In practice, we sum token-level losses,
+which is convenient for training but does not by itself give the full sequence
+path KL, because tokens may still depend on each other. Thus, the proof covers
+the one-token objective and the ideal full-sequence objective, but not the
+practical factorized sequence loss. We leave a formal theoretical analysis of
+the factorized sequence-level IDLM objective as a promising direction for future
+research.

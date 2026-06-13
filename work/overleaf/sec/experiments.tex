@@ -1,0 +1,36 @@
+% !TEX root = ../main.tex
+\vspace{-2mm}
+\section{Experiments}
+\label{sec:exps}
+\vspace{-2mm}
+  This section demonstrates the applicability of our IDLM distillation method across various types of DLMs. To this end, we conduct experiments using \underline{available checkpoints} of pretrained SEDD, MDLM, and Duo teacher models trained on OpenWebText (OWT; \citealp{gokaslan2019openwebtext}). For evaluation, we follow the protocol of prior works~\citep{dieleman2022continuous, lou2024discrete, deschenaux2024beyond, sahoo2024simple, sahoo2025the} and report GPT-2 Large~\citep{radford2019language} generative perplexity (GenPPL) as well as average sequence entropy to measure diversity. Comprehensive results are summarized in Table~\ref{tab:all results}. Additional \underline{technical details} for all evaluated methods are provided in Appendix~\ref{app: experimental details}. We also provide the \underline{uncurated} text samples in Appendix~\ref{app: qualitative samples}. All implementations were developed in PyTorch, and the code will be published.
+% \vspace{-2mm}
+% \subsection{Distillation of SEDD}
+% \label{sec: distillation of sedd}
+% \vspace{-2mm}
+
+\ecoparagraph{Distillation of SEDD.}
+  To the best of our knowledge, no distillation methods have been developed specifically for the SEDD model. This section therefore focuses on demonstrating the effectiveness of our distillation approach in reducing the number of sampling steps required to achieve comparable generation quality of the teacher model. In the case of SEDD, only checkpoints for the absorbing-process variant are available, so we distill this version and refer to it simply as SEDD for clarity.
+  As shown in Figure~\ref{fig: sedd results}, our method, \texttt{IDLM-SEDD}, consistently outperforms SEDD in terms of GenPPl across all sampling steps. Notably, IDLM-SEDD maintains high sequence entropy at low sampling steps. IDLM-SEDD achieves a $4\times$ reduction in sampling steps, accelerating generation from $1024$ to $256$ steps, while preserving both GenPPL and output diversity.
+    
+% \vspace{-2mm}
+% \subsection{Distillation of MDLM}
+% \label{sec: distillation of mdlm}
+% \vspace{-2mm}
+
+\ecoparagraph{Distillation of MDLM.}
+  This section addresses two primary objectives: (1) demonstrating the feasibility of MDLM model distillation within our framework and (2) comparing with the SDTT~\citep{deschenaux2024beyond} a leading method for MDLM distillation. As shown in Figure~\ref{fig: mdlm results}, our method, \texttt{IDLM-MDLM}, exhibits reduced entropy at large sampling steps, indicating lower diversity in that regime. However, in the low–sampling-step regime, IDLM-MDLM achieves strong performance in terms of both GenPPL and entropy. In particular, IDLM-MDLM attains a $64\times$ acceleration for both MDLM and SDTT, reducing the number of sampling steps from $1024$ to $16$ while preserving comparable generation quality and diversity metrics.
+
+% \vspace{-2mm}   
+% \subsection{Distillation of Duo}
+% \label{sec: distillation of duo}
+% \vspace{-2mm}
+\ecoparagraph{Distillation of Duo.}
+  Two related models have been proposed for uniform discrete diffusion: UDLM~\citep{schiff2024discreteguidance} and its extension, Duo~\citep{sahoo2025the}. As shown in the Duo paper, it achieves better generation quality than UDLM, so we focus our distillation experiments on Duo. Duo supports two sampling strategies, Ancestral and Greedy-Tail, which we denote by superscripts ($^{\mathrm{a}}$) and ($^{\mathrm{g}}$), respectively. The authors also introduce a distillation procedure, \textit{Discrete Consistency Distillation} (Duo-DCD), which serves as our primary baseline. Notably, Duo-DCD uses distillation to train a student model that skips some of the teacher's sampling steps. In the next stage, the student becomes the new teacher, progressively shortening the sampling trajectory. Following this idea, we treat Duo-DCD as the teacher in our experiments and apply the same IDLM distillation loss as for the original Duo model, with Duo-DCD as the teacher. Therefore, we apply our method to distill both the original Duo model and the Duo-DCD variant, denoted as \texttt{IDLM-Duo} and \texttt{IDLM-DCD}, respectively. Results are summarized in Figure~\ref{fig: duo results}. Under Ancestral sampling, IDLM-Duo performs similarly to Duo-DCD at low sampling steps, achieving a $64\times$ reduction in steps (from $1024$ to $16$) while preserving GenPPL and output diversity.
+  Furthermore, distilling the Duo-DCD model using our IDLM-DCD yields $64\times$ speed-up over Duo-DCD (from $1024$ to $16$ steps), and a $128\times$ reduction when measured relative to the original Duo model (from $1024$ to $8$ steps), all while preserving performance metrics. 
+  Under Greedy-Tail sampling, IDLM-Duo shows higher entropy but slightly worse GenPPL than Duo-DCD at low steps. Nevertheless, it still achieves a $64\times$ reduction (to $16$ steps), while Duo-DCD gives a $128\times$ speed-up (to $8$ steps).
+  Further distillation of the Duo-DCD model using our IDLM-DCD yields $32\times$ reduction (to $32$ steps) over Duo-DCD, resulting in a $256\times$ acceleration over the original Duo model, reducing inference from $1024$ to just $4$ steps, while maintaining comparable metrics.
+        
+    
+% \subsection{Concerns regarding the evaluation protocol used in prior works}
+%   TODO

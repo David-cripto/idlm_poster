@@ -1,0 +1,10 @@
+\begin{abstract}
+    Diffusion Language Models (DLMs) have recently achieved strong results in text generation. However, their multi-step sampling leads to slow inference, limiting practical use. To address this, we extend Inverse Distillation, a technique originally developed to accelerate continuous diffusion models, to the discrete setting.
+    Nonetheless, this extension introduces both theoretical and practical challenges. From a theoretical perspective, the inverse distillation objective lacks uniqueness guarantees, which may lead to suboptimal solutions. From a practical standpoint, backpropagation in the discrete space is non-trivial and often unstable. To overcome these challenges, we first provide a theoretical result demonstrating that our inverse formulation admits a unique solution, thereby ensuring valid optimization. We then introduce gradient-stable relaxations to support effective training. 
+    As a result, experiments on multiple DLMs show that our method, \textit{Inverse-distilled Diffusion Language Models (IDLM)}, reduces the number of inference steps by $4 \times$-$64 \times$, while preserving the teacher model’s generation quality.  We provide the code, model checkpoints, and video tutorials on the project page: 
+    \looseness=-1
+
+    \vspace{0.3ex}
+    \centerline{\href{https://david-cripto.github.io/idlm-project-page/}{https://david-cripto.com/idlm}}
+    \vspace{-5mm}
+\end{abstract}

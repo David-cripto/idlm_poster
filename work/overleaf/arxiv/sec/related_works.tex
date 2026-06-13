@@ -1,0 +1,64 @@
+\vspace{-2mm}
+\section{Related Works}
+\label{sec:related-works}
+    \ecoparagraph{Continuous diffusion distillation.}
+    Continuous distillation has two main branches: consistency-like methods~\citep{song2023consistency,song2023improved}, which train students to jump along teacher trajectories, and distribution-matching methods~\citep{yin2024one,yin2024improved,zhou2024score,huang2024flow,gushchin2025inverse,kornilov2025universal, selikhanovych2025one},
+    which directly optimize the student distribution, usually with an auxiliary or
+    fake model. IDLM follows the distribution-matching view and extends it to
+    discrete diffusion.
+
+    \ecoparagraph{Inverse distillation.}
+    Inverse distillation directly optimizes a student generator to approximate the
+    target distribution, placing it within the family of distribution-matching
+    distillation methods. This idea was introduced by IBMD for diffusion bridge models~\citep{gushchin2025inverse}, then
+    generalized to continuous-space flow and diffusion
+    models in UID framework~\citep{kornilov2025universal}. RSD further extended this view to
+    discrete-time diffusion and clarified its relation to DMD: a DMD-like update
+    appears after a stop-gradient reduction~\citep{selikhanovych2025one}. IDLM
+    adopts the same inverse view, but extends it to discrete space.
+
+    \ecoparagraph{Consistency-style distillation for DLMs.}
+    The consistency branch has discrete analogues such as
+    SDTT~\citep{deschenaux2024beyond} and Duo-DCD~\citep{sahoo2025the}. However,
+    the objective mainly teaches trajectory skipping. In practice, this preserves a
+    conditional-independence factorization of the teacher's denoising process, which
+    can miss the full joint distribution and favor common modes. Thus, especially in
+    the one-step limit, these methods lack guaranteeing recovery of the data
+    distribution and remain largely empirical. In contrast, IDLM represents the
+    student as a sequence-level mixture, see (\wasyparagraph\ref{sec:loss intuition}), and Theorem~\ref{thm:unique solution} shows that its ideal
+    objective is minimized only by the data distribution.
+    \nocite{consistency2024rep, abulkhanov2026unifying}
+
+    \ecoparagraph{Distribution matching in discrete space.}
+    Discrete distribution-matching methods such as
+    Di[M]O~\citep{zhu_dimathttmo_2025}, D-MMD~\citep{hoogeboom2026beyond}, and
+    DiDi-Instruct~\citep{zheng2026ultrafast} match teacher and auxiliary signals at
+    sampled noising times, corresponding to KL matching of noised marginals,
+    \[
+        \mathcal L_{\mathrm{DMD}}(\theta)
+        =
+        \int_0^1 w(t)\,
+        D_{\mathrm{KL}}\!\left(p_t^\theta\,\|\,p_t^*\right)\,dt .
+    \]
+    Here $p_t^\theta$ and $p_t^*$ are the student and target noised marginal
+    distributions at time $t$.
+    IDLM instead matches full diffusion path measures,
+    \[
+        \mathcal L_{\mathrm{IDLM}}(\theta)
+        =
+        D_{\mathrm{KL}}\!\left(\mathbb P^\theta\,\|\,\mathbb P^*\right),
+    \]
+    so the comparison is trajectory-level rather than marginal-only. A DMD-like
+    update appears only after a stop-gradient reduction~\citep{selikhanovych2025one},
+    so in masked diffusion, because of the \textsc{subs} parameterization, the
+    marginal and path-based losses coincide. In uniform diffusion, this distinction
+    matters in practice, as our experiments show.
+
+    \ecoparagraph{Continuous-space language flows.}
+    A parallel line changes the state space: FLM/FMLM~\citep{lee2026flow} use
+    one-hot flows, while ELF~\citep{hu2026elf} uses embedding-space flows. These
+    models can obtain strong GenPPL, but their Entropy can drop relative to other
+    baselines. This matters because lower GenPPL may trade off Entropy, for example
+    when sweeping the sampling temperature. Moreover, FLM underperforms on recent
+    benchmarks~\citep{deschenaux2026language}. Thus, it remains unclear whether a
+    continuous or discrete state space is preferable for language modeling.

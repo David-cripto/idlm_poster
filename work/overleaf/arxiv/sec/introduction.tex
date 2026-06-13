@@ -1,0 +1,30 @@
+
+\section{Introduction}
+\label{sec:introduction}
+
+    \begin{figure}[t!]
+    \centering
+        \includegraphics[width=\linewidth, trim = 1.6cm 0.4cm 0.8cm 0.4cm, clip]{images/teaser_idlm_forward_inverse_cropped.pdf}
+        \caption{\textbf{Diffusion training vs inverse distillation.} DLMs learn a slow teacher $f^*$ from data. IDLM fixes $f^*$ and learns $p_\theta$ for fast few-step generation.}
+        \vspace{-4mm}
+        \label{fig:teaser}
+    \end{figure}
+  
+    Generative modeling for discrete data, such as natural language, has seen widespread adoption, driven by the rapid advancement of large language models~\citep{touvron2023llama, groeneveld2024olmo, lozhkov2024starcoder}. 
+    Recently, Diffusion Language Models 
+    (DLMs; \citealp{sohl2015deep, austin2021structured, campbell2022continuous, lou2024discrete}) have emerged as a promising framework for modeling the distribution of the text data. A general formulation for a broad class of DLMs was introduced by~\citep{lou2024discrete}. However, the general formulation is often intractable in practice and introduces \textcolor{debugcolor}{additional} theoretical complexity. To address this, subsequent work~\citep{sahoo2024simple, sahoo2025the, schiff2024discreteguidance, shi2024simplified} has focused on specific types of diffusion processes, enabling simplified theoretical analyses and more tractable implementations. As a result, DLMs have achieved competitive performance in text generation, comparable to that of autoregressive language models~\citep{nie2025large}. However, the inherently iterative nature of reverse diffusion requires hundreds or even thousands of sampling steps at inference time, resulting in considerable latency that limits their practicality.
+
+    On the other hand, in the continuous domain, the issue of slow inference in diffusion models~\citep{ho2020denoising, song2020score, karras2022elucidating} has been the focus of extensive research~\citep{song2021denoising, luhman2021knowledge, zhang2022fast, lu2022dpm}. Among the various approaches, \emph{distillation} has emerged as one of the most effective solutions~\citep{song2023consistency, salimans2022progressive, luhman2021knowledge, berthelot2023tract, xie2024distillation}. However, directly applying such techniques in the discrete domain is challenging due to the non-differentiable nature of discrete data. Recent efforts have begun to address this limitation for DLMs. Notably, SDTT~\citep{deschenaux2024beyond} and Duo-DCD~\citep{sahoo2025the} propose adaptations of consistency-based distillation methods~\citep{song2023consistency, song2023improved, kim2023consistency} to the discrete setting, demonstrating initial progress toward enabling fast inference in DLMs.
+
+    In this work, we investigate an alternative distillation paradigm by extending the theoretical framework of \emph{Inverse Distillation}~\citep{gushchin2025inverse, kornilov2025universal, selikhanovych2025one}, originally developed for continuous diffusion models, to the discrete domain. However, this direct extension introduces several nontrivial challenges arising from the intrinsic properties of discrete data. First, \underline{theoretical concerns} emerge regarding the validity of the training objective, particularly due to the potential non-uniqueness of its minimizers. Second, \underline{practical challenges} arise from the non-smoothness of the discrete space, which complicates the optimization. 
+  
+    \textbf{Contributions.} To address the above-mentioned issues, we present \emph{Inverse-distilled Diffusion Language Models (IDLM)}, a principled framework for accelerating a broad class of discrete diffusion models. In summary, our core contributions are as follows:
+    \vspace{-0.9em}
+
+    \begin{enumerate}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{1pt}
+        \item We theoretically establish the uniqueness of the global optimum for the IDLM objective, validating the correctness of the proposed optimization procedure (\wasyparagraph\ref{sec:theoretical extension idlm}).
+        \item We propose gradient-stable relaxations for effective training \textcolor{debugcolor}{in the non-smooth discrete domain} (\wasyparagraph\ref{sec:simplex relaxation}).
+        \item We empirically demonstrate that IDLM achieves competitive generation quality, matching the performance of 1024-step teacher models while requiring up to $64\times$ fewer sampling steps (\wasyparagraph\ref{sec:exps}).
+    \end{enumerate}

@@ -1,0 +1,283 @@
+\section{Qualitative Samples}
+\label{app: qualitative samples}
+
+\newcommand{\qualpenicon}{%
+\begin{tikzpicture}[baseline=-0.5ex, x=1cm, y=1cm]
+    \filldraw[fill=owtgreen, draw=owtgreen, rounded corners=1.5pt] (0,0) rectangle (0.31,0.31);
+    \draw[white, line width=0.95pt, line join=round, rounded corners=0.5pt]
+        (0.08,0.10) -- (0.17,0.24) -- (0.25,0.20) -- (0.15,0.06) -- cycle;
+    \draw[white, line width=0.8pt, line join=round]
+        (0.08,0.10) -- (0.06,0.03) -- (0.15,0.06);
+    \draw[white, line width=0.65pt, line cap=round] (0.18,0.23) -- (0.24,0.19);
+    \draw[white, line width=0.85pt, line cap=round]
+        (0.14,0.05) .. controls (0.18,0.01) and (0.22,0.06) .. (0.27,0.05);
+\end{tikzpicture}}
+
+\newcommand{\qualdocicon}{%
+\begin{tikzpicture}[baseline=-0.5ex, x=1cm, y=1cm]
+    \filldraw[fill=tinyorange, draw=tinyorange, rounded corners=1.5pt] (0,0) rectangle (0.31,0.31);
+    \draw[white, line width=0.85pt, rounded corners=0.35pt]
+        (0.085,0.055) -- (0.085,0.255) -- (0.205,0.255) -- (0.255,0.205) -- (0.255,0.055) -- cycle;
+    \draw[white, line width=0.65pt] (0.205,0.255) -- (0.205,0.205) -- (0.255,0.205);
+    \draw[white, line width=0.65pt, line cap=round] (0.12,0.175) -- (0.22,0.175);
+    \draw[white, line width=0.65pt, line cap=round] (0.12,0.135) -- (0.22,0.135);
+    \draw[white, line width=0.65pt, line cap=round] (0.12,0.095) -- (0.19,0.095);
+\end{tikzpicture}}
+
+\newcommand{\qualdivider}[1]{%
+\vspace{-0.9mm}
+\noindent\begin{tikzpicture}
+\draw[#1, densely dashed, line width=0.5pt] (0,0) -- (\linewidth,0);
+\end{tikzpicture}
+\vspace{-2.0mm}}
+
+\newcommand{\qualgroup}[1]{%
+\par\vspace{1.4mm}
+\noindent\begin{tikzpicture}
+\draw[owtgreen, densely dashed, line width=0.45pt] (0,0) -- (\linewidth,0);
+\end{tikzpicture}
+\vspace{-1.0mm}
+{\scriptsize\bfseries\textcolor{owtgreen}{#1}}\\[-0.2mm]}
+
+\newcommand{\qualfirstgroup}[1]{%
+\vspace{-0.4mm}
+{\scriptsize\bfseries\textcolor{owtgreen}{#1}}\\[-0.2mm]}
+
+\newcommand{\qualrowsep}{\par\vspace{1.0mm}}
+
+\newcommand{\owtrow}[4]{%
+\noindent
+\begin{minipage}[t]{0.31\linewidth}
+{\footnotesize\bfseries\textcolor{owtgreen}{#1 / #2 Sampling steps}}\\[-0.1mm]
+{\scriptsize\bfseries #3}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.66\linewidth}
+{\scriptsize #4}
+\end{minipage}}
+
+\newcommand{\condmetric}[1]{%
+{\scriptsize\bfseries\textcolor{tinyorange}{Accuracy:} #1}\\[-0.1mm]}
+
+\newcommand{\condrowsep}{%
+\par\vspace{0.8mm}
+\noindent\begin{tikzpicture}
+\draw[tinyorange, densely dashed, line width=0.45pt] (0,0) -- (\linewidth,0);
+\end{tikzpicture}
+\vspace{-0.8mm}}
+
+This appendix provides compact qualitative excerpts for the unconditional OpenWebText setting and the conditional TinyGSM setting. Samples are shortened for readability.
+
+\subsection{Unconditional Generation (OpenWebText)}
+\label{app:owt-qualitative-samples}
+
+\begin{tcolorbox}[
+    enhanced,
+    breakable,
+    colframe=owtgreen,
+    colback=green!3!white,
+    boxrule=0.65pt,
+    arc=4pt,
+    left=5pt,
+    right=5pt,
+    top=3pt,
+    bottom=3pt,
+    width=\textwidth,
+    before upper={\setlength{\parindent}{0pt}}]
+\noindent
+\begin{minipage}[c]{0.04\linewidth}
+\centering
+\qualpenicon
+\end{minipage}%
+\begin{minipage}[c]{0.94\linewidth}
+{\normalsize\bfseries\textcolor{owtgreen}{Unconditional Generation (OpenWebText)}}
+\end{minipage}
+\qualdivider{owtgreen}
+
+\qualfirstgroup{SEDD}
+\owtrow{IDLM-SEDD}{256}
+{\textcolor{owtgreen}{Gen. PPL:} 39.24; \textcolor{owtgreen}{H:} 5.3}
+{\ldots{} We knew the injuries against Fulham and Newcastle prevented us from gaining victory, but we felt we deserved a big victory in a game which brought us back to the group stage. There were only two fifth division sides in the last eight games, and the Premier League came into the day in third place. \ldots{}}
+\qualrowsep
+\owtrow{SEDD}{1024}
+{\textcolor{owtgreen}{Gen. PPL:} 43.31; \textcolor{owtgreen}{H:} 5.2}
+{\ldots{} I think we want to win every championship with these players, and we have given all I have to say. I know and I do not know that we will rush forward. In our view, we will not give any assurances that we are going to stay. \ldots{}}
+
+\qualgroup{Masked Diffusion}
+\owtrow{IDLM-MDLM}{16}
+{\textcolor{owtgreen}{Gen. PPL:} 32.75 $\pm$ 1.62; \textcolor{owtgreen}{H:} 5.42 $\pm$ 0.06}
+{\ldots{} In the wake of angry remarks from the media, Sam Kicks Radio decided to take a shot, claiming that he had only ever learned how to get away with something bad. I want to get over it, he says, while the exchange returns to the same public dispute. \ldots{}}
+\qualrowsep
+\owtrow{MDLM}{1024}
+{\textcolor{owtgreen}{Gen. PPL:} 41.29; \textcolor{owtgreen}{H:} 5.28}
+{\ldots{} Google claims that Android is its own operating system and could soon be replaced by more complicated cloud services from Samsung and Mozilla. Several business applications on mobile devices bring many direct interaction options. \ldots{}}
+
+\qualgroup{Uniform Diffusion (Ancestral Sampling)}
+\owtrow{IDLM-Duo$^{\mathrm{a}}$}{16}
+{\textcolor{owtgreen}{Gen. PPL:} 78.00; \textcolor{owtgreen}{H:} 5.6}
+{\ldots{} I think it is important to worry about better credit security and better integrated trading of those metrics, says a professor of regenerative engineering at McMaster University. The resident range has grown to 7.4 million in the UAE's next 25 years. \ldots{}}
+\qualrowsep
+\owtrow{IDLM-DCD$^{\mathrm{a}}$}{8}
+{\textcolor{owtgreen}{Gen. PPL:} 66.41 $\pm$ 4.59; \textcolor{owtgreen}{H:} 5.42 $\pm$ 0.03}
+{\ldots{} I am mostly an economist; for me, I am one of the co-creators of the culture of socialization and a simple person. A computer is enhanced with incredible energy by itself, while the passage moves through biography and explanation. \ldots{}}
+\qualrowsep
+\owtrow{Duo-DCD$^{\mathrm{a}}$}{16}
+{\textcolor{owtgreen}{Gen. PPL:} 75.24; \textcolor{owtgreen}{H:} 5.53}
+{\ldots{} My favorite cuisine is pretty varied, changing from regular to country cooking. Some local dishes are fine when guests visit the hotel, and the Southern Japanese Thai restaurant is described as something to watch. \ldots{}}
+\qualrowsep
+\owtrow{Duo$^{\mathrm{a}}$}{1024}
+{\textcolor{owtgreen}{Gen. PPL:} 77.69; \textcolor{owtgreen}{H:} 5.55}
+{\ldots{} The Germanic literature is based on a set of cultural expectations, while the English is largely freighted with fiction. Thus, it would be a useful contribution to this field for a shift away from the vernacular. \ldots{}}
+
+\qualgroup{Uniform Diffusion (Greedy Sampling)}
+\owtrow{IDLM-Duo$^{\mathrm{g}}$}{16}
+{\textcolor{owtgreen}{Gen. PPL:} 68.04; \textcolor{owtgreen}{H:} 5.6}
+{\ldots{} Strong performance in the NBN Co network will drive costs toward power parity, said Paul McCormick, chief economist at Business Economics. Strong growth of the network in Telstra Powerplows will drive costs in real time. \ldots{}}
+\qualrowsep
+\owtrow{IDLM-DCD$^{\mathrm{g}}$}{4}
+{\textcolor{owtgreen}{Gen. PPL:} 77.47 $\pm$ 4.43; \textcolor{owtgreen}{H:} 5.28 $\pm$ 0.06}
+{\ldots{} This device is not the only way to use features in this article. People who conduct interviews in secure environments are attracted by a two-way monitor, making it an ideal candidate for an interviewee who can adapt to secure systems. \ldots{}}
+\qualrowsep
+\owtrow{Duo-DCD$^{\mathrm{g}}$}{8}
+{\textcolor{owtgreen}{Gen. PPL:} 69.58; \textcolor{owtgreen}{H:} 5.30}
+{\ldots{} Craft beer from Wisconsin was based on a local foundation, while the market spread through misleading advertising and state-level pushes for ways to craft beer. The passage repeats the theme of freshness and local identity. \ldots{}}
+\qualrowsep
+\owtrow{Duo$^{\mathrm{g}}$}{1024}
+{\textcolor{owtgreen}{Gen. PPL:} 71.72; \textcolor{owtgreen}{H:} 5.22}
+{\ldots{} Medical applications and patents are being struck down under the patent devices act. The patent does not include more than medical devices or the described holder, and readers are asked to note changes in size or functionality. \ldots{}}
+\end{tcolorbox}
+
+\subsection{Conditional Generation (TinyGSM)}
+\label{app:tinygsm-qualitative-samples}
+
+\begin{tcolorbox}[
+    enhanced,
+    breakable,
+    colframe=tinyorange,
+    colback=orange!3!white,
+    boxrule=0.65pt,
+    arc=4pt,
+    left=5pt,
+    right=5pt,
+    top=3pt,
+    bottom=3pt,
+    width=\textwidth,
+    before upper={\setlength{\parindent}{0pt}}]
+\noindent
+\begin{minipage}[c]{0.04\linewidth}
+\centering
+\qualdocicon
+\end{minipage}%
+\begin{minipage}[c]{0.94\linewidth}
+{\normalsize\bfseries\textcolor{tinyorange}{Conditional Generation (TinyGSM)}}
+\end{minipage}
+\qualdivider{tinyorange}
+
+\noindent
+\begin{minipage}[t]{0.31\linewidth}
+{\footnotesize\bfseries\textcolor{tinyorange}{IDLM-MDLM / 32 Sampling steps}}\\[-0.1mm]
+\condmetric{12.8\%}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.66\linewidth}
+{\scriptsize\bfseries Prompt.}
+{\scriptsize Marcus is half of Leo's age and five years younger than Deanna. Deanna is 26. How old is Leo?}\\[-0.1mm]
+{\scriptsize\bfseries Generation.}\\[-2.4mm]
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\tiny,columns=fullflexible,keepspaces=true,breaklines=true,aboveskip=0pt,belowskip=0pt,xleftmargin=0.04\linewidth,xrightmargin=0.04\linewidth]
+def simple_math_problem() -> int:
+    marcus = 26 - 5
+    leo = marcus * 2
+    result = leo
+    return result
+\end{lstlisting}
+\end{minipage}
+
+\par\vspace{1.0mm}
+\noindent
+\begin{minipage}[t]{0.31\linewidth}
+{\footnotesize\bfseries\textcolor{tinyorange}{IDLM-MDLM / 64 Sampling steps}}\\[-0.1mm]
+\condmetric{14.9\%}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.66\linewidth}
+{\scriptsize\bfseries Prompt.}
+{\scriptsize Dan plants 3 rose bushes. Each rose bush has 25 roses. Each rose has 8 thorns. How many thorns are there total?}\\[-0.1mm]
+{\scriptsize\bfseries Generation.}\\[-2.4mm]
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\tiny,columns=fullflexible,keepspaces=true,breaklines=true,aboveskip=0pt,belowskip=0pt,xleftmargin=0.04\linewidth,xrightmargin=0.04\linewidth]
+def simple_math_problem() -> int:
+    thorns = 3 * 25 * 8
+    result = thorns
+    return result
+\end{lstlisting}
+\end{minipage}
+
+\par\vspace{1.0mm}
+\noindent
+\begin{minipage}[t]{0.31\linewidth}
+{\footnotesize\bfseries\textcolor{tinyorange}{IDLM-MDLM / 128 Sampling steps}}\\[-0.1mm]
+\condmetric{19.9\%}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.66\linewidth}
+{\scriptsize\bfseries Prompt.}
+{\scriptsize John collects peaches for 3 hours. He can collect 2 peaches a minute. How many peaches does he collect?}\\[-0.1mm]
+{\scriptsize\bfseries Generation.}\\[-2.4mm]
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\tiny,columns=fullflexible,keepspaces=true,breaklines=true,aboveskip=0pt,belowskip=0pt,xleftmargin=0.04\linewidth,xrightmargin=0.04\linewidth]
+def simple_math_problem() -> int:
+    minutes = 3 * 60
+    peaches = 2 * minutes
+    result = peaches
+    return result
+\end{lstlisting}
+\end{minipage}
+
+\condrowsep
+\noindent
+\begin{minipage}[t]{0.31\linewidth}
+{\footnotesize\bfseries\textcolor{tinyorange}{IDLM-Duo / 32 Sampling steps}}\\[-0.1mm]
+\condmetric{15.4\%}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.66\linewidth}
+{\scriptsize\bfseries Prompt.}
+{\scriptsize Ted starts with \$200. He buys 3 books for 16 dollars each and 3 pencils for 6 dollars each. How much did he spend in total?}\\[-0.1mm]
+{\scriptsize\bfseries Generation.}\\[-2.4mm]
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\tiny,columns=fullflexible,keepspaces=true,breaklines=true,aboveskip=0pt,belowskip=0pt,xleftmargin=0.04\linewidth,xrightmargin=0.04\linewidth]
+def simple_math_problem() -> int:
+    total_cost = 3 * 16 + 3 * 6
+    result = total_cost
+    return result
+\end{lstlisting}
+\end{minipage}
+
+\par\vspace{1.0mm}
+\noindent
+\begin{minipage}[t]{0.31\linewidth}
+{\footnotesize\bfseries\textcolor{tinyorange}{IDLM-Duo / 64 Sampling steps}}\\[-0.1mm]
+\condmetric{19.0\%}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.66\linewidth}
+{\scriptsize\bfseries Prompt.}
+{\scriptsize Sam ran 3 miles on Monday, Wednesday and Friday. On Tuesday and Thursday, Sam ran 5 miles. How many miles did Sam run this week?}\\[-0.1mm]
+{\scriptsize\bfseries Generation.}\\[-2.4mm]
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\tiny,columns=fullflexible,keepspaces=true,breaklines=true,aboveskip=0pt,belowskip=0pt,xleftmargin=0.04\linewidth,xrightmargin=0.04\linewidth]
+def simple_math_problem() -> int:
+    total_miles = (3 * 3) + 5 * 2
+    result = total_miles
+    return result
+\end{lstlisting}
+\end{minipage}
+
+\par\vspace{1.0mm}
+\noindent
+\begin{minipage}[t]{0.31\linewidth}
+{\footnotesize\bfseries\textcolor{tinyorange}{IDLM-Duo / 128 Sampling steps}}\\[-0.1mm]
+\condmetric{21.4\%}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.66\linewidth}
+{\scriptsize\bfseries Prompt.}
+{\scriptsize James has to buy insurance. Since he had an accident, it was 60\% more than normal. The normal cost is \$120 a month. How much does he pay a year?}\\[-0.1mm]
+{\scriptsize\bfseries Generation.}\\[-2.4mm]
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\tiny,columns=fullflexible,keepspaces=true,breaklines=true,aboveskip=0pt,belowskip=0pt,xleftmargin=0.04\linewidth,xrightmargin=0.04\linewidth]
+def simple_math_problem() -> int:
+    yearly_cost = (120 * (1 + 0.60)) * 12
+    result = yearly_cost
+    return result
+\end{lstlisting}
+\end{minipage}
+\end{tcolorbox}

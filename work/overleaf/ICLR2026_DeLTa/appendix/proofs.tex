@@ -1,0 +1,152 @@
+\section{Proofs}
+\label{app: proofs}
+    In this section, our primary objective is to establish the uniqueness result stated in Theorem~\eqref{thm:unique solution} for the cases of SEDD~\eqref{eq:sedd loss}, MDLM~\eqref{eq:mdlm loss} and UDLM~\eqref{eq:udlm loss} losses. Since a rigorous formulation of the theorem requires a precise definition of the diffusion path measure, we first introduce this notion and relate it to the main text in (\wasyparagraph\ref{app: connection with the main text}). Building on this connection, we then present a complete proof of the theorem in (\wasyparagraph\ref{app: proof of the theorem}).
+    
+    \paragraph{Notations.} Recall that $\mathcal{V} = \{x \in {0,1}^N : \sum_{i=1}^N x_i = 1\}$ denotes the space of one-hot column vectors. We let $D([0, T], \mathcal{V})$ represent the Skorokhod space, i.e., the space of functions from $[0, T]$ to $\mathcal{V}$ that are right-continuous with left limits (càdlàg). Finally, we denote by $\mathcal{P}(D)$ the space of probability measures over paths in $D([0, T], \mathcal{V})$. For any path measure $\mathbb{Q} \in \mathcal{P}(D)$ we denote its marginal at time $t$ as $\mathbb{Q}_t$, its joint distribution at times $s$ and $t$ as $\mathbb{Q}_{s,t}$ and its conditional distribution at time $s$ given state at time $t$ as $\mathbb{Q}_{s\mid t}.$ 
+    % We denote by $w \in D([0, T], \VC)$ as element in Skorokhod space and shortly we define $w_t \colon= w(t)$. 
+    
+    \subsection{Connection with the main text}
+        \label{app: connection with the main text}
+        Diffusion Language Models (DLMs) define a forward noising process represented by a path measure $\mathbb{P} \in \mathcal{P}(D)$. This path measure induces a time-dependent diffusion matrix $Q_t$, which is consistent with the forward dynamics described in Equation~\eqref{eq:forward diffusion} of the main text. The central objective of diffusion models is to reverse this path measure in time, obtaining the exact time-reversed path measure $\mathbb{P}^*$, from which samples can be drawn to recover the unknown data distribution $p^*$.
+
+        In practice, the exact reverse path measure $\mathbb{P}^*$ is intractable. Consequently, it is approximated by a parameterized path measure $\mathbb{P}^{\widehat{f}}$, defined through a function $\widehat{f}$. Training proceeds by minimizing a tractable objective derived from this approximation~\citep{campbell2022continuous, song2021maximum, lou2024discrete}. This objective is formulated using $\mathbb{P}^*_{x_0}$, the reverse-time path measure of the noising process initialized at $\delta_{x_0}$, and corresponds to the negative evidence lower bound (NELBO) for a fixed sample $x_0 \sim p^*(x_0)$.
+        \begin{equation}
+        \label{eq: teacher loss}
+            \LC(\widehat{f}, x_0) = \mathbb{E}_{p_{T\mid 0}(x_T \mid x_0)} \DC_{\text{KL}}(\PP^*_{x_0} (\cdot \mid x_T) \parallel \PP^{\widehat{f}}(\cdot \mid x_T)).
+        \end{equation}
+        Finally, \citet{lou2024discrete} apply Dynkin’s formula~\citep{hanson2007applied, campbell2022continuous} to show that this objective is equivalent, up to an additive constant, to the SEDD loss in Equation~\eqref{eq:sedd loss}, under the model parameterization $\widehat{f}(x_t, t) = \widehat{s}(x_t, t)$.
+        \begin{gather}
+            \LC(\widehat{s}, x_0)=\LC_{\text{SEDD}}(\widehat{s}, x_0) = \nonumber \\ \int_0^T \EE_{p_{t|0}(x_t|x_0)} \biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t} \biggl(\langle \widehat{s}(x_t,t), y\rangle -  \langle s(x_t,t \! \mid \! x_0), y\rangle \log  \langle \widehat{s}(x_t, t), y\rangle \biggr)\biggr]dt. 
+        \end{gather}
+        Further works connected this loss with MDLM~\citep{sahoo2024simple} and UDLM~\citep{schiff2024discreteguidance} using another parameterization $\widehat{f}(x_t, t) = \widehat{x}_0(x_t, t)$ and matrices $Q_t$ (see Appendix~\ref{app:details of considered processes} for more details). So, that $\LC(\widehat{x}_0, x_0) = \LC_{\text{MDLM}}(\widehat{x}_0, x_0)$ and $\LC(\widehat{x}_0, x_0)=\LC_{\text{UDLM}}(\widehat{x}_0, x_0)$ for specific diffusion matrices.
+
+        We denote the solution to the loss in Equation~\eqref{eq: teacher loss} as $f^* \colon= \argmin_{\widehat{f}} \mathbb{E}_{p^*(x_0)} \LC(\widehat{f}, x_0).$ At optimality, the corresponding path measure satisfies $\mathbb{P}^{f^*} = \mathbb{P}^*$, indicating that the trained model $f^*$ can be used to sample from the target data distribution $p^*$.
+        
+    \subsection{Proof of the theorem}
+        \label{app: proof of the theorem}
+        We begin by formulating the training objective in terms of the KL divergence and subsequently demonstrate its equivalence to the inverse distillation loss defined in Equation~\eqref{eq:inverse discrete diffusion distillation}. Formally, our goal is to approximate an unknown data distribution $p^*$. To this end, we define a generator $G_{\theta} : \mathcal{Z} \to \mathcal{V}$, where $\mathcal{Z}$ denotes a latent space endowed with a tractable prior distribution $p_{\mathcal{Z}}(z)$. The generator induces a distribution over $\mathcal{V}$ via the pushforward operation $p_{\theta} = G_{\theta} \# p_{\mathcal{Z}}.$ Let $\mathbb{P}^{\theta}$ denote the reverse-time path measure induced by $p_{\theta}$, satisfying $\mathbb{P}^{\theta}_T = p_{\theta}$. Similarly, let $\mathbb{P}^{*}$ denote the reverse-time path measure associated with the true data distribution $p^*$, such that $\mathbb{P}^{*}_T = p^*$. The training objective is then given by:
+        
+        \begin{equation} 
+        \label{eq: kl definition} 
+            \LC_{\text{IDLM}}(\theta) \colon= \DC_{\text{KL}} (\PP^{\theta} \parallel \PP^*) 
+        \end{equation}
+        
+        We first establish the equivalence of this formulation to the SEDD loss~\eqref{eq:sedd loss}.
+
+        \begin{theorem}[Equivalence to the SEDD Loss]
+        \label{thm: unique solution for sedd}
+            Let $s^* = \arg\min_{\widehat{s}} \mathbb{E}_{p^*(x_0)} \, \mathcal{L}_{\text{SEDD}}(\widehat{s}, x_0)$, where $\mathcal{L}_{\text{SEDD}}$ is defined in Equation~\eqref{eq:sedd loss}. Then, the IDLM loss in Equation~\eqref{eq: kl definition} is equivalent to the following inverse distillation loss:
+            $$
+            \mathcal{L}_{\text{IDLM}}(\theta) =
+            \mathbb{E}_{ p_{\theta}(x_0)} \left[\mathcal{L}_{\text{SEDD}}(s^*, x_0)\right]
+            - \min_{\widehat{s}} \mathbb{E}_{ p_{\theta}(x_0)} \left[\mathcal{L}_{\text{SEDD}}(\widehat{s}, x_0)\right].
+            $$
+        \end{theorem}
+        \begin{proof}
+            We define $$ s^{\theta} \coloneqq \arg\min_{\widehat{s}} \, \mathbb{E}_{ p_{\theta}(x_0)} \left[ \mathcal{L}_{\text{SEDD}}(\widehat{s}, x_0) \right], $$ and denote the corresponding marginal distribution at time $t$ by $$ p_t^{\theta}(x_t) \coloneqq \int p_{t \mid 0}(x_t \mid x_0) \, p_{\theta}(dx_0). $$ Following the approach of \citet{lou2024discrete}, we apply Dynkin’s formula~\citep{hanson2007applied, campbell2022continuous}, which plays a role analogous to Girsanov’s theorem for standard stochastic differential equations~\citep{oksendal2003stochastic} by enabling the computation of changes of measure. Using this result and also the fact that 
+            $$
+            \mathbb{P}^{s^*} = \mathbb{P}^*,
+            $$ the KL divergence objective in Equation~\eqref{eq: kl definition} can be expressed in the following form:
+            \begin{gather} 
+                \LC_{\text{IDLM}}(\theta) \colon= \DC_{\text{KL}} (\PP^{\theta} \parallel \PP^*) = \nonumber\\
+                \int_0^T \EE_{p_t^{\theta}(x_t)} \biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t} \langle s^{*}(x_t,t), y\rangle\biggl(\frac{\langle s^{\theta}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} \log \frac{\langle s^{\theta}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} \nonumber \\ -  \frac{\langle s^{\theta}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle}  + 1\biggr)\biggr]dt \nonumber
+            \end{gather}
+            Moreover, it has been shown that the score function can be estimated via the conditional expectation~\citep{campbell2022continuous, lou2024discrete, meng2022concrete}:
+            \begin{equation}
+            \label{eq: conditional posterior expectation of score function}
+                \langle s^{\theta}(x_t, t), y\rangle = \mathbb{E}_{p_{0 \mid t}(x_0 \mid x_t)} \langle s(x_t, t\mid x_0), y \rangle,
+            \end{equation}
+            where the conditional distribution is given by $$ p_{0 \mid t}(x_0 \mid x_t) = \frac{p_{t \mid 0}(x_t \mid x_0)\, p_{\theta}(x_0)} {\int p_{t \mid 0}(x_t \mid x_0)\, p_{\theta}(dx_0)},$$ and the conditional score function is defined as
+            $$\langle s(x_t, t\mid x_0), y \rangle \vcentcolon= \frac{p_{t\mid 0} (y \mid x_0)}{p_{t\mid 0} (x_t \mid x_0)}.$$ The main difficulty arises from the term inside the $\log$, as direct Monte Carlo estimation of this quantity leads to a biased objective. To address this issue, we adopt a linearization technique introduced by \citet{kornilov2025universal}, which renders the objective linear with respect to the ratio $$ \frac{\langle s^{\theta}(x_t, t), y \rangle}{\langle s^{*}(x_t, t), y \rangle}. $$ Specifically, we obtain the following expression:
+            \begin{gather}
+                \frac{\langle s^{\theta}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} \log \frac{\langle s^{\theta}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} -  \frac{\langle s^{\theta}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle}  + 1 = \nonumber \\ \max_{l(y, x_t, t)} \biggl[\frac{\langle s^{\theta}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} \cdot l(y, x_t, t) + 1 - \exp(l(y, x_t, t))\biggr]. \nonumber
+            \end{gather}
+            We note that the maximizer $l(y, x_t, t)$ of the above optimization problem admits the following closed-form expression:
+            \begin{gather}
+                l^*(y, x_t, t) = \argmax_{l(y, x_t, t)} \biggl[\frac{\langle s^{\theta}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} \cdot l(y, x_t, t) + 1 - \exp(l(y, x_t, t))\biggr] \nonumber \\ = \log \biggl[ \frac{\langle s^{\theta}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} \biggr]
+            \end{gather}
+            This observation motivates the following choice of parameterization:
+            \begin{gather}
+                l(y, x_t, t) = \log \biggl[ \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} \biggr]
+            \end{gather}
+            Finally, under this parameterization, the loss function takes the following form:
+            \begin{gather} 
+                \LC_{\text{IDLM}}(\theta) =  \max_{\widehat{s}}\int_0^T \EE_{p_t^{\theta}(x_t)}\nonumber\\
+                 \biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t} \langle s^{*}(x_t,t), y\rangle\biggl(\frac{\langle {s}^{\theta}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} \log \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} -  \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle}  + 1\biggr)\biggr]dt =
+                 \nonumber \\
+                 \max_{\widehat{s}}\int_0^T \EE_{p_t^{\theta}(x_t)}\nonumber\\
+                 \biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t} \langle s^{*}(x_t,t), y\rangle\biggl(\underbrace{\frac{\mathbb{E}_{p_{0 \mid t}(x_0 \mid x_t)} \langle s(x_t, t\mid x_0), y \rangle}{\langle s^{*}(x_t,t), y\rangle}}_{\text{using Equation~\eqref{eq: conditional posterior expectation of score function}}} \log \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} -  \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle}  + 1\biggr)\biggr]dt =
+                 \nonumber \\
+                 \max_{\widehat{s}}\int_0^T \EE_{p_t^{\theta}(x_t)}\nonumber\\
+                 \biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t} \biggl(\mathbb{E}_{p_{0 \mid t}(x_0 \mid x_t)} \langle s(x_t, t\mid x_0), y \rangle \log \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} - \langle \widehat{s}(x_t,t), y\rangle  + \langle s^{*}(x_t,t), y\rangle\biggr)\biggr]dt =
+                 \nonumber \\
+                 \max_{\widehat{s}}\int_0^T \EE_{p_t^{\theta}(x_t)}\nonumber\\
+                 \biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t} \biggl(\mathbb{E}_{p_{0 \mid t}(x_0 \mid x_t)} \langle s(x_t, t\mid x_0), y \rangle \log \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} + \langle s^{*}(x_t,t) - \widehat{s}(x_t,t), y\rangle\biggr)\biggr]dt =
+                 \nonumber \\
+                 \max_{\widehat{s}}\int_0^T  \biggl(\EE_{p_t^{\theta}(x_t)}
+                \biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t} \mathbb{E}_{p_{0 \mid t}(x_0 \mid x_t)} \langle s(x_t, t\mid x_0), y \rangle \log \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle}\biggr] + \\
+                 \EE_{p_t^{\theta}(x_t)}\biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t}\langle s^{*}(x_t,t) - \widehat{s}(x_t,t), y\rangle\biggr)\biggr]dt =
+                 \nonumber \\
+                 \max_{\widehat{s}}\int_0^T  \biggl(\EE_{p_t^{\theta}(x_t)}\mathbb{E}_{p_{0 \mid t}(x_0 \mid x_t)} \biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t}  \langle s(x_t, t\mid x_0), y \rangle \log \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle}\biggr] + \\
+                \EE_{p_t^{\theta}(x_t)}\underbrace{\biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t}\langle s^{*}(x_t,t) - \widehat{s}(x_t,t), y\rangle\biggr)\biggr]}_{\text{does not depend on } x_0\text{, so we can take expectation over it}}dt =
+                 \nonumber \\
+                 \max_{\widehat{s}}\int_0^T  \biggl(\EE_{p_t^{\theta}(x_t)}\mathbb{E}_{p_{0 \mid t}(x_0 \mid x_t)} \biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t}  \langle s(x_t, t\mid x_0), y \rangle \log \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle}\biggr] + \nonumber\\
+                 \EE_{p_t^{\theta}(x_t)}\EE_{p_{0\mid t} (x_0 \mid x_t)}\biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t}\langle s^{*}(x_t,t) - \widehat{s}(x_t,t), y\rangle\biggr)\biggr]dt =
+                 \nonumber \\
+                 \max_{\widehat{s}}\int_0^T  \biggl(\EE_{p^{\theta}(x_0)}\mathbb{E}_{p_{t \mid 0}(x_t \mid x_0)} \biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t}  \langle s(x_t, t\mid x_0), y \rangle \log \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle}\biggr] + \nonumber\\
+                 \EE_{p^{\theta}(x_0)}\mathbb{E}_{p_{t \mid 0}(x_t \mid x_0)}\biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t}\langle s^{*}(x_t,t) - \widehat{s}(x_t,t), y\rangle\biggr)\biggr]dt =
+                 \nonumber \\
+                 \max_{\widehat{s}}\int_0^T \EE_{p^{\theta}(x_0)}\mathbb{E}_{p_{t \mid 0}(x_0 \mid x_t)}  \biggl[ \sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t} \biggl(\langle s(x_t, t\mid x_0), y \rangle \log \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} + \nonumber \\
+                  \langle s^{*}(x_t,t) - \widehat{s}(x_t,t), y\rangle\biggr)\biggr]dt =
+                 \nonumber \\
+                 \EE_{p^{\theta}(x_0)} \max_{\widehat{s}}\int_0^T \mathbb{E}_{p_{t \mid 0}(x_0 \mid x_t)}  \biggl[ \sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t} \biggl(\langle s(x_t, t\mid x_0), y \rangle \log \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} + \nonumber \\
+                  \langle s^{*}(x_t,t) - \widehat{s}(x_t,t), y\rangle\biggr)\biggr]dt
+                 \nonumber
+            \end{gather}
+            To complete the derivation, we examine the SEDD loss in Equation~\eqref{eq:sedd loss} and observe that:
+            \begin{gather}
+                \LC_{\text{IDLM}}(\theta) = \EE_{p^{\theta}(x_0)} \max_{\widehat{s}}\int_0^T \mathbb{E}_{p_{t \mid 0}(x_0 \mid x_t)}  \biggl[\sum_{y \neq x_t} \langle x_t, y\rangle_{Q_t} \biggl(\langle s(x_t, t\mid x_0), y \rangle \log \frac{\langle \widehat{s}(x_t,t), y\rangle}{\langle s^{*}(x_t,t), y\rangle} + \nonumber \\
+                  \langle s^{*}(x_t,t) - \widehat{s}(x_t,t), y\rangle\biggr)\biggr]dt =
+                  \nonumber \\
+                  \EE_{p^{\theta}(x_0)} \max_{\widehat{s}}\biggl[\underbrace{\LC_{\text{SEDD}}(s^*, x_0)}_{\text{does not depend on } \widehat{s}} - \LC_{\text{SEDD}}(\widehat{s}, x_0) \biggr] = \EE_{p^{\theta}(x_0)} \biggl[\LC_{\text{SEDD}}(s^*, x_0) - \min_{\widehat{s}} \LC_{\text{SEDD}}(\widehat{s}, x_0)\biggr] \nonumber
+            \end{gather}
+        \end{proof}
+        Given this theorem, the uniqueness of the inverse distillation loss in Equation~\eqref{eq:inverse discrete diffusion distillation} can be established in a straightforward manner for the MDLM~\eqref{eq:mdlm loss} and UDLM~\eqref{eq:udlm loss} cases.
+        \begin{proposition}
+            Let $x_0^* = \arg\min_{\widehat{x}_0} \mathbb{E}_{p^*(x_0)} \, \mathcal{L}_{\text{MDLM}}(\widehat{x}_0, x_0)$, where $\mathcal{L}_{\text{SEDD}}$ is defined in Equation~\eqref{eq:mdlm loss}. Then, the IDLM loss in Equation~\eqref{eq: kl definition} is equivalent to the following inverse distillation loss:
+            $$
+            \mathcal{L}_{\text{IDLM}}(\theta) =
+            \mathbb{E}_{ p_{\theta}(x_0)} \left[\mathcal{L}_{\text{MDLM}}(x_0^*, x_0)\right]
+            - \min_{\widehat{x}_0} \mathbb{E}_{ p_{\theta}(x_0)} \left[\mathcal{L}_{\text{MDLM}}(\widehat{x}_0, x_0)\right].
+            $$                
+            An analogous result holds for the UDLM loss defined in Equation~\eqref{eq:udlm loss}.
+        \end{proposition}
+        \begin{proof}
+            In~\citet[Appendix C]{sahoo2024simple}, it was shown that using the parameterization $\widehat{x}_0$ instead of $\widehat{s}$, together with a specific choice of diffusion matrix $Q_t$, given in Equation~\eqref{eq: absorbing diffusion matrix}, yields an equivalence between the SEDD and MDLM losses:
+            $$ \mathcal{L}_{\text{SEDD}}(\widehat{s}, x_0) = \mathcal{L}_{\text{MDLM}}(\widehat{x}_0, x_0).$$
+            Combining this result with the expression for the IDLM loss associated with the SEDD formulation, we obtain, for the corresponding matrix $Q_t$,
+            \begin{gather}
+                \LC_{\text{IDLM}}(\theta) = \EE_{p^{\theta}(x_0)} \biggl[\LC_{\text{SEDD}}(s^*, x_0) - \min_{\widehat{s}} \LC_{\text{SEDD}}(\widehat{s}, x_0)\biggr] = \nonumber \\ \mathbb{E}_{ p_{\theta}(x_0)} \left[\mathcal{L}_{\text{MDLM}}(x_0^*, x_0)\right]
+            - \min_{\widehat{x}_0} \mathbb{E}_{ p_{\theta}(x_0)} \left[\mathcal{L}_{\text{MDLM}}(\widehat{x}_0, x_0)\right].
+            \end{gather}
+            A similar argument applies to the UDLM loss. Using the equivalence between the SEDD and UDLM objectives established in~\citet[Appendix B]{schiff2024discreteguidance}, one can derive an analogous result for the UDLM case using another specific diffusion matrix defined in Equation~\eqref{eq: uniform diffusion matrix}.
+        \end{proof}
+        Having established the connection between Equation~\eqref{eq: kl definition} and Equation~\eqref{eq:inverse discrete diffusion distillation}, we now proceed to prove the theorem stated in the main text.
+        \begin{theorem}
+            The IDLM loss defined in Equation~\eqref{eq: kl definition} and equivalent to Equation~\eqref{eq:inverse discrete diffusion distillation} satisfies the following inequality:
+            \begin{equation}
+            \mathcal{L}_{\text{IDLM}}(\theta) \geq
+            \mathcal{D}_{\text{KL}}(p_{\theta} \parallel p^*) \geq 0,
+            \end{equation}
+            and attains its minimum value of zero if and only if the model distribution exactly matches the target distribution:
+            \begin{equation}
+            \mathcal{L}_{\text{IDLM}}(\theta) = 0 \iff p_{\theta} = p^*.
+            \end{equation}
+        \end{theorem}
+        \begin{proof}
+            By applying the chain rule for KL divergence via disintegration of path measures, the IDLM loss can be decomposed as follows:
+            \begin{gather}
+                \mathcal{L}_{\text{IDLM}}(\theta) = \DC_{\text{KL}} (\PP^{\theta} \parallel \PP^*) = \mathcal{D}_{\text{KL}}(p_{\theta} \parallel p^*) + \underbrace{\mathbb{E}_{p_{\theta}(x)} \left[ \mathcal{D}_{\text{KL}}\big(\PP_x^{\theta} \parallel \PP_{x}^*\big)\right]}_{\geq 0} \nonumber \\ \geq \mathcal{D}_{\text{KL}}(p_{\theta} \parallel p^*) \geq 0.
+            \end{gather}
+            This decomposition implies that $\mathcal{L}_{\text{IDLM}}(\theta) = 0$ if and only if $\PP^{\theta} = \PP^*$, which necessarily implies that $p_{\theta} = p^*$. Conversely, if $p_{\theta} = p^*$, then the conditional path measures also coincide, i.e., $\PP^{\theta}_x = \PP^{*}_x$ for all $x$, since both are defined using the same forward transition distribution specified in Equation~\eqref{eq:conditional_distribution}. Consequently, we obtain $\mathcal{L}_{\text{IDLM}}(\theta) = 0$. Hence, the global minimum of the IDLM loss is achieved if and only if the model distribution exactly recovers the target data distribution.
+        \end{proof}

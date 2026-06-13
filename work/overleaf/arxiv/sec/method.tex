@@ -1,0 +1,423 @@
+\vspace{-2mm}
+\section{Inverse-distilled Diffusion Language Models}
+\vspace{-2mm}
+\label{sec:idlm}
+    In this section, we present our core methodology for distilling a broad class of Diffusion Language Models into a few-step generator. We begin by providing the theoretical foundations supporting the extension of the Inverse Distillation framework to the discrete domain (\wasyparagraph\ref{sec:theoretical extension idlm}). We then address the practical challenges arising from the non-smooth nature of discrete spaces (\wasyparagraph\ref{sec:practical extension of idlm}). Lastly, we outline key implementation details \textcolor{debugcolor}{and introduce the sequence-level scaling of the proposed objective} (\wasyparagraph\ref{sec:technical aspects}). Appendices~\ref{app:absorbing process} and~\ref{app:uniform process} give the masked- and uniform-diffusion formulations used below.
+
+\vspace{-1mm}
+\subsection{Theoretical extension of Inverse Distillation}
+\vspace{-1mm}
+\label{sec:theoretical extension idlm}
+
+\ecoparagraph{Inverse distillation for DLMs.}
+    To address the issue of slow inference, we extend the Inverse Distillation framework, originally developed for continuous diffusion models, to the domain of Diffusion Language Models. Then, following the logic of the continuous case, described in (\wasyparagraph\ref{sec:inverse distillation}), we propose to consider the following objective for the discrete diffusion:
+    \begin{equation}
+    \label{eq:inverse discrete diffusion distillation}
+        \mathcal{L}_{\text{IDLM}} (\theta ) = \LC(f^*, p_{\theta}) \!
+        - \! \min_{f} \LC(f, p_{\theta}).\!
+    \end{equation}
+
+\ecoparagraph{Theoretical validity of the training objective.}
+    However, simply formulating this objective in a manner analogous to the distillation loss used in continuous diffusion models does not guarantee the validity of its solutions. The absence of a uniqueness guarantee implies that the optimization procedure may converge to suboptimal solutions. To address this, we present the following theorem. 
+    
+    \begin{theorem}[Unique solution]
+    \vspace{-1mm}
+    \label{thm:unique solution} 
+        For the SEDD~\eqref{eq:sedd loss}, MDLM~\eqref{eq:mdlm loss}, and Duo~\eqref{eq:duo loss} (in the limit as $\tau \to 0^{+}$) objectives the IDLM loss defined in equation~\eqref{eq:inverse discrete diffusion distillation} satisfies
+        \begin{equation}
+            \LC_{\text{IDLM}}(\theta) \geq \mathcal{D}_{\text{KL}}(p_{\theta} \parallel p^*)\geq 0 \nonumber
+        \end{equation}
+        and achieves its minimum (zero) if and only if the model distribution matches the target distribution
+        \vspace{-2mm}
+        \begin{equation}
+            \LC_{\text{IDLM}}(\theta) = 0 \iff p_{\theta} = p^*. \nonumber
+        \end{equation}
+    \vspace{-2mm}
+    \end{theorem}
+    \vspace{-5mm}
+    
+    We give the proof and discuss the sequence-level case in Appendix~\ref{app: proof of the theorem}.
+
+\ecoparagraph{Probabilistic intuition.}
+    The IDLM loss has a simple probabilistic interpretation: it matches full diffusion trajectories. If $\PP^\theta$ and $\PP^*$ denote the trajectory distributions induced by $p_\theta$ and $p^*$, respectively, then the proof shows
+    \[
+        \LC_{\mathrm{IDLM}}(\theta)
+        =
+        \DC_{\mathrm{KL}}(\PP^\theta\|\PP^*).
+    \]
+    Because the final clean sample is part of the trajectory, this KL controls $\DC_{\mathrm{KL}}(p_\theta\|p^*)$, which is exactly the inequality in Theorem~\ref{thm:unique solution}. Hence zero IDLM loss can occur only when the student recovers the data distribution.
+
+% \ecoparagraph{Relation to DMD-style loss.}
+%     DMD-style continuous distillation~\citep{yin2024one,yin2024improved} matches noised marginals across diffusion time:
+%     \[
+%         \LC_{\mathrm{DMD}}(\theta)
+%         =
+%         \int_0^1 w(t)\,
+%         \DC_{\mathrm{KL}}(p_t^\theta\|p_t^*)\,dt .
+%     \]
+%     Here $p_t^\theta$ and $p_t^*$ are the student and target marginal distributions at time $t$. Recent discrete methods such as D-MMD~\citep{hoogeboom2026beyond} and DiDi-Instruct~\citep{zheng2025ultra} follow this marginal-matching view. IDLM is related, but it matches the whole stochastic path rather than only sampled-time marginals. As shown in RSD work~\citep{selikhanovych2025one}, a DMD-like update is recovered from inverse distillation after stop-gradient (see Appendix~\ref{app:marginal-vs-trajectory}). It is worth to note that in masked diffusion, these losses coincide because the MDLM \textsc{subs} parameterization implicitly applies this stop-gradient to the intermediate states, while in uniform diffusion this distinction is important.
+
+\vspace{-2mm}
+\subsection{Addressing Discrete Nonsmoothness}
+\label{sec:practical extension of idlm}
+\vspace{-2mm}
+    We now explain the main optimization problems that arise when applying IDLM in a discrete domain. For clarity, we use MDLM as an example because the absorbing process gives the simplest setting in which these bottlenecks can be seen explicitly. The same problems also arise for uniform diffusion. Appendix~\ref{app:mdlm-inverse-distillation} expands the MDLM-specific inverse distillation simplification used below. Appendix~\ref{app:uniform-inverse-distillation} gives the corresponding uniform-diffusion specialization. Specializing the IDLM objective to the MDLM loss gives
+    \begin{equation}
+    \label{eq:draft_idlm_mdlm}
+    \LC_{\mathrm{IDLM-MDLM}}(\theta)
+    =
+    \LC_{\text{MDLM}}(f^*,p_\theta)
+    -
+    \min_f \LC_{\text{MDLM}}(f,p_\theta). \nonumber
+    \end{equation}
+    Here we use the same MDLM loss as in the Equation~\eqref{eq:mdlm loss}, replacing the data distribution $p^*$ by the student distribution $p_\theta$. This is the quantity through which the distribution $p_\theta$ must be optimized:
+    \begin{equation}
+    \label{eq:draft_mdlm_distribution_loss}
+    \LC_{\text{MDLM}}(f,p_\theta)
+    \!\!\vcentcolon=\!\!
+    -
+    \EE_{p_\theta(x_0),\,t,\,q_t}
+    \bigl[
+    \lambda_t
+    \langle x_0,\log f(x_t,t)\rangle
+    \bigr].
+    \end{equation}
+    In practice, we parametrize ditribution $p_{\theta}$ by \textit{student} model ${G_{\theta}\colon \mathcal{E} \to \VC}$, which transforms latent variable $\epsilon \in \mathcal{E}$ to a discrete output $x_0 \in \VC$. The latent space $\mathcal{E}$ is equipped with a tractable prior distribution $p_{\mathcal{E}}$, inducing a distribution $p_{\theta}$ over $\VC$ via the mapping $G_{\theta}$:
+    \[
+    \epsilon\sim p_{\mathcal E},
+    \qquad
+    x_0=G_{\theta}(\epsilon).
+    \]
+    In the equations below, we highlight with \textcolor{MyRed}{red} quantities whose values depend on the generator parameter \textcolor{MyRed}{$\theta$}. Substituting the generator sample into~\eqref{eq:draft_mdlm_distribution_loss} gives the loss:
+    \begin{equation}
+    \label{eq:draft_mdlm_generator_loss}
+    \LC_{\text{MDLM}}(f,p_\theta)
+    =
+    -
+    \EE_{\epsilon,\,t,\,
+    \textcolor{MyRed}{x_t}\sim q_t(\cdot\mid G_{\textcolor{MyRed}{\theta}}(\epsilon))}
+    \bigl[
+    \lambda_t
+    \langle
+    G_{\textcolor{MyRed}{\theta}}(\epsilon),
+    \log f(\textcolor{MyRed}{x_t},t)
+    \rangle
+    \bigr]. \nonumber
+    \end{equation}
+
+    This formulation reveals two gradient bottlenecks. First, if $G_{\textcolor{MyRed}{\theta}}$ is forced to output a one-hot token in $\VC$, then the generator output is not a smooth function of its logits. Second, $\textcolor{MyRed}{x_t}$ is sampled from $q_t(\cdot\mid G_{\textcolor{MyRed}{\theta}}(\epsilon))$, hence the noised token depends on $\textcolor{MyRed}{\theta}$ through the probabilities of this categorical distribution. Backpropagating through the objective would therefore require passing gradients through the sampling of $\textcolor{MyRed}{x_t}$. This is not handled by automatic differentiation, and common alternatives such as hard Gumbel-Softmax can be unstable.
+
+    \ecoparagraph{Simplex relaxation.}
+    \label{sec:simplex relaxation}
+    To remove the first bottleneck, we relax the generator range from $\VC$ to the simplex $\Delta$:
+    \[
+    G_{\textcolor{MyRed}{\theta}}(\epsilon)\in\Delta.
+    \]
+    This relaxation is compatible with both ingredients of the MDLM loss: the cross-entropy term remains a valid soft-label loss, and the absorbing conditional distribution $q_t(\cdot~\mid ~G_{\textcolor{MyRed}{\theta}}(\epsilon))$ remains a categorical distribution when $G_{\textcolor{MyRed}{\theta}}(\epsilon)\in\Delta$.
+    Figures~\ref{fig:masked-forward-kernel},~\ref{fig:mdlm-simplex-relaxation}, and~\ref{fig:mdlm-token-loss} in Appendix~\ref{app:mdlm-inverse-distillation} visualize why this remains a valid update and how it changes a one-hot token loss into a weighted token loss.
+    Appendix~\ref{app:uniform-inverse-distillation} uses the same relaxation for uniform diffusion.
+
+    \ecoparagraph{MDLM: \textsc{subs} parameterization.}
+    For MDLM, the \textsc{subs} parameterization copies already unmasked tokens: if $x_t\neq m$, then $f^*(x_t,t)=f(x_t,t)=x_t$ for any model. Consequently, the corresponding token contribution to $\LC_{\mathrm{IDLM-MDLM}}$ is zero. Hence the IDLM update is nonzero only when the noised token is the mask token, $x_t=m$. The absorbing-process details are given in Appendix~\ref{app:absorbing process}. Appendix~\ref{app:mdlm-inverse-distillation} and Figure~\ref{fig:mdlm-subs-cancellation} show this mask-only cancellation explicitly. Therefore, for the generator update, the MDLM loss reduces to
+    \begin{equation}
+    \label{eq:draft_mdlm_mask_only}
+    \LC_{\text{MDLM}}(f,p_\theta)
+    =
+    -
+    \EE_{\epsilon,t}
+    \bigl[
+    (1-\alpha_t)\lambda_t
+    \langle
+    G_{\textcolor{MyRed}{\theta}}(\epsilon),
+    \log f(m,t)
+    \rangle
+    \bigr]. \nonumber
+    \end{equation}
+    The sampled token $x_t$ no longer appears in the generator update. The remaining dependence on $\textcolor{MyRed}{\theta}$ is only through the differentiable simplex-valued output $G_{\textcolor{MyRed}{\theta}}(\epsilon)$. Appendix~\ref{app:mdlm-inverse-distillation} explains why this can be viewed as an implicit stop-gradient through the intermediate state for masked diffusion.
+
+    \ecoparagraph{Duo: Gaussian reparameterization.}
+    Duo provides a differentiable path by introducing an auxiliary Gaussian variable $\xi$ and using the relaxed state
+    \begin{equation}
+    \label{eq:draft_duo_soft_state}
+    \textcolor{MyRed}{x_t}
+    =
+    \softmax\!\left(
+    \frac{
+    \tilde{\alpha}_t G_{\textcolor{MyRed}{\theta}}(\epsilon)
+    +
+    \sqrt{1-\tilde{\alpha}_t^2}\,\xi
+    }{\tau}
+    \right),
+    \qquad
+    \xi\sim\NC(0,I), \nonumber
+    \end{equation}
+    where the \textcolor{MyRed}{red} terms indicate the path through the generator parameters. The map $G_{\textcolor{MyRed}{\theta}}(\epsilon)\mapsto \textcolor{MyRed}{x_t}$ is differentiable. This is possible in the Duo parameterization because the denoiser is trained on simplex-valued states rather than only on discrete one-hot tokens.
+    More details are given in Appendix~\ref{app:uniform-inverse-distillation}.
+
+\vspace{-1mm}
+\subsection{Loss Intuition}
+\label{sec:loss intuition}
+\vspace{-1mm}
+\ecoparagraph{Alternating Optimization.}
+    The IDLM objective contains an inner optimization over the fake diffusion model $f$. In practice, we approximate this nested problem by
+    alternating two updates, following prior work~\citep{yin2024one,
+    yin2024improved, zhou2024score, gushchin2025inverse,
+    kornilov2025universal}.
+
+    First, we fix the student generator $G_{\theta}$ and train
+    $f$ on samples from the current student distribution
+    $p_{\theta}$. This approximates the inner minimization in the IDLM
+    objective:
+    \begin{gather}
+    \label{eq:update fake distribution}
+      \text{\textit{Update:} } f \text{;} \quad
+      \text{\textit{Fix:} } \theta  \\
+      \LC_{f} = \LC(f, p_{\theta}). \nonumber
+    \end{gather}
+
+    Second, we fix $f$ and update $G_{\theta}$ using the IDLM gap:
+    \begin{gather}
+    \label{eq:update generator distribution}
+      \text{\textit{Update:} } \theta \text{;} \quad
+      \text{\textit{Fix:} } f \\
+      \LC_{\mathrm{IDLM}}(\theta)
+      =
+      \LC(f^*, p_{\theta})
+      -
+      \LC(f, p_{\theta}). \nonumber
+    \end{gather}
+
+    These two updates are summarized visually in Figure~\ref{fig:method},
+    which depicts the fake model and the student generator as the two
+    learnable components of the IDLM training loop.
+
+\ecoparagraph{IDLM intuition.}
+    For MDLM, the \textsc{subs} parameterization makes the generator update
+    especially transparent: only masked positions contribute. Substituting the
+    mask-only MDLM loss into the IDLM gap gives
+    \[
+    \LC_{\mathrm{IDLM-MDLM}}(\theta)
+    =
+    -\EE_{\epsilon,t}\!
+    \left[
+    \lambda_t\big\langle G_\theta(\epsilon),a_t\big\rangle
+    \right].
+    \]
+    Here \(a_t=\log f^*(m,t)-\log f(m,t)\), and \(f\) is the current fake model. Thus
+    each masked position gives the
+    generator a teacher-over-fake advantage vector \(a_t\). If
+    \(G_\theta(\epsilon)=\softmax(z_\theta)\), then for a fixed \((\epsilon,t)\)
+    \[
+    \frac{\partial \LC_{\mathrm{IDLM-MDLM}}}{\partial z_{\theta,i}}
+    =
+    -\lambda_t G_{\theta,i}(\epsilon)
+    \Big(a_{t,i}-\langle G_\theta(\epsilon),a_t\rangle\Big).
+    \]
+    Hence gradient descent increases token \(i\)'s logit exactly when its advantage
+    is above the generator's current average advantage. In words, the student does
+    not simply chase the teacher's most likely token, it promotes tokens that the
+    teacher prefers more than the fake model does. When the fake model catches up
+    to the teacher on student samples, this relative advantage vanishes.
+
+    \begin{center}
+    {\small
+    \setlength{\tabcolsep}{2.5pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.31\linewidth}>{\raggedright\arraybackslash}p{0.23\linewidth}>{\raggedright\arraybackslash}p{0.37\linewidth}@{}}
+    \toprule
+    Case & Token behavior & Intuition \\
+    \midrule
+    \(a_{t,i}>\langle G_\theta,a_t\rangle\)
+    & logit increases
+    & $f^*$ prefers token \(i\) more than $f$ does \\
+    \(a_{t,i}<\langle G_\theta,a_t\rangle\)
+    & logit decreases
+    & token \(i\) is below the current advantage \\
+    \(a_t\approx 0\)
+    & no relative signal
+    & $f$ has matched $f^*$ on student samples \\
+    \bottomrule
+    \end{tabular}
+    }
+    \end{center}
+
+    For uniform diffusion, the same idea applies to a noised transition rather
+    than only to a masked clean-token prediction. The local advantage becomes
+    \[
+    \begin{aligned}
+    a_t
+    =
+    g_{\mathrm{Duo}}(x_t,G_{\theta}(\cdot),f^*(x_t,t))-
+    g_{\mathrm{Duo}}(x_t,G_{\theta}(\cdot),f(x_t,t)),
+    \end{aligned}
+    \]
+    Appendix~\ref{app:uniform process} gives \(g_{\mathrm{Duo}}\), and Appendix~\ref{app:uniform-inverse-distillation} expands the advantage.
+    Since uniform diffusion can revise tokens repeatedly, this advantage guides
+    both which token to choose and when the reverse path should jump.
+
+\ecoparagraph{Why few-step distillation is difficult.}
+    Standard discrete diffusion samplers usually draw the next state
+    conditionally independently across output positions, even though each
+    factor can attend to the whole current sequence. With many reverse steps,
+    the composition of these local transitions can still represent a rich
+    sequence distribution. In the few-step regime, however, each reverse step
+    must replace many small teacher updates, making this factorization a
+    bottleneck.
+    IDLM addresses this bottleneck by learning a mixture of sequence-level
+    distributions, as described next.
+
+\begin{figure*}[!t]
+\centering
+\begin{minipage}[t]{0.49\linewidth}
+\idlmalgcaption{alg:idlm}{IDLM: training.}{One branch is active per update: fit the fake model or distill the student.}
+\begin{lstlisting}[language=IDLMPseudocode, escapechar=`, basicstyle=\ttfamily\scriptsize, breaklines=true, gobble=4]
+    `\algcom{teacher \algid{f*}, fake model \algid{f}, and student generator \algid{net}}`
+    `\algcom{mode in \{\algstr{"fake"}, \algstr{"student"}\} selects the updated component}`
+
+    x_0 = `\algfn{sample_data}`(p_data)
+    t = `\algfn{uniform}`(0, 1)
+    x_t = `\algfn{corrupt}`(x_0, t)  `\algcommath{$q_t(\cdot\mid x_0)$}`
+    x_hat = `\algid{net}`(x_t, t)
+
+    `\algkw{if}` mode == `\algstr{"fake"}`:
+        loss = `\algfn{L_seq}`(`\algid{f}`, x_hat)
+        `\algfn{update}`(`\algid{f}`, loss)
+    `\algkw{else}`:
+        loss = `\algfn{L_seq}`(`\algid{f*}`, x_hat) - `\algfn{L_seq}`(`\algid{f}`, x_hat)
+        `\algfn{update}`(`\algid{net}`, loss)
+    \end{lstlisting}
+\idlmalgbottom
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\linewidth}
+\idlmalgcaption{alg:idlm-sampling}{IDLM: few-step sampling.}{The reverse transition is chosen by the diffusion process.}
+\begin{lstlisting}[language=IDLMPseudocode, escapechar=`, basicstyle=\ttfamily\scriptsize, breaklines=true, gobble=4]
+    `\algcommath{grid = [$t_K$, ..., $t_0$]}`
+
+    `\algcommath{masked or uniform terminal distribution}`
+    x_t = `\algfn{sample_terminal}`(process)
+    `\algkw{for}` k `\algkw{in}` `\algfn{range}`(K, 0, -1):
+        t = grid[k]
+        t_prev = grid[k - 1]
+        x_hat = `\algid{net}`(x_t, t)
+
+        `\algcommath{masked or uniform reverse step}`
+        x_prev = `\algfn{sample_reverse}`(x_t, x_hat, t, t_prev)
+        x_t = x_prev
+    `\algkw{return}` x_t
+    \end{lstlisting}
+\idlmalgbottom
+\end{minipage}
+\vspace{-2mm}
+\end{figure*}
+
+\ecoparagraph{Sequence-level mixture.}
+    A full distribution over $\VC^L$ would require $N^L$
+    probabilities, which is intractable to parameterize directly.
+    The key is that the student uses a structured mixture: it samples a
+    shared variable $\epsilon\sim p_{\mathcal E}$ and outputs
+    $G_\theta^{1:L}(\epsilon)
+    =(G_\theta^1(\epsilon),\ldots,G_\theta^L(\epsilon))\in\Delta^L$.
+    For this fixed $\epsilon$, the component may factorize over positions,
+    \[
+    \begin{aligned}
+        p_\theta(x_0^{1:L}\mid\epsilon)
+        &=
+        \prod_{i=1}^L
+        \mathrm{Cat}\!\left(x_0^i;G_\theta^i(\epsilon)\right),\\
+        p_\theta(x_0^{1:L})
+        &=
+        \mathbb{E}_{\epsilon\sim p_{\mathcal E}}
+        \left[
+        p_\theta(x_0^{1:L}\mid\epsilon)
+        \right].
+    \end{aligned}
+    \]
+    The product describes one component, while the expectation mixes many
+    such components. Since the same $\epsilon$ controls all positions, a
+    component can encode a sentence-level choice. Although we use
+    simplex-valued outputs for differentiable training, in theory the
+    generator should produce vocabulary tokens. Hence, during training, each
+    $G_\theta^i(\epsilon)$ should concentrate near a one-hot token, so the
+    component degenerates to a point mass on one full sequence. Thus the
+    generator represents text as a mixture over coherent sequence-level atoms,
+    allowing $p_\theta$ to capture semantic correlations without explicitly
+    enumerating the full sequence space.
+    A similar latent-mixture intuition appears in VADD~\citep{xie2026variational}
+    and Di4C$^2$~\citep{hayakawa2025distillation}, but with different
+    objectives.
+
+% \subsection{Technical Aspects}
+% \label{sec:technical aspects}
+% \vspace{-1mm}
+%     \textcolor{debugcolor}{Having addressed the principal theoretical and practical challenges of the proposed method, we now turn to its empirical aspects. This section provides additional technical details that are essential for implementation of our method. We assume that all techniques introduced in (\wasyparagraph\ref{sec:practical extension of idlm}) are applied throughout this section and in the remainder of the paper.}
+    
+% \ecoparagraph{Models initialization.}
+%     Following prior distillation approaches that employ an auxiliary fake model during training~\citep{yin2024one, yin2024improved, zhou2024score, zhou2024adversarial, gushchin2025inverse, kornilov2025universal}, we initialize both the fake diffusion model and the student generator using the parameters of the pretrained teacher diffusion model.
+
+% \ecoparagraph{Multistep distillation.}
+%     We observe that distilling a single-step generator for text generation remains practically challenging. This observation motivates us to follow prior works~\citep{yin2024one, yin2024improved, gushchin2025inverse} and extend the IDLM framework to support multistep generation. 
+%     Specifically, to enable few-step inference, and given that the student generator is initialized from the pretrained teacher model, \color{debugcolor} we set the latent space $\ZC$ to be the same input space as for the teacher \color{black}. Therefore, the generator is parameterized as $G_{\theta} \colon \VC \times [0, 1] \to \Delta$ in the SEDD and MDLM settings, and as $G_{\theta} \colon \Delta \times [0, 1] \to \Delta$ in the Duo setting. To avoid notational ambiguity, we denote samples from the target data distribution as $\tilde{x}_0 \sim p^*(\tilde{x}_0)$. Under this parameterization, the generator receives as input either: (i) samples $x_{\tilde{t}} \sim p_{\tilde{t} \mid 0}(x_{\tilde{t}} \mid \tilde{x}_0)$ in the SEDD and MDLM settings, or (ii) soft embeddings $x_{\tilde{t}}^{\tau}(w_{\tilde{t}}(\tilde{x}_0, \epsilon))$ in the Duo setting, where $\epsilon \sim \mathcal{N}(0, I)$ and $\tilde{x}_0 \sim p^*(\tilde{x}_0)$ is drawn from the data distribution.
+%     This design enables the generator to leverage supervision from ground-truth data samples, which can lead to improved generation quality. 
+%     As a result, the generator is capable of performing multistep inference in the same manner as the teacher model, by numerically integrating the reverse-time dynamics~\eqref{eq:backward diffusion}.
+
+%     % \color{red}
+%     % Specifically, the multistep variant uses the same distillation objective
+%     % \begin{gather}
+%     %     \!\!\! \mathbb{E}_{p_{\theta}(x_0)} \big[\LC(f^*, x_0)\big]
+%     %     \!-\! \min_{\widehat{f}}\; \mathbb{E}_{p_{\theta}(x_0)} \big[\LC(\widehat{f}, x_0)\big], \nonumber
+%     % \end{gather}
+%     % but parameterizes the student marginal $p_\theta(x_0)$ as a mixture over intermediate times:
+%     % \begin{gather}\label{eq:multistep mixture}
+%     %     % p_{\theta}(x_0)
+%     %     % = \int p_{\theta}(x_0 \mid x_{\tilde t}, \tilde t)\; p^*_{\tilde t}(x_{\tilde t})\; p(\tilde t)\; dx_{\tilde t}\, d\tilde t . \nonumber
+%     %     p_{\theta}(x_0)
+%     %     = \EE_{p^*_{\tilde t}(x_{\tilde t}, \tilde t)} \left[p_{\theta}(x_0 \mid x_{\tilde t}, \tilde t)\; \right] . \nonumber
+%     % \end{gather}
+%     % Here $p^*_{\tilde t}(x_{\tilde t})$ denotes the ground-truth marginal at time $\tilde t$ obtained by running the forward noising process on real data,
+%     % and the conditional $p_{\theta}(x_0 \mid x_{\tilde t}, \tilde t)$ is parameterized by the generator $G_\theta$.
+%     % Importantly,~\eqref{eq:multistep mixture} provides supervision at arbitrary noise levels $\tilde t$, since $(x_{\tilde t},\tilde t)$ can be sampled from the teacher forward process starting from $\tilde x_0 \sim p^*(x_0)$.
+    
+%     % At inference time, there is no access to samples from $p^*_{\tilde t}(x_{\tilde t})$. The standard way to address it is to substitute them with samples from the model's own intermediate marginals, yielding the self-consistent recursion
+%     % \begin{gather}
+%     %     p_{\theta}(x_0)
+%     %     \approx \EE_{ p^{\theta}_{\tilde t}(x_{\tilde t})} \left[p_{\theta}(x_0 \mid x_{\tilde t}, \tilde t)\right]\;
+%     %     \nonumber
+%     %     \\
+%     %     p^{\theta}_{t'}(x_{t'}) = \EE_{p_{\theta}(x_0)} \left[q_{t'}(x_{t'}|x_0)\right] , \quad t' < \tilde{t}.
+%     %     \nonumber
+%     % \end{gather}
+%     % initialized at the limiting (noise) distribution ${p^{\theta}_{1}(x_1)=p^{*}_{1}(x_1)}$. This induces a few-step sampling procedure that progressively denoises samples by repeatedly applying the learned conditional model.
+%     % \color{black}
+
+
+% \ecoparagraph{\textcolor{debugcolor}{Sequence-Level loss.}}
+%     \textcolor{debugcolor}{We now extend the proposed objective to the sequence level. Guided by the formulation in equation~\eqref{eq:sequence level loss}, we retain the same structural decomposition of the loss. More formally, considering the multistep training procedure, for a fixed sample $x_{\tilde{t}}^{1:L} \sim p_{\tilde{t} \mid 0}(x_{\tilde{t}}^{1:L} \mid \tilde{x}_0^{1:L})$ with $\tilde{x}_0^{1:L} \sim p^*(\tilde{x}_0^{1:L})$, the sequence-level IDLM objective, corresponding to equation~\eqref{eq:inverse discrete diffusion distillation}, is defined as $\LC_{\text{IDLM}}^{1:L}(\theta) \vcentcolon=$
+%     \begin{gather}
+%        \LC^{1:L}(f^{*}, G_{\theta}^{1:L}\bigl(x_{\tilde{t}}^{1:L}, \tilde{t})\bigr) \!-\! \LC^{1:L}\bigl(\widehat{f}, G_{\theta}^{1:L}(x_{\tilde{t}}^{1:L}, \tilde{t})\bigr). \nonumber
+%     \end{gather}
+%     }
+
+% \vspace{-3mm}
+% \ecoparagraph{Algorithm.}
+%     % \textcolor{debugcolor}{Finally}, Algorithm~\ref{alg:idlm} outlines the proposed procedure for distilling a pretrained DLM into a few-step generator using the IDLM objective. A visual illustration of the method is provided in Figure~\ref{fig:method}.
+
+
+\vspace{-1mm}
+\subsection{Technical Aspects}
+\label{sec:technical aspects}
+\vspace{-1mm}
+    This section specifies what latent space we use in practice and clarifies the remaining implementation details. The training update is summarized in Algorithm~\ref{alg:idlm}, the few-step sampler in Algorithm~\ref{alg:idlm-sampling}, and the full pipeline in Figure~\ref{fig:method}.
+    
+\ecoparagraph{Model initialization.}
+    We initialize both the student generator $G_\theta$ and the auxiliary fake model $f$ from the pretrained teacher $f^*$. Since the teacher has already learned the semantic structure of the token space, this provides a strong initialization and lets the student refine the teacher's predictions rather than learn them from scratch.
+
+\ecoparagraph{Multistep distillation.}
+    We found that directly distilling the model into a one-step generator is difficult in practice, as the student must map terminal noise to a clean sample in a single pass. We therefore allow $G_\theta$ to produce samples in the few-step regime. Concretely, we set the generator latent input to $\epsilon=(x_t,t)$. During training, these inputs are obtained by corrupting real data:
+    \[
+        x_0\sim p^*(x_0),\qquad
+        t\sim \UC[0,1],\qquad
+        x_t\sim q_t(\cdot\mid x_0),
+    \]
+    and then feeding $(x_t,t)$ to the student. This multistep parameterization allows the generator to accept intermediate noised states as input, so at inference we can use the same few-step reverse sampling procedure as the teacher model, see Algorithm~\ref{alg:idlm-sampling}.
+
+\ecoparagraph{Sequence-level loss.}
+    All practical updates use the sequence-level loss introduced in the (\wasyparagraph\ref{sec:unified notations sequence loss}). That is, the token-level objective $\LC(f,p)$ is replaced by $\LC^{1:L}(f,p)$. The forward corruption factorizes across positions, but the teacher, fake model, and student are evaluated on the full noised sequence.

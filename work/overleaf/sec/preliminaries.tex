@@ -1,0 +1,340 @@
+% !TEX root = ../main.tex
+\vspace{-2mm}
+\section{Preliminaries}
+\vspace{-2mm}
+\ecoparagraph{Notations.}
+  We represent scalar discrete random variables over $N$ categories as one-hot column vectors, with ${\VC = \{x \in \{0,1\}^N \colon \sum_{i=1}^N x_i = 1\}}$ denoting the set of such vectors. We further define the probability simplex $\Delta \vcentcolon= \{ z \in \RR^N\colon z \ge 0, \langle z, \vec{1} \rangle = 1 \}$ as the convex hull of $\VC$, where $\vec{1} \in \RR^N$ denotes the all-ones vector. Additionally, let $I \in \RR^{N \times N}$ be the identity matrix. The matrix-weighted inner product is defined as $\langle a, b \rangle_Q \vcentcolon= a^\top Q b$, and we omit the subscript when $Q = I$. For absorbing diffusion process we define special mask token $m \in \VC$ such that $m_N = 1$.
+
+\vspace{-2mm}
+\subsection{Diffusion Language Models}
+\label{sec:discrete diffusion models}
+\vspace{-2mm}
+  We start by recalling the Diffusion Language Models (DLMs; \citealp{austin2021structured, campbell2022continuous, lou2024discrete}). Consider a distribution $p^*(x_0) \in \Delta$ over $\VC$. DLMs aim to generate samples from $p^*(x_0)$ by constructing a transformation process from an initial tractable distribution, based on predefined \textit{forward diffusion}.
+
+\ecoparagraph{Forward Diffusion.}
+  A forward discrete diffusion process is defined by a family of time-dependent distributions $p_t(x_t) \in \Delta,$ evolving over the interval $t \in [0, 1].$ This evolution follows a continuous-time Markov chain defined by a linear ordinary differential equation~\citep{anderson2012continuous, campbell2022continuous, lou2024discrete}:
+        % \begin{Box1}{Forward Diffusion}
+        % \begin{equation}
+        %   \frac{dp_t}{dt} = Q_t p_t, \quad p_0 = p^*,
+        % \label{eq:forward diffusion}
+        % \end{equation}
+        % \end{Box1}
+  \begin{equation}
+    \frac{dp_t}{dt} = Q_t p_t, \quad p_0 = p^*,
+  \label{eq:forward diffusion}
+  \end{equation}
+  where $Q_t \in \RR^{N \times N}$ are the diffusion matrices and have nonnegative non-diagonal entries and columns which sum to zero, ensuring valid probability dynamics. These matrices are typically chosen in the form $Q_t = \sigma_t Q$, where $Q$ is a fixed base matrix that defines the structure of the diffusion process, and $\sigma_t$ is a time-dependent scalar that controls the diffusion schedule. With an appropriate choice of $Q$ and scheduling function $\sigma_t$, the distribution $p_t$ converges to a tractable limiting distribution $\pi(x_1) \in \Delta$ as $t \to 1$.
+
+  For a fixed initial state $x_0 \sim p^*(x_0)$, the forward diffusion process defined in equation~\eqref{eq:forward diffusion} induces a family of conditional distributions over intermediate states $x_t \in \VC$.
+  \begin{Box1}{Conditional Distribution}
+    \begin{equation}
+        % p_{t \mid 0}(x_t \mid x_0) = \langle x_t, x_0 \rangle_{\exp\left(\bar{\sigma}_t Q\right)}, 
+        % \nonumber
+        % \\
+      p_{t \mid 0}(x_t \mid x_0) \vcentcolon= \text{Cat}(x_t; \exp\left(\bar{\sigma}_t Q\right)x_0 ), 
+    \label{eq:conditional_distribution}
+    \end{equation}
+  \end{Box1}
+  where, $\exp\left(\bar{\sigma}_t Q\right)$ denotes the matrix exponential, and $\bar{\sigma}_t \coloneqq \int_{0}^{t} \sigma_s \, ds$ is the cumulative diffusion schedule. 
+  % Importantly, for any $x_0$, the matrix–vector product $\exp!\left(\bar{\sigma}_t Q\right) x_0$ yields a probability vector whose entries sum to one, thereby ensuring a valid probability distribution.
+  % For one-hot vectors $x_0, x_t \in \mathcal{V}$ such that $[x_0]_j = 1$ and $[x_t]_i = 1$, the conditional distribution $p_{t \mid 0}(x_t \mid x_0)$ corresponds to the just $(i, j)$-th entry of the matrix exponential, i.e.,$$ p_{t \mid 0}(x_t \mid x_0) = \exp\left(\bar{\sigma}_t Q\right)_{i, j},$$ which corresponds to the formulation for conditional distributions in~\citep[Equation 14]{lou2024discrete}. 
+  % However, for our purposes, it is necessary to generalize this definition to accommodate any $x_0 \in \Delta$. For details on this relaxation, we refer the reader to (\wasyparagraph\ref{sec:simplex relaxation}). Accordingly, we adopt the generalized formulation provided in Equation~\eqref{eq:conditional_distribution}.
+
+\ecoparagraph{Backward Diffusion.} 
+  The forward process transforms the unknown distribution $p^*$ into a known, tractable distribution $\pi$. The goal is to reverse this process backward in time to recover $p^*$ from $\pi$. This leads to the backward diffusion process, which is given by backward diffusion matrix $\overline{Q}_t$:
+  % \begin{Box1}{Backward Diffusion}
+  %   \begin{equation}
+  %     \frac{dp_{1-t}}{dt} = \overline{Q}_{1-t} \, p_{1-t}, \quad p_T = \pi.
+  %   \label{eq:backward diffusion}
+  %   \end{equation}
+  % \end{Box1}
+  %
+  \begin{equation}
+    \frac{dp_{1-t}}{dt} = \overline{Q}_{1-t} \, p_{1-t}, \quad p_1 = \pi. 
+      \label{eq:backward diffusion}
+  \end{equation}
+  %
+  If the backward diffusion matrix $\overline{Q}_t$ is known, this process can be simulated using numerical methods such as Euler's~\citep{lou2024discrete}.
+  Consequently, the primary challenge is to estimate $\overline{Q}_t.$
+  It can be derived from the forward diffusion matrix $Q_t$ using the following relationship~\citep{kelly2011reversibility, campbell2022continuous, sun2022score}:
+  \begin{equation*}
+    \langle y, x\rangle_{\overline{Q}_{t}} = \frac{p_t(y)}{p_t(x)} \langle x, y \rangle_{Q_t}, \quad 
+    \langle x, x\rangle_{\overline{Q}_{t}} = - \sum_{y \neq x} \langle y, x \rangle_{\overline{Q}_{t}},
+  \end{equation*}
+  where $y, x \in \VC$. The main challenge is to compute the ratio $\frac{p_t(y)}{p_t(x)}$, which depends on unknown intermediate distributions and cannot be computed directly. However, it can be estimated using the Concrete Score Matching approach.
+
+\ecoparagraph{Concrete Score Matching (SEDD).}
+  % As this ratio is generally intractable, a tractable alternative is used in the loss function via a conditional score function defined:
+  % \begin{equation}
+  % \label{eq: conditional score function}
+  %     \langle s(x, t \mid x_0), y \rangle \vcentcolon= \frac{p_{t \mid 0}(y \mid x_0)}{p_{t \mid 0}(x \mid x_0)}.
+  % \end{equation}
+  % Importantly, the marginal ratio $\frac{p_t(y)}{p_t(x)}$ can be expressed as the conditional expectation of this score under the posterior, namely $\frac{p_t(y)}{p_t(x)} = \EE_{x_0 \sim p_{0 \mid t}(x_0 \mid x)} \langle s(x, t \mid x_0), y \rangle$.
+  % The objective of the Concrete Score Matching framework~\citep{meng2022concrete, lou2024discrete} is to approximate the ratio of marginal probabilities $\frac{p_t(y)}{p_t(x)}$.
+  % \citep{lou2024discrete} propose to learn a score function model $\widehat{s}\colon \VC \times [0, T] \to \RR_{+}^N$ using the \textit{Score Entropy Discrete Diffusion} (SEDD) loss in order to approximate it, which is expressed for data point $x_0 \sim p^*(x_0)$ as:
+  The goal of the Concrete Score Matching~\citep{meng2022concrete, lou2024discrete} is to approximate the ratio of marginal probabilities $\frac{p_t(y)}{p_t(x)}$. To achieve this, \citep{lou2024discrete} propose learning a score function $\widehat{s} \colon \mathcal{V} \times [0, 1] \to \mathbb{R}_{+}^N$ using the \textit{Score Entropy Discrete Diffusion} (SEDD) loss. This objective, defined for a data point $x_0 \sim p^*(x_0)$, is given by:
+  \begin{Box1}{SEDD Loss, $\LC_{\text{SEDD}}(\widehat{s}, x_0) \vcentcolon=$}
+    \vspace{-8pt}
+    \begin{gather}
+    \label{eq:sedd loss}
+       \int_0^1 \EE_{p_{t|0}(x_t|x_0)} \biggl[\sum_{y \neq x_t} \lambda_{x_ty} \times 
+       \\
+        \! \times \biggl(\langle \widehat{s}(x_t,t), y\rangle - \frac{p_{t \mid 0}(y \mid x_0)}{p_{t \mid 0}(x_t \mid x_0)} \log  \langle \widehat{s}(x_t, t), y\rangle \biggr)\biggr]dt,
+       \nonumber 
+    \end{gather}
+  \end{Box1}
+  where $\lambda_{x_ty}$ is positive weighting function.
+  \citet{lou2024discrete} show that the minimizer for the data distribution $p^*(x_0)$: 
+  \[
+    s^*= \arg\min\nolimits_{\widehat{s}} \EE_{p^*(x_0)}\left[\LC_{\text{SEDD}}(\widehat{s}, x_0)\right]
+  \] 
+  recovers the desired ratio of marginal probabilities $\frac{p_t(y)}{p_t(x)}.$ 
+  
+  However, as noted in~\citep{lou2024discrete}, applying this formulation to large-scale settings (e.g., GPT-2 with $N = 50257$ tokens) is practically challenging, as storing and computing all edge weights in the transition matrix $Q_t$ becomes infeasible. To address this, subsequent work has focused on specific classes of diffusion processes with simplified transition structures, reducing computational overhead while improving numerical stability and model efficiency.
+  %
+  % Additionally, \citet{lou2024discrete} showed that the minimizer for the whole data distribution $p^*(x_0)$
+  % $$
+  %   s^* \vcentcolon= \arg\min_{\widehat{s}} \EE_{p^*(x_0)}\LC_{\text{SEDD}}(\widehat{s}, x_0)
+  % $$ 
+  % recovers the true probability ratio, satisfying 
+  % $$
+  %   \langle s^*(x_t, t),y\rangle~=~\EE_{p_{0\mid t}(x_0 \mid x_t)} \langle s(x_t, t \!\mid\! x_0),y\rangle~=~\frac{p_t(y)}{p_t(x_t)}.
+  % $$
+
+% \ecoparagraph{Mean Prediction reparameterization.} Recent works~\citep{sahoo2024simple, schiff2024discreteguidance, sahoo2025the} use an alternative parameterization of the model using a function $\widehat{x}_0\colon \XC \times [0, T] \to \Delta$, which approximates $x_0$. In this case, the score function can be expressed as $s(x, t)_y = \frac{p_{t \mid 0}(y \mid \widehat{x}_0(x, t))}{p_{t \mid 0}(x \mid \widehat{x}_0(x, t))}$\footnote{When $\widehat{x}_0 \in \Delta$, the conditional distribution is given by $p_{t \mid 0}(x_t \mid \widehat{x}_0) = \left( \exp\left(\bar{\sigma}_t Q\right)\widehat{x}_0 \right)[x_t]$, where $\exp\left(\bar{\sigma}_t Q\right)\widehat{x}_0$ denotes the matrix–vector product, and $[\cdot]$ selects the $x_t$-th component of the resulting vector. This is a natural extension of the conditional distribution defined in equation~\eqref{eq:conditional_distribution}.}~\citep[see equation 66]{sahoo2024simple}. \citet{sahoo2024simple} and~\citet{schiff2024discreteguidance} show that with specific choices of the forward matrix $Q_t$, the process becomes either absorbing (MDLM) or uniform (UDLM). In these cases, the loss in equation~\eqref{eq:sedd loss} reduces to the (M/U)DLM loss:
+% \begin{gather}
+%     \textit{(M/U)DLM loss}: \label{eq:(m/u)dlm loss} \\
+%     \LC_{\text{(M/U)DLM}}(\widehat{x}_0, p) \vcentcolon= 
+%     T \EE_{x_0, x_t, t} \sum_{y \neq x_t} Q_t(x_t, y)\, g_{\text{(M/U)DLM}}(\widehat{x}_0), \nonumber \\
+%     x_0 \sim p(x_0), \quad x_t \sim p_{t \mid 0}(x_t \mid x_0), \quad t \sim \UC([0, T]), \nonumber
+% \end{gather}
+% where $g_{\text{(M/U)DLM}}$ is defined in equations~\eqref{eq:mdlm additional functional} and~\eqref{eq:udlm additional functional} for MDLM and UDLM, respectively. For a detailed discussion on how this formulation recovers the structure of the original (M/U)DLM losses, we refer the reader to Appendix~\ref{app:related works}.
+
+% \david{Probably delete part with Duo}\citet{sahoo2025the} introduced Duo formulation, which demonstrates that applying the pushforward of the $\argmax$ operator to a Gaussian process yields a uniform diffusion process. This observation motivates a relaxation of the model input domain, extending the parameterization to $\widehat{x}_0\colon \Delta \times [0, T] \to \Delta$. As a result, equation~\eqref{eq:(m/u)dlm loss} undergoes a minor modification. However, the overall structure of the loss functional remains unchanged. For a detailed discussion of this formulation, we refer the reader to Appendix~\ref{app:udlm/duo}.
+
+\ecoparagraph{Absorbing Process (MDLM).}
+  % Another DLMs works concentrated on two specific types of processes and another model parameterizations. The first an important considered diffusion process is the \textit{absorbing process}. 
+  % where the terminal distribution is a delta distribution centered on a mask token, i.e., $\pi= m$. This is achieved by selecting a specific base matrix $Q_{\text{abs}}$ (see Appendix~\ref{app:related works}), yielding the diffusion matrix $Q_t = \frac{\alpha_t'}{\alpha_t}(I - \pi \vec{1}^\top)$.
+  % A prominent example of this process is \textit{Masked Diffusion Language Model} (MDLM; \citealp{sahoo2024simple}), where the authors adopt an alternative model parameterization $\widehat{x}_0\colon \VC \times [0, T] \to \Delta,$ leading to the following loss for $x_0 \sim p^*(x_0)$: 
+  % that approximates the posterior distribution $p_{0 \mid t}(x_0 \mid x_t)$. Since the posterior distribution is also intractable, the authors instead use an explicit $x_0$ in the loss function. Importantly, the objective also can be reformulated in terms of a conditional expectation over a tractable quantity, \textcolor{red}{namely $p_{0 \mid t}(x_0 \mid x_t) = \EE_{p_{0 \mid t}(x_0 \mid x_t)}\left[x_0\right]$.}
+  % Substituting this into the SEDD loss~\eqref{eq:sedd loss} yields the following form (for $x_0 \sim p^*(x_0)$):
+  Previous work on DLMs has primarily focused on two particular classes of processes. The first is the \textit{absorbing process} (see Appendix~\ref{app:absorbing process} for further details). A prominent example of that is the \textit{Masked Diffusion Language Model} (MDLM; \citealp{sahoo2024simple, shi2024simplified}), in which the authors, rather than directly parameterizing the probability ratios $\frac{p_t(y)}{p_t(x)}$, follow the strategy of~\citet{ho2020denoising, austin2021structured, campbell2022continuous} and instead learn the reverse conditional density $p_{0\mid t}(x_0 \mid x_t)$. Accordingly, they adopt an alternative parameterization $\widehat{x}_0\colon \VC \times [0, 1] \to \Delta$, which yields the following training objective for a fixed data point $x_0~\sim~p^*(x_0)$:
+  \begin{Box1}{MDLM Loss, $\LC_{\text{MDLM}}(\widehat{x}_0, x_0) \vcentcolon=$}
+    \vspace{-8pt}
+    \begin{gather}
+      \textstyle \int_0^1 \, \EE_{p_{t|0}(x_t \mid x_0)} \left[
+          \lambda_{t} \langle \log\widehat{x}_0(x_t, t), x_0 \rangle
+      \right]dt,
+    \label{eq:mdlm loss}
+    \end{gather}
+  \end{Box1}
+  %
+  where $\lambda_{t}$ is positive weighting function and $\log \widehat{x}_0(x_t, t)$ is element-wise logarithm of $\widehat{x}_0(x_t, t)$. Note that in the original work, the authors use the notation $\log \langle \widehat{x}_0(x_t, t), x_0 \rangle$, which is equivalent. Moreover, \citep{sahoo2024simple} show that this loss corresponds to the negative evidence lower bound (NELBO). As a result, at optimality, the learned model on whole data distribution $p^*(x_0)$: 
+  \[
+    x_0^* = \arg\min_{\widehat{x}_0} \EE_{p^*(x_0)}\left[\LC_{\text{MDLM}}(\widehat{x}_0, x_0)\right]
+  \]
+  recovers the target reverse conditional density $p_{0\mid t}(x_0 \mid x_t).$
+  % Moreover, \citet{sahoo2024simple} shows that the MDLM loss~\eqref{eq:mdlm loss} corresponds to the negative evidence lower bound (NELBO) in the limit as $T \to \infty$. Consequently, the optimal solution of this objective for the data distribution $p^*(x_0)$
+  % \begin{gather}
+  %   x_0^* = \arg\min_{\widehat{x}_0} \EE_{p^*(x_0)}\LC_{\text{MDLM}}(\widehat{x}_0, x_0)
+  %   \nonumber
+  % \end{gather}
+  % satisfies $x_0^*(x_t, t) = \EE_{p_{0 \mid t}(x_0 \mid x_t)} \left[x_0\right]= p_{0 \mid t}(x_0 \mid x_t)$.
+
+
+\ecoparagraph{Uniform Process (UDLM/Duo).}
+  % Another key example is the \textit{uniform process}. 
+  % where the terminal distribution is uniform, i.e., $\pi = \frac{1}{N}\vec{1}$. This is also achieved by choosing a specific base matrix $Q_{\text{uni}}$ (see Appendix~\ref{app:related works}), yielding the diffusion matrix $Q_t = -\frac{\alpha_t'}{N\alpha_t}(\vec{1}\vec{1}^{\top} - N I)$. 
+  % A representative case of this process is the \textit{Uniform Diffusion Language Model} (UDLM; \citealp{schiff2024discreteguidance}), which adopts the same parameterization as MDLM. This leads to the simplified form of the SEDD loss~\eqref{eq:sedd loss}\footnote{For brevity, we omit the arguments and write $\widehat{x}_0 \vcentcolon= \widehat{x}_0(x_t, t)$.} for one data point $x_0 \sim p^*(x_0)$:
+  % \begin{Box1}{UDLM Loss, $\LC_{\text{UDLM}}(\widehat{x}_0, x_0) \vcentcolon=$}
+  %   \vspace{-8pt}
+  %   \begin{gather}
+  %   \label{eq:udlm loss}
+  %     \int_0^1 \EE_{p_{t|0}(x_t|x_0)} \Bigg[
+  %         \frac{\alpha_t'}{N\alpha_t} 
+  %         \Bigg(\frac{1}{p_{t\mid0}(x_t \mid x_0)} - \frac{1}{p_{t \mid 0}(x_t \mid \widehat{x}_0)} \nonumber 
+  %         \\ 
+  %         \!\!\!\!\! - \! \sum_{y \neq x_t} \! \frac{p_{t\mid0}(y \!\mid \!x_0)}{p_{t\mid0}(x_t \! \mid \! x_0)}\log\frac{p_{t \mid 0}(x_t \!\mid\! \widehat{x}_0) p_{t \mid 0}(y \!\mid \!x_0)}{p_{t \mid 0}(y\!\mid\! \widehat{x}_0) p_{t \mid 0}(x_t \!\mid \! x_0)}\!\Bigg)\!\Bigg]dt.
+  %   \end{gather}
+  % \end{Box1}
+  % %
+  % \citet{sahoo2025the} further introduced the \textit{Diffusion Duality} (Duo) framework, connecting Gaussian and uniform processes. This leads to an extended parameterization $\widehat{x}_0\colon \Delta \times [0, T] \to \Delta$ and a minor modification of the UDLM loss~\eqref{eq:udlm loss}, while preserving its overall structure.
+  % Additionally, \citet{schiff2024discreteguidance} show that the UDLM loss in equation~\eqref{eq:udlm loss} also corresponds to the NELBO in the limit as $T \to \infty$. Consequently, the optimal solution for the dadistributionion $p^*(x_0)$:
+  % \begin{gather}
+  %     x_0^* = \arg\min_{\widehat{x}_0} \EE_{p^*(x_0)}\LC_{\text{UDLM}}(\widehat{x}_0, p^*) \nonumber
+  % \end{gather} satisfies $x_0^*(x_t, t) =\EE_{p_{0 \mid t}(x_0 \mid x_t)} \left[x_0\right] = p_{0 \mid t}(x_0 \mid x_t)$.
+  Another important case is the \textit{uniform process} (see Appendix~\ref{app:uniform process} for further details). Two notable models have been proposed in this setting: the \textit{Uniform Diffusion Language Model} (UDLM; \citealp{schiff2024discreteguidance}) and its extension, \textit{Diffusion Duality} (Duo; \citealp{sahoo2025the}). UDLM adopts the same model parameterization and target function as MDLM, and introduces the loss for a data point $x_0 \sim p^*(x_0)$ as $\mathcal{L}_{\text{UDLM}}(\widehat{x}_0,x_0) \vcentcolon=$
+  \begin{equation}
+    \textstyle \int_0^1 \EE_{p_{t|0}(x_t \mid x_0)} g\bigl(x_t, x_0, \widehat{x}_0(x_t, t)\bigr) dt,
+  \label{eq:udlm loss}
+  \end{equation}
+  where the function $g\bigl(x_t, x_0, \widehat{x}_0(x_t, t)\bigr) \vcentcolon=$
+  \begin{gather}
+       \lambda_{t}\Bigg(\frac{1}{p_{t\mid0}(x_t \mid x_0)} - \frac{1}{p_{t \mid 0}(x_t \mid \widehat{x}_0)} \nonumber 
+          \\ 
+          - \sum_{y \neq x_t} \frac{p_{t \mid 0}(y \mid x_0)}{p_{t\mid0}(x_t \mid x_0)}\log\frac{p_{t \mid 0}(x_t \mid \widehat{x}_0) \, p_{t \mid 0}(y \mid x_0)}{p_{t \mid 0}(y \mid \widehat{x}_0) \, p_{t \mid 0}(x_t \mid x_0)}\Bigg), \nonumber
+  \end{gather}
+  with $\lambda_t$ denoting a positive weighting function. For clarity, we slightly abuse notation by omitting the model's input in $\widehat{x}_0$, assuming $\widehat{x}_0 = \widehat{x}_0(x_t, t)$ within the expression.
+  
+  Duo further introduces an objective with reduced variance. To achieve it the authors first introduce distribution:
+  \begin{equation}
+    \tilde{p}_{t\mid 0}(w_t \mid x_0) = \NC(\tilde{\alpha}_t x_0, (1-\tilde{\alpha}_t^2)I), \nonumber
+  \end{equation}
+  where $\tilde{\alpha}_t$ denotes a rescaled diffusion schedule. Then they show that for $w_t \sim \tilde{p}_{t\mid 0}(w_t \mid x_0)$ and $x_t(w_t) \vcentcolon= \arg\max(w_t)$:
+  \[
+    x_t(w_t) \sim p_{t|0}(x_t \mid x_0), 
+  \]
+  where $\arg\max(w_t)$ denotes a one-hot vector whose index corresponds to the maximum value in $w_t$. Based on this, they propose reducing the variance of the objective by substituting the discrete model input $x_t(w_t)$ with soft approximation:
+  \begin{equation}
+    x^{\tau}_{t}(w_t) = \mathrm{softmax}\left({w_t}/{\tau}\right). \nonumber
+  \end{equation} 
+  % Note, that $\x_t(w_t) = \arg \max(\x_t^{\tau}) = \argmax(\softmax(\frac{w_t}{\tau}))$.
+  This relaxation leads to an extended model parameterization $\widehat{x}_0 \colon \Delta \times [0, 1] \to \Delta$. The resulting loss function for a data point $x_0 \sim p^*(x_0)$ is given by:
+  \begin{Box1}{Duo Loss, $\LC_{\text{Duo}}(\widehat{x}_0, x_0) \vcentcolon=$}
+    \vspace{-8pt}
+    \begin{gather}
+    \label{eq:duo loss}
+      \textstyle \int_0^1 \EE_{\tilde{p}_{t\mid 0}(w_t\mid x_0)} \left[g(x_t(w_t),x_0, \widehat{x}_0(x_t^{\tau}(w_t), t))\right]dt.
+    \end{gather}
+  \end{Box1}
+  %
+  Moreover, \citet{sahoo2025the} shows that, in the limit as $\tau \to 0^{+}$, this loss corresponds to the NELBO of UDLM. Consequently, at optimality and in this limit, the learned model on whole data distribution $p^*(x_0)$:
+  \[
+    x_0^* = \arg\min_{\widehat{x}_0} \EE_{p^*(x_0)}\left[\LC_{\text{Duo}}\right](\widehat{x}_0, x_0)
+  \]
+  recovers the reverse conditional distribution $p_{0\mid t}(x_0 \mid x_t).$
+  
+\ecoparagraph{Sequence-Level Discrete Diffusion.}
+  In practical applications, we are interested in generating sequences of some length. A direct extension of the diffusion process to this setting would require modeling over an exponentially large space, resulting in a diffusion matrix of intractable size. To overcome this limitation, following~\citep{lou2024discrete}, we consider diffusion processes defined by sparse diffusion matrices that perturb tokens independently across sequence positions. Under this assumption, the forward diffusion matrix factorizes across tokens, yielding both a factorized conditional distribution and, crucially, a loss function that decomposes as a sum of token-wise losses. As a result, the per-token objectives in equations~\eqref{eq:sedd loss}, \eqref{eq:mdlm loss}, and~\eqref{eq:duo loss} can be directly applied to sequence modeling.
+% \begin{gather}
+%     p_{t \mid 0}(x_t^{1:L} \mid x_0^{1:L}) = \prod_{i=1}^L p_{t \mid 0}(x_t^{i}\mid x_0^{i}), \nonumber
+% \end{gather}
+% This structure induces a corresponding model parameterization
+% $\widehat{s}\colon \XC^L \times [0, T] \to \RR_{+}^{N \times L}$,
+% and yields the following SEDD loss:
+% \begin{gather}
+%     \textit{Sequence SEDD loss}: \label{eq:sequence sedd loss}\\
+%     \LC_{\text{SEDD}}(\widehat{s}, p) \vcentcolon=
+%     T \EE_{x_0^{1:L}, x_t^{1:L}, t}
+%     \sum_{i=1}^L \sum_{y \neq x_t^i}
+%     Q_t(x_t^i, y)\, g_{\text{SEDD}}(\widehat{s}), \nonumber \\
+%     x_0^{1:L} \sim p(x_0^{1:L}), \quad
+%     x_t^{1:L} \sim p_{t \mid 0}(x_t^{1:L} \mid x_0^{1:L}), \quad
+%     t \sim \UC([0, T]). \nonumber
+% \end{gather}
+% The same factorization extends naturally to the (M/U)DLM setting, resulting in the model parameterization $\widehat{x}_0\colon \XC^L \times [0, T] \to \Delta^L$. Analogously, for the Duo model the parameterization takes the form $\widehat{x}_0\colon \Delta^L \times [0, T] \to \Delta^L$. Under this formulation, the loss function is given by:
+% \begin{gather}
+%     \textit{Sequence (M/U)DLM loss}: \label{eq:sequence (m/u)dlm loss}\\
+%     \LC_{\text{(M/U)DLM}}(\widehat{x}_0, p) \vcentcolon=
+%     T \EE_{x_0^{1:L}, x_t^{1:L}, t}
+%     \sum_{i=1}^L \sum_{y \neq x_t^i}
+%     Q_t(x_t^i, y)\, g_{\text{(M/U)DLM}}(\widehat{x}_0), \nonumber \\
+%     x_0^{1:L} \sim p(x_0^{1:L}), \quad
+%     x_t^{1:L} \sim p_{t \mid 0}(x_t^{1:L} \mid x_0^{1:L}), \quad
+%     t \sim \UC([0, T]). \nonumber
+% \end{gather}
+
+\vspace{-1mm}
+\subsection{Distillation of Diffusion Models} 
+\vspace{-1mm}
+\ecoparagraph{Acceleration of diffusion models via distillation.}
+  Diffusion language models share the same problem of long iterative inference as continuous state space diffusion models. One of the primary approaches to mitigating this issue in continuous state space models is the use of a procedure known as \emph{distillation}. This technique involves training a new model, referred to as the \textit{student}, to approximate the sampling behavior of the original diffusion model, termed the \textit{teacher}, but with significantly fewer inference steps. For continuous space diffusion models, a huge number of different distillation techniques were developed~\citep{luhman2021knowledge, salimans2022progressive, song2023consistency}. A particularly prominent class of these methods involves the integration of an auxiliary diffusion model, referred to as the \textit{fake} model, into the training process~\citep{yin2024one,yin2024improved,zhou2024score, zhou2024adversarial, huang2024flow, gushchin2025inverse, kornilov2025universal}.
+
+\ecoparagraph{Inverse Distillation of Diffusion Models.} 
+  % Although discrete diffusion models have demonstrated strong performance in text generation tasks, their reliance on multi-step inference substantially limits their practical applicability. In contrast, a large body of work has focused on accelerating diffusion models in continuous spaces, among which distillation-based approaches have emerged as particularly effective~\citep{luhman2021knowledge,salimans2022progressive,song2023consistency}. These approaches aim to distill a pre-trained multi-step diffusion model into a few-step student generator capable of producing high-quality samples. A notable instantiation of this approach involves training an auxiliary or “fake” model as part of the distillation process to support the training of the few-step student generator. While these methods were initially developed for different classes of models, they can be unified under the broader framework of \textit{inverse distillation}. This approach was first introduced in the Inverse Bridge Matching Distillation framework~\citep{gushchin2025inverse}, where the authors derived a distillation objective based on an inverse Kullback–Leibler (KL) divergence. Subsequently, \citet{kornilov2025universal} demonstrated that several prior works~\citep{zhou2024score, zhou2024adversarial, huang2024flow} also implicitly can be described within this framework. Nevertheless, these connections have thus far been explored primarily in the context of continuous-space diffusion models and presented as auxiliary theoretical insights rather than as core methodological principles. In contrast, our work explicitly adopts the inverse distillation perspective and extends it to the discrete diffusion setting, positioning it as a central component of our approach.
+  %
+  We focus our attention on the distillation using an auxiliary fake model. One of the branches of this work is the direction of 
+  % In this work, we build upon the concept of 
+  \textit{Inverse Distillation}, originally introduced in the Inverse Bridge Matching Distillation framework~\citep{gushchin2025inverse} for a special type of diffusion models called ``Diffusion Bridge Models'' and further developed by~\citet{kornilov2025universal} for the general case of \textit{continuous space} flow and diffusion models. 
+
+\ecoparagraph{Teacher as an optimizer.}
+  Let $p^*(x_0)$ denote the data distribution and let $\LC_{\text{cont.}}(\widehat{f}, x_0)$ be the per-example training loss
+  used to fit a continuous diffusion model $f$ from data.
+  The pretrained \emph{teacher} model is defined as the optimizer of
+  \begin{equation}
+    f^* = \arg\min\nolimits_{\widehat{f}} \ \EE_{p^*(x_0)}\big[ \LC_{\text{cont.}}(\widehat{f},
+    x_0)\big].
+    \label{eq:teacher_objective_cont}
+  \end{equation}
+
+% One important instance of \eqref{eq:teacher_objective_cont} is \emph{diffusion/flow matching}
+% \citep{kornilov2025}, where one matches a model field $\hat f(x_t,t)$ to the conditional field induced by
+% the forward process started at $x_0$:
+% \begin{equation}
+%   L_d(f; x_0)
+%   := \EE_{t\sim \mathrm{Unif}[0,T]}\,
+%      \EE_{x_t\sim p_{t|0}(\cdot|x_0)}
+%      \big\|\hat f(x_t,t) - f_{p_0}(x_t,t\,|\,x_0)\big\|^2 .
+%   \label{eq:matching_loss}
+% \end{equation}
+% In this case one can take $L_{\text{teach}} \equiv L_d$.
+
+\ecoparagraph{Inverse objective.}
+  Inverse distillation optimizes a \emph{student distribution} $p_\theta(x_0)$ parametrized by one or few step generator network such that the fixed teacher $f^*$ remains optimal under $p_\theta$. Specifically, inverse distillation considers objective $\LC_{\text{inv}}(\theta) :=$
+  \begin{gather}
+    \!\!\! \EE_{p_{\theta}(x_0)} \!\left[\LC_{\text{cont.}}(f^*\!\!, x_0)\right]  - \min\nolimits_{\widehat{f}} \EE_{p_{\theta}(x_0)} \! \left[\LC_{\text{cont.}}(\widehat{f}, x_0)\right],
+  \label{eq:inverse optimization problem} 
+  \end{gather}
+  % \begin{Box1}{Inverse Distillation, $\LC_{\text{inv}}(\theta) \vcentcolon=$}
+  %   \begin{equation}\label{eq:inverse optimization problem} 
+  %       \!\!\! \EE_{p_{\theta}(x_0)} \!\left[\LC_{\text{d/f}}(f^*\!\!, x_0)\right]  - \min_{\widehat{f}} \EE_{p_{\theta}(x_0)} \! \left[\LC_{\text{d/f}}(\widehat{f}, x_0)\right]\!, \!\!
+  %   \end{equation}
+  % \end{Box1}
+  % \begin{equation}
+  %   \LC_{\text{inv}}(\theta)
+  %   :=
+  %   \EE_{x_0\sim p_\theta}\big[L_{\text{teach}}(f^\*; x_0)\big]
+  %   \;-\;
+  %   \min_f \ \EE_{x_0\sim p_\theta}\big[L_{\text{teach}}(f; x_0)\big],
+  %   \label{eq:inverse_distillation_cont}
+  % \end{equation}
+  where the inner minimizer is the \emph{fake} model trained on samples from $p_\theta$. 
+  By construction, the inverse loss satisfies $\LC_{\text{inv}}(\theta) \geq 0$ and for $p_\theta(x_0) = p^*(x_0)$ the minimum value $0$ is attained. However, this formulation does not, in general, guarantee the uniqueness of the minimizer meaning that optimization may converge to suboptimal solutions.
+  % By definition, $\LC_{\text{inv}}(\theta)\ge 0$, and for $p_\theta(x_0) = p^*(x_0)$ the minimum value $0$ is attained.
+
+  % Since \rewriteit{there is no PF-ODE analog for discrete diffusion}, 
+  % We focus our attention on the distillation using an auxiliary \textbf{fake} model. One of the branches of this work is the direction of 
+  % % In this work, we build upon the concept of 
+  % \textit{Inverse Distillation}, originally introduced in the Inverse Bridge Matching Distillation framework~\citep{gushchin2025inverse} for a special type of diffusion models called "Diffusion Bridge Models" and further developed by~\citet{kornilov2025universal} for the general case of \underline{continuous space} flow and diffusion models. 
+  
+  % However, prior studies have primarily explored this idea in the context of continuous diffusion models, while our work explicitly extends the inverse distillation to the discrete setting.
+  % This paradigm considers a unified learning objective for flows and diffusions based on the unification of conditional score and conditional flow matchings. Consider a \underline{continuous space} (specifically D-dimensional real space $\mathbb{R}^D$) probability path $\{p_t \}_{t\in 0, T}$ on the time interval $[0, T]$ that transforms data distribution $p^*_0$ into noise distribution $p_T$. The path itself is built as a mixture of simple conditional paths $\{p_t(\cdot|x_t) \}_{t\in [0, T]}$ conditioned on samples $x_0 \sim p(x_0)$:
+  % \begin{gather}
+  %   p_t(x_t) = \int_{\mathbb{R}^D} p_t(x_t|x_0)p(x_0)dx_0.
+  %   \nonumber
+  % \end{gather}
+  % In turn, with each conditional path $p_t(x_t|x_0)$ there is associated a function $f^{p^0}(\cdot|x_0)$ which recovers it (i.e., score, or ODE/SDE drift functions of diffusion started from data point $x_0$). To fit a function $f^{p_0}$ which recovers $p^*(x_0)$ from the noise $p_T$ the authors propose a unified matching loss:
+  %   \begin{Box1}{\rewriteit{Diffusion/Flow Matching}, $\LC_{\text{d}} \vcentcolon=$}
+  %   \begin{equation}\label{eq:inverse optimization problem} 
+  %       \EE_{p(x_t| x_0)} \|\widehat{f}(x_t) - \widehat{f}_t^{p_0}(x_t|x_0)\|^2
+  %   \end{equation}
+  % \end{Box1}
+  % The model $f^*$  trained by the minimization of this loss is called \textbf{teacher} model:
+  % \begin{gather}
+  %     f^*~=~\argmin_{\widehat{f}} \EE_{p^*(x_0)} \left[\LC_{\text{d}}(\widehat{f}, x_0)\right].
+  %     \nonumber
+  % \end{gather}
+  % This paradigm considers a parametric family of optimization problems defined by an objective function $\LC(\widehat{f}, \theta)$, where $\widehat{f}$ denotes the optimization variable and $\theta$ represents the problem parameters. We define the \underline{forward optimization problem} as finding the optimal solution $f^*$ for given parameters $\theta$, that is, $f^*~=~\argmin_{\widehat{f}} \LC(\widehat{f}, \theta)$. 
+  % Then the authors propose a general way of distilling this model into a one-step generator $G_{\theta}$, which parametrizes the distribution $p_{\theta}(x_0)$ using the following objective:
+  % Conversely, the inverse optimization problem assumes access to a desired solution $f^*$ and aims to recover parameters $\theta^*$ such that $f^*$ solves the corresponding forward problem $f^* = \arg\min_{\widehat{f}} \LC(\widehat{f}, \theta^*)$. A standard approach to solving the inverse problem is to minimize the following objective~\citep{gushchin2025inverse, kornilov2025universal}:
+  % where model $\widehat{f}$ is called \textbf{fake} model. By construction, the inverse loss satisfies $\LC_{\text{inv}}(\theta) \geq 0$. Furthermore, for the case of $p_{\theta}(x_0) = p^*(x_0)$ (i.e., $G_{\theta}$ produces a data distribution in one step), the loss attains its minimum value of 0. 
+
+  % \textcolor{red}{Write gradient formula for inverse loss and say that everything is easy in case of continious diffusion. Or do it in the method section?}
+
+  While such a general description of the inverse distillation was proposed in~\citep{kornilov2025universal} the particular cases of this distillation were introduced before, specifically for continuous diffusion (Score identity Distillation, SiD) in~\citep{zhou2024score} and specifically for continuous flows (Flow Generator Matching, FGM) in~\citep{huang2024flow}. 
+
+  \ecoparagraph{Connection to this work.}
+    In \emph{continuous} space, the model distribution $p_\theta$ is typically represented via a few-step generator and reparameterized, allowing the optimization of~\eqref{eq:inverse optimization problem} via backpropagation through sampled trajectories. In contrast, extending this approach to the \emph{discrete} domain presents several challenges, stemming from the inherent characteristics of discrete spaces. These include \underline{theoretical concerns} regarding the validity of the training objective, due to the non-uniqueness of its minimizers, as well as \underline{practical difficulties} related to the non-differentiability of discrete sampling. Our objective is to extend the inverse distillation framework to the widely studied class of \emph{diffusion language models} by addressing both of these challenges, as discussed in \wasyparagraph\ref{sec:idlm}.
+  % While the loss attains its minimum value of $0$ at the trivial solution $\theta = \theta^*$, this formulation does not guarantee the uniqueness of the solution. As a result, the optimization process may converge to suboptimal solutions.
+  
+  % In this work, we adopt the \textit{Inverse Optimization} framework~\citep{chan2025inverse} as the foundation for our main method. This paradigm considers a parametric family of optimization problems defined by an objective function $\LC(\widehat{f}, \theta)$, where $\widehat{f}$ denotes the optimization variable and $\theta$ represents the problem parameters. The forward problem seeks the optimal solution $f^*$ for a given set of parameters $\theta$, i.e., $f^* = \arg\min_{\widehat{f}} \LC(\widehat{f}, \theta)$. Conversely, the inverse optimization problem assumes access to a desired solution $f^*$ and aims to recover parameters $\theta^*$ such that $f^*$ solves the corresponding forward problem $f^* = \arg\min_{\widehat{f}} \LC(\widehat{f}, \theta^*)$. A standard approach to solving the inverse problem is to minimize the following objective:
+  % \begin{Box1}{Inverse Optimization Objective}
+  %   \begin{equation}
+  %     \label{eq:inverse optimization problem} 
+  %     \LC_{\text{inv}}(\theta) \vcentcolon= \LC(f^*, \theta) - \min\nolimits_{\widehat{f}} \LC(\widehat{f}, \theta).
+  %   \end{equation}
+  % \end{Box1}
+  % %
+  % By construction, the inverse loss satisfies $\LC_{\text{inv}}(\theta) \geq 0$. While the loss attains its minimum value of $0$ at the trivial solution $\theta = \theta^*$, this formulation does not guarantee the uniqueness of the solution. As a result, the optimization process may converge to suboptimal solutions.
+
+  % It is worth noting that \citet{kornilov2025universal} establish a connection between their proposed loss function and an inverse optimization formulation. However, this connection is developed in the context of continuous-space diffusion models and is presented primarily as an auxiliary theoretical insight rather than a central methodological component. In contrast, our work builds directly upon this inverse optimization perspective and extends it to the setting of discrete diffusion models.

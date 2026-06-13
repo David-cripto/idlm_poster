@@ -1,0 +1,37 @@
+\section{Related Works}
+\label{sec:related works}
+
+\paragraph{Acceleration of Discrete Diffusion Language Models.}
+The high inference latency of diffusion models has prompted extensive research into acceleration strategies.
+A prominent direction involves hybridizing diffusion with autoregressive (AR) mechanisms. \citet{ardiffusion}
+and \citet{han2023ssd} propose semi-autoregressive approaches that generate blocks of tokens in parallel,
+while \citet{huang_ctrldiff_2025} introduce dynamic block sizing with reinforcement learning to balance speed
+and control. More recently, \citet{sahoo_esoteric_2025} proposed Eso-LMs, which fuse AR and Masked Diffusion
+Models (MDMs) to interpolate between the two paradigms, enabling KV-caching for diffusion.
+\citet{israel_accelerating_2025} take a different approach with Adaptive Parallel Decoding, using a small
+AR model to guide the parallel sampling of a diffusion model.
+Beyond architectural hybrids, other works optimize the sampling process itself.
+\citet{lyu2022accelerating} explore early stopping mechanisms, while \citet{liu2024think}
+introduce planned denoising to dynamically allocate compute. \citet{xu_energy-based_2025}
+propose Energy-based Diffusion Language Models (EDLM) to improve the approximation of the reverse process,
+allowing for fewer steps without performance degradation.
+
+\paragraph{Continuous Relaxations and Flow Matching.}
+To leverage the mature toolkits of continuous optimization, several works relax the discrete constraint by mapping
+tokens to continuous spaces. \citet{gong2023diffuseq} project discrete tokens into a continuous embedding space
+to apply standard diffusion. Alternatively, methods like TESS \citep{mahabadi_tess_2023} and SSD-LM
+\citep{han2023ssd} define diffusion processes directly on the logit simplex.
+In the realm of Flow Matching, \citet{liu2022flow} introduced Rectified Flow to learn straight-line probability
+paths in continuous space. This concept has been extended to the simplex by \citet{stark2024dirichlet}
+via Dirichlet Flow Matching. \citet{campbell_generative_2024} further bridge the gap with Discrete Flow Models (DFMs),
+demonstrating that continuous-time Markov chains can be viewed through the lens of flow matching, a perspective that
+aligns with our unified formulation.
+
+\paragraph{Distillation of Diffusion Models.}
+Distillation is a standard practice for accelerating continuous diffusion. Techniques such as Progressive Distillation \citep{salimans2022progressive} and Consistency Models
+\citep{song2023consistency, kim2023consistency} have successfully reduced sampling to a few steps.
+While consistency-based training objectives have also proven effective for discrete representation tasks \citep{consistency2024rep}, distillation for \textit{generative} discrete diffusion remains nascent.
+Recent approaches such as SDTT \citep{deschenaux2024beyond} and Duo-DCD \citep{sahoo2025the} have begun to address this challenge; SDTT applies a start-distribution transfer technique, while Duo-DCD adapts consistency distillation to the discrete setting. Other works include TRACT \citep{berthelot2023tract} and EM-based distillation \citep{xie2024distillation}. Most recently, \citet{zhu_dimathttmo_2025} proposed Di[M]O to distill MDMs into a one-step generator. However, these methods often rely on specific heuristics. Our work, IDLM, offers a principled extension of the inverse distillation framework \citep{gushchin2025inverse, kornilov2025universal} to the discrete domain.
+
+\paragraph{Inverse Distillation.}
+Inverse distillation is a distribution-matching view of diffusion distillation in which the pretrained teacher is treated as the desired solution of a training problem, and the student generator is optimized to produce a distribution for which that teacher remains optimal. This perspective was introduced for diffusion bridge models by \citet{gushchin2025inverse} and was further developed as a general framework for continuous diffusion and flow models by \citet{kornilov2025universal}. Several earlier continuous-space objectives can be interpreted through the same lens, including Score Identity Distillation for diffusion models~\citep{zhou2024score,zhou2024adversarial} and Flow Generator Matching for flows~\citep{huang2024flow}. A common feature of these methods is the use of an auxiliary \emph{fake} model trained on samples from the current student distribution; the student is then updated by comparing the teacher with this best fake model. In continuous spaces, this objective can often be optimized through a reparameterized generator and differentiable noising trajectories. In discrete language modeling, the same idea faces two extra obstacles: the inverse optimality gap need not have a unique minimizer in general, and the student samples and noised states are discrete. The main text keeps only the core inverse-distillation principle, while Section~\ref{sec:idlm} develops the discrete objective, uniqueness result, and practical relaxation used by IDLM.

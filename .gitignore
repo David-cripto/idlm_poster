@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.pyc
+
+# Local dependency installs used while generating assets.
+work/pydeps/
+
+# Local server/editor noise.
+.venv/
+.idea/
+.vscode/
+

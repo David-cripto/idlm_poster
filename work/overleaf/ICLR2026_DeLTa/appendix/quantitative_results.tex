@@ -1,0 +1,68 @@
+\section{Quantitative results}
+    \begin{table}[t!]
+      \caption{
+      \textbf{Quantitative comparison across all methods.} Results are reported in terms of generation perplexity (GenPPL~$\downarrow$) and sample entropy~$\uparrow$ for varying numbers of inference steps. $^\ddag$ indicates that the checkpoint was obtained from the Duo~\citep{sahoo2025the} repository and re-evaluated. $^\P$ indicates values directly reported from~\citep{sahoo2025the}. Our IDLM variants consistently match or outperform prior distillation methods with significantly fewer sampling steps.
+      }
+      \label{tab:all results}
+      \centering
+    {
+    \footnotesize
+      
+      \begin{tabular}{llccc}
+        \toprule
+        &&  {\scriptsize Steps } & {\scriptsize GenPPL $\downarrow$} & {\scriptsize Entropy $\uparrow$} \\
+        \midrule
+        \multicolumn{3}{l}{\textit{Autoregressive}}\\
+            & Transformer$^\ddag$ ($p=1.0$)  & \multirow{3}{*}{1024} & 36.45 & 5.60 \\
+            & Transformer$^\ddag$ ($p=0.95$)  &  & 18.51 & 5.40 \\
+            & Transformer$^\ddag$ ($p=0.9$)  &  & 12.11 & 5.24 \\
+        \midrule
+        \multicolumn{3}{l}{\textit{Diffusion (Absorbing-state)}}\\
+            &SEDD Absorb$^*$~{\scriptsize \citep{lou2024discrete}} & \multirow{2}{*}{1024} & 43.31 & 5.25 \\
+            &MDLM$^\ddag$~{\scriptsize \citep{sahoo2024simple}} &  & 41.29 & 5.28 \\
+        \midrule
+        \multicolumn{3}{l}{\textit{Diffusion (Uniform-state / Gaussian)}}\\
+            & SEDD Uniform$^\P$~{\scriptsize \citep{lou2024discrete}} & \multirow{3}{*}{1024} & 99.90 & 5.56 \\
+            & Duo$^a$$^\P$~{\scriptsize \citep{sahoo2025the}} &  & 77.69 & 5.55 \\
+            & Duo$^g$$^\P$~{\scriptsize \citep{sahoo2025the}} &  & 71.72 & 5.22 \\
+        \midrule
+        \multicolumn{3}{l}{\textit{Distillation}}\\
+            &   SDTT$^\P$~{\scriptsize \citep{deschenaux2024beyond}} &  \multirow{8}{*}{32} &  62.29 &  5.49 \\
+            & Duo-DCD$^g$$^\P$~{\scriptsize \citep{sahoo2025the}}  &  &  46.31 & 5.38 \\ 
+            & Duo-DCD$^a$$^\P$~{\scriptsize \citep{sahoo2025the}}  &  &  61.31 & 5.52 \\
+            &IDLM-MDLM \textbf{(Ours)}  &  &  20.37 &  5.23 \\ 
+            &IDLM-Duo$^g$ \textbf{(Ours)}  &  &  54.05 &  5.49 \\
+             &IDLM-Duo$^a$ \textbf{(Ours)}  &  &  63.10 &  5.54 \\
+            &IDLM-DCD$^g$ \textbf{(Ours)}  &  &  38.57 &  5.35 \\
+            &IDLM-DCD$^a$ \textbf{(Ours)}  &  &  42.03 &  5.41 \\
+        \midrule
+            &   SDTT$^\P$~{\scriptsize \citep{deschenaux2024beyond}} &  \multirow{8}{*}{16} &  89.17 &  5.53 \\
+            & Duo-DCD$^g$$^\P$~{\scriptsize \citep{sahoo2025the}}  &  &  54.11 & 5.37 \\ 
+            & Duo-DCD$^a$$^\P$~{\scriptsize \citep{sahoo2025the}}  &  &  75.24 & 5.53 \\
+            &IDLM-MDLM \textbf{(Ours)}  &  &  32.74 &  5.42 \\ 
+            &IDLM-Duo$^g$ \textbf{(Ours)}  &  &  68.04 &  5.55 \\
+            &IDLM-Duo$^a$ \textbf{(Ours)}  &  &  78.00 &  5.58 \\
+            &IDLM-DCD$^g$ \textbf{(Ours)}  &  &  43.21 &  5.41 \\
+            &IDLM-DCD$^a$ \textbf{(Ours)}  &  &  51.86 &  5.44 \\
+        \midrule
+            &   SDTT$^\P$~{\scriptsize \citep{deschenaux2024beyond}} &  \multirow{8}{*}{8} &  193.05 &  5.58 \\
+            & Duo-DCD$^g$$^\P$~{\scriptsize \citep{sahoo2025the}}  & &  69.58 & 5.30 \\ 
+            & Duo-DCD$^a$$^\P$~{\scriptsize \citep{sahoo2025the}}  & &  111.88 & 5.52 \\ 
+            &IDLM-MDLM \textbf{(Ours)}  &  &  79.42 &  5.61 \\ 
+            &IDLM-Duo$^g$ \textbf{(Ours)}  &  &  93.00 &  5.56 \\
+            &IDLM-Duo$^a$ \textbf{(Ours)}  &  &  117.88 &  5.62 \\
+            &IDLM-DCD$^g$ \textbf{(Ours)}  &  &  53.55 &  5.41 \\
+            &IDLM-DCD$^a$ \textbf{(Ours)}  &  &  66.31 &  5.42 \\
+        \midrule
+            & Duo-DCD$^g$$^\ddag$~{\scriptsize \citep{sahoo2025the}}  & \multirow{7}{*}{4} &  96.24 & 4.93 \\
+            & Duo-DCD$^a$$^\ddag$~{\scriptsize \citep{sahoo2025the}}  & & 261.82  & 5.50  \\
+            & IDLM-MDLM \textbf{(Ours)}  &  &  310.38 &  5.78 \\ 
+            & IDLM-Duo$^g$ \textbf{(Ours)}  &  &  144.74 &  4.28 \\ 
+            & IDLM-Duo$^a$ \textbf{(Ours)}  &  & 495.85 & 5.56 \\ 
+            &IDLM-DCD$^g$ \textbf{(Ours)}  &  &  77.49 &  5.28 \\
+            &IDLM-DCD$^a$ \textbf{(Ours)}  &  &  111.01 &  5.32 \\
+        \bottomrule
+      \end{tabular}}
+    \end{table}
+    
+    All quantitative results are presented in the Table~\ref{tab:all results}.

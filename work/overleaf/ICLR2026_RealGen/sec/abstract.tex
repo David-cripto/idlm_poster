@@ -1,0 +1,46 @@
+% !TEX root = ../main.tex
+%\vspace{-3mm}
+%\begin{abstract}
+%  Diffusion Language Models (DLMs) have recently achieved strong results in text generation. However, their multi-step sampling leads to slow inference, limiting practical use. To address this, we extend Inverse Distillation, a technique originally developed to accelerate continuous diffusion models, to the discrete setting.
+%  Nonetheless, this extension introduces both theoretical and practical challenges.
+%From a theoretical perspective, the inverse distillation objective lacks uniqueness guarantees,
+%which may lead to suboptimal solutions. From a practical standpoint, backpropagation in the discrete space is
+%non-trivial and often unstable. To overcome these challenges, we first provide a theoretical result demonstrating
+%that our inverse formulation admits a unique solution, thereby ensuring valid optimization. We then introduce gradient-stable relaxations to support effective training.
+%  As a result, experiments on multiple DLMs show that our method, \textit{Inverse-distilled Diffusion Language Models (IDLM)}, reduces the number of inference steps by $4 \times$-$64 \times$, while preserving the teacher model’s entropy and generative perplexity.
+%  \vspace{-1mm}
+%\end{abstract}
+%\begin{abstract}
+%Diffusion language models (DLMs) enable competitive text generation, but their reverse diffusion typically requires hundreds to thousands of steps, making inference-time guidance, constraint satisfaction, and preference-oriented steering prohibitively expensive. We propose \emph{Inverse-distilled Diffusion Language Models} (IDLM), a post-training framework that distills a pretrained DLM teacher into a few-step generator by extending inverse distillation to discrete diffusion objectives.
+%The discrete extension raises two obstacles: (i) the inverse objective may admit non-unique minimizers, and (ii) gradients through discrete sampling are unstable. We address (i) by proving that for common DLM objectives (SEDD, MDLM, and Duo) the IDLM loss lower-bounds \(D_{\mathrm{KL}}(p_\theta \,\|\, p^*)\) and has a unique global optimum at the data distribution. For (ii) we introduce gradient-stable relaxations via a simplex-parameterized generator and principled gradient paths through the discrete forward process.
+%Across multiple pretrained DLMs on OpenWebText, IDLM achieves \(4\times\)–\(256\times\) fewer sampling steps while preserving teacher generative perplexity and sequence entropy, substantially improving the practicality of diffusion LMs in control-heavy, low-latency regimes.
+%\end{abstract}
+%\vspace{-3mm}
+%\begin{abstract}
+%Diffusion Language Models (DLMs) generate text via iterative reverse diffusion, but the resulting inference latency
+%limits practical use and makes inference-time methods such as guidance expensive.
+%We propose \emph{Inverse-distilled Diffusion Language Models (IDLM)}, a post-training framework that distills
+%a pretrained DLM into a few-step generator by extending inverse distillation to discrete token spaces.
+%IDLM uses a bilevel objective: an auxiliary \emph{fake} diffusion model is trained on samples from the student
+%generator using the same diffusion loss as the teacher, and the student is updated to maximize the teacher-fake loss gap
+%on its own samples. Two obstacles arise in discrete settings: the inverse objective may be non-identifiable,
+%and gradients through discrete sampling can be unstable.
+%We address identifiability by proving a uniqueness guarantee for IDLM under SEDD, MDLM, and Duo objectives.
+%For stable optimization, we introduce gradient-friendly relaxations: the student outputs simplex-valued token distributions (avoiding brittle hard relaxations), and the diffusion losses are reformulated to remain computable and differentiable under this relaxation, enabling end-to-end training.
+%As a result, experiments on multiple DLMs show that our method reduces the number of inference steps by $4 \times$-$64 \times$,
+%while preserving the teacher model’s entropy and generative perplexity.
+%\vspace{-2mm}
+%\end{abstract}
+
+\vspace{-3mm}
+\begin{abstract}
+Diffusion Language Models (DLMs) generate text via iterative reverse diffusion, but the resulting inference latency
+limits practical use and makes inference-time methods such as guidance expensive.
+We propose \emph{Inverse-distilled Diffusion Language Models (IDLM)}, a post-training framework that distills
+a pretrained DLM into a few-step generator by extending inverse distillation to discrete token spaces.
+IDLM optimizes a bilevel objective: a \emph{fake} diffusion model is trained on student samples with the teacher’s diffusion loss, and the student is updated to maximize the teacher--fake loss gap on its own samples.
+In discrete settings, we (i) establish identifiability by proving a uniqueness guarantee under SEDD, MDLM, and Duo objectives, and (ii) stabilize training with simplex-valued token outputs and differentiable reformulations of the diffusion losses.
+As a result, experiments on multiple DLMs show that our method reduces the number of inference steps by $4 \times$-$64 \times$,
+while preserving the teacher model’s entropy and generative perplexity.
+\vspace{-1mm}
+\end{abstract}

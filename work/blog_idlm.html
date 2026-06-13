@@ -1,0 +1,1948 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Blog post about few-step text generation with Inverse Distillation">
+  <title>IDLM Blog | David Li</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/Bio-page/static/homepage/favicon-32.png?v=20260530-balanced-hero">
+  <link rel="icon" type="image/png" sizes="192x192" href="/Bio-page/static/homepage/favicon-192.png?v=20260530-balanced-hero">
+  <link rel="apple-touch-icon" sizes="180x180" href="/Bio-page/static/homepage/apple-touch-icon.png?v=20260530-balanced-hero">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [["\\(", "\\)"]],
+        displayMath: [["\\[", "\\]"]]
+      },
+      svg: {
+        fontCache: "global"
+      },
+      options: {
+        skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"]
+      }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <link rel="stylesheet" href="/Bio-page/static/homepage/concept.css?v=20260606-section-heading-size">
+</head>
+<body>
+  <main class="blog-shell">
+    <nav class="top-nav" aria-label="Research page navigation">
+      <a href="/Bio-page/">Home</a>
+      <a href="/Bio-page/publications/">Publications</a>
+      <a href="/Bio-page/blog/">Blog</a>
+    </nav>
+
+    <header class="blog-hero">
+      <div class="blog-hero-heading">
+        <h1><span>Few-step text generation</span><span>with Inverse Distillation</span></h1>
+        <div class="blog-meta" aria-label="Post metadata">
+          <span>David Li · MBZUAI</span>
+          <span>ICML 2026</span>
+          <span>Created May 29, 2026</span>
+        </div>
+      </div>
+      <div class="blog-hero-copy">
+        <p>
+          Can a language model generate 1024 tokens in only 16 forward passes? That means producing
+          64 tokens per pass, instead of decoding one token at a time.
+        </p>
+        <p>
+          IDLM makes this kind of parallel generation practical for diffusion language models by
+          compressing long denoising chains into a few reliable steps.
+        </p>
+        <div class="blog-actions">
+          <a class="resource-icon" href="https://david-cripto.github.io/idlm-project-page/" target="_blank" rel="noopener noreferrer" aria-label="Project page">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 4.8A1.8 1.8 0 0 1 4.8 3h14.4A1.8 1.8 0 0 1 21 4.8v10.4a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 15.2V4.8Z"/>
+              <path d="M8 21h8"/>
+              <path d="M12 17v4"/>
+            </svg>
+          </a>
+          <a class="resource-icon" href="https://arxiv.org/abs/2602.19066" target="_blank" rel="noopener noreferrer" aria-label="Paper">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/>
+              <path d="M14 3v5h5"/>
+              <path d="M9 13h6"/>
+              <path d="M9 17h6"/>
+              <path d="M9 9h1"/>
+            </svg>
+          </a>
+          <a class="resource-icon" href="https://github.com/David-cripto/IDLM" target="_blank" rel="noopener noreferrer" aria-label="Code">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m16 18 6-6-6-6"/>
+              <path d="m8 6-6 6 6 6"/>
+              <path d="m14 4-4 16"/>
+            </svg>
+          </a>
+          <a class="resource-icon" href="https://huggingface.co/kekchpek/models" target="_blank" rel="noopener noreferrer" aria-label="Checkpoints">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <ellipse cx="12" cy="5" rx="8" ry="3"/>
+              <path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/>
+              <path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+      <figure class="blog-figure blog-hero-figure">
+        <img src="/Bio-page/static/homepage/blog/idlm-teaser.png" alt="Current arXiv teaser comparing diffusion training with inverse distillation">
+        <figcaption>Standard DLM training learns a many-step diffusion model from data, whereas IDLM fixes a pretrained teacher and learns a student distribution.</figcaption>
+      </figure>
+    </header>
+
+    <section id="contents" class="blog-contents" aria-labelledby="contents-title">
+      <p class="label" id="contents-title">Contents</p>
+      <ol>
+        <li>
+          <a href="#motivation">Motivation</a>
+          <span class="toc-note">Why language diffusion is attractive, and why its inference is still the bottleneck.</span>
+          <ol>
+            <li><a href="#generation-approaches">Autoregression vs Diffusion</a></li>
+            <li><a href="#diffusion-inference">Diffusion Inference</a></li>
+            <li><a href="#image-distillation">Distillation in the Image Domain</a></li>
+          </ol>
+        </li>
+        <li>
+          <a href="#inverse-distillation">Inverse Distillation</a>
+          <span class="toc-note">The distribution-matching view behind IDLM.</span>
+          <ol>
+            <li><a href="#distillation-families">Two Distillation Families</a></li>
+            <li><a href="#inverse-view">Inverse Distillation View</a></li>
+            <li><a href="#language-transfer">From Images to Language</a></li>
+          </ol>
+        </li>
+        <li>
+          <a href="#idlm">IDLM: Inverse-distilled Diffusion Language Models</a>
+          <span class="toc-note">How inverse distillation transfers to the discrete language domain.</span>
+          <ol>
+            <li><a href="#theory">Theoretical Guarantees</a></li>
+            <li><a href="#discrete-practice">Discrete Non-Smoothness</a></li>
+            <li><a href="#sequence-capacity">Sequence-Level Generative Capacity</a></li>
+            <li><a href="#loss-intuition">Loss Intuition</a></li>
+            <li><a href="#final-algorithm">Final Algorithm</a></li>
+          </ol>
+        </li>
+        <li>
+          <a href="#results">Results</a>
+          <span class="toc-note">Empirical evaluation of IDLM under few-step sampling budgets.</span>
+          <ol>
+            <li><a href="#gsm8k">Conditional generation on TinyGSM</a></li>
+            <li><a href="#openwebtext">Unconditional generation on OpenWebText</a></li>
+          </ol>
+        </li>
+        <li>
+          <a href="#conclusion">Conclusion</a>
+          <span class="toc-note">The practical takeaway from IDLM.</span>
+        </li>
+        <li>
+          <a href="#bibtex">BibTeX</a>
+        </li>
+      </ol>
+    </section>
+
+    <article class="blog-article">
+      <section id="motivation" class="blog-section">
+        <h2>1. Motivation</h2>
+        <div class="blog-callout">
+          <strong>TL;DR</strong>
+          <span>
+            Autoregressive models dominate in text generation but decode token by token.
+            Diffusion language models can update whole sequences, but their denoising chains are
+            slow. Image diffusion shows a path forward: distill many teacher steps into a few
+            student jumps. IDLM asks whether this can work for discrete domain.
+          </span>
+        </div>
+
+        <h3 id="generation-approaches" class="blog-subheading">1.1 General Approaches: Autoregression vs Diffusion</h3>
+        <p>
+          Most modern language models use the autoregressive recipe behind
+          <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener noreferrer">Transformers</a>
+          and GPT-style models: generate one token, append it to the context, then generate the next
+          token. This gives a clean probabilistic factorization,
+        </p>
+        <div class="blog-equation">
+          \[
+            p(x^{1:L})
+            =
+            \prod_{i=1}^{L} p(x^{(i)} \mid x^{1:i-1}).
+          \]
+        </div>
+        <p>
+          This is why autoregression is so strong in text: training is stable, causal transformers
+          scale well, and sampling decisions are easy to interpret. The price is the sampling loop.
+          A \(L\)-token completion usually needs \(L\) sequential forward passes, because token \(i\)
+          cannot be sampled before token \(i-1\) exists.
+        </p>
+        <p>
+          Diffusion language models use a different generation view. They start from a noisy sequence
+          and repeatedly denoise it, so each denoising call can look at the whole sequence and revise
+          many token positions together. Recent models such as
+          <a href="https://arxiv.org/abs/2107.03006" target="_blank" rel="noopener noreferrer">D3PM</a>,
+          <a href="https://openreview.net/forum?id=L4uaAR4ArM" target="_blank" rel="noopener noreferrer">MDLM</a>,
+          <a href="https://arxiv.org/abs/2310.16834" target="_blank" rel="noopener noreferrer">SEDD</a>,
+          <a href="https://arxiv.org/abs/2412.10193" target="_blank" rel="noopener noreferrer">UDLM</a>,
+          and <a href="https://arxiv.org/abs/2502.09992" target="_blank" rel="noopener noreferrer">LLaDA</a>
+          show that this bidirectional, whole-sequence paradigm can be competitive for language. The
+          promise is not that one denoising call magically solves generation. The promise is that
+          the expensive sequential dimension might move from sequence length to the number of
+          denoising rounds.
+        </p>
+        <figure class="generation-animation-figure" aria-label="Autoregressive versus diffusion generation animation">
+          <div class="generation-animation-grid">
+            <div class="generation-animation-item">
+              <span>Autoregressive</span>
+              <img
+                class="generation-animation"
+                src="/Bio-page/static/homepage/blog/idlm-autoregressive-generation.gif?v=20260530-slower-gifs"
+                alt="Animated autoregressive token row filling one token at a time">
+            </div>
+            <div class="generation-animation-item">
+              <span>Diffusion</span>
+              <img
+                class="generation-animation"
+                src="/Bio-page/static/homepage/blog/idlm-diffusion-generation.gif?v=20260530-slower-gifs"
+                alt="Animated diffusion token row moving from unknown tokens to a complete sentence">
+            </div>
+          </div>
+          <figcaption>
+            Autoregression moves left to right. Diffusion maintains a whole-sequence state, which is
+            the source of its parallel-generation appeal.
+          </figcaption>
+        </figure>
+
+        <h3 id="diffusion-inference" class="blog-subheading">1.2 The Problem of Diffusion Inference</h3>
+        <p>
+          Despite their strong potential for high-quality generation, diffusion models retain a
+          central practical limitation: inference is slow. A sampler starts from noise and
+          repeatedly calls the denoising network, call \(k\) consumes the output of call \(k+1\).
+          So even though one call can update all tokens in parallel, the outer loop may require
+          \(50\), \(100\), \(250\), or \(1000\) forward passes before the sequence becomes clean.
+        </p>
+        <figure class="problem-figure" aria-label="Sequential language denoising bottleneck">
+          <div class="problem-panels">
+            <div class="problem-panel problem-panel-text">
+              <div class="problem-panel-head">
+                <span>Language diffusion generation</span>
+                <strong>\(T\) sequential token-denoising steps</strong>
+              </div>
+              <div class="problem-steps" aria-label="Token denoising timeline">
+                <div class="problem-node">
+                  <span class="problem-node-label">Random tokens</span>
+                  <div class="token-board token-board-noise">
+                    <span>LQ</span><span>7G</span><span>%X</span>
+                    <span>Q#</span><span>3M</span><span>R8</span>
+                    <span>V4</span><span>@T</span><span>9B</span>
+                  </div>
+                </div>
+                <div class="problem-node">
+                  <span class="problem-node-label">Step&nbsp;\(1\)</span>
+                  <div class="token-board">
+                    <span>The</span><span>xz</span><span>cat</span>
+                    <span>Q#</span><span>sat</span><span>on</span>
+                    <span>V4</span><span>@T</span><span>mat</span>
+                  </div>
+                  <span class="problem-model">Denoising model</span>
+                </div>
+                <div class="problem-node">
+                  <span class="problem-node-label">Step&nbsp;\(2\)</span>
+                  <div class="token-board">
+                    <span>The</span><span>small</span><span>cat</span>
+                    <span>R8</span><span>on</span><span>the</span>
+                    <span>mat</span><span>y2</span><span>7G</span>
+                  </div>
+                  <span class="problem-model">Denoising model</span>
+                </div>
+                <div class="problem-node">
+                  <span class="problem-node-label">Step&nbsp;\(3\)</span>
+                  <div class="token-board">
+                    <span>The</span><span>small</span><span>cat</span>
+                    <span>sat</span><span>on</span><span>the</span>
+                    <span>mat</span><span>y2</span><span>.</span>
+                  </div>
+                  <span class="problem-model">Denoising model</span>
+                </div>
+                <div class="problem-node problem-dots">
+                  <span class="problem-node-label" aria-hidden="true">...</span>
+                </div>
+                <div class="problem-node">
+                  <span class="problem-node-label">Step&nbsp;\(T-1\)</span>
+                  <div class="token-board">
+                    <span>The</span><span>small</span><span>cat</span>
+                    <span>sat</span><span>on</span><span>the</span>
+                    <span>mat</span><span>quietly</span><span>?</span>
+                  </div>
+                  <span class="problem-model">Denoising model</span>
+                </div>
+                <div class="problem-node problem-final-node">
+                  <span class="problem-node-label">Step&nbsp;\(T\)</span>
+                  <div class="token-board token-board-final">
+                    <span>The</span><span>small</span><span>cat</span>
+                    <span>sat</span><span>on</span><span>the</span>
+                    <span>mat</span><span>quietly</span><span>.</span>
+                  </div>
+                  <span class="problem-model">Denoising model</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <figcaption>
+            Each denoising block can update several tokens, but the blocks remain ordered. This
+            ordered outer loop is the part we want to compress.
+          </figcaption>
+        </figure>
+        <div class="blog-callout">
+          <strong>The target regime</strong>
+          <span>
+            Generating \(1024\) tokens in \(16\) forward passes means producing \(1024/16=64\)
+            tokens per pass. This is exactly the kind of regime where diffusion could be useful,
+            but only if the denoising chain can be compressed safely.
+          </span>
+        </div>
+        <p>
+          The natural acceleration idea is to replace many small denoising steps with a few large
+          jumps. But the reverse transition used by many discrete diffusion models is factorized
+          over positions:
+        </p>
+        <div class="blog-equation">
+          \[
+            p_\theta(x_{t-1}^{1:L} \mid x_t^{1:L})
+            =
+            \prod_{i=1}^{L}
+            p_\theta(x_{t-1}^{(i)} \mid x_t^{1:L}).
+          \]
+        </div>
+        <p>
+          This works well when the jump from \(x_t^{1:L}\) to \(x_{t-1}^{1:L}\) is small: most
+          sentence structure is already present, and each token only needs a local correction. A
+          large skip from \(x_t^{1:L}\) to \(x_{t-\Delta}^{1:L}\) asks one factorized transition to
+          capture stronger cross-token dependencies:
+        </p>
+        <div class="blog-equation">
+          \[
+            p_\theta(x_{t-\Delta}^{1:L} \mid x_t^{1:L})
+            \not\approx
+            \prod_{i=1}^{L}
+            p_\theta(x_{t-\Delta}^{(i)} \mid x_t^{1:L}),
+            \qquad \Delta \gg 1.
+          \]
+        </div>
+        <p>
+          This is the central tension. A composition of many small factorized transitions can still
+          represent a rich final distribution, because later steps can repair earlier local mistakes.
+          If we remove most of those steps, one factorized jump must suddenly coordinate agreement,
+          syntax, semantics, and long-range dependencies. That is where naive step-skipping becomes
+          fragile.
+        </p>
+        <div class="factorization-visual" aria-label="Large factorized jump versus small denoising steps">
+          <div class="factorization-card factorization-gif-card">
+            <span>Large factorized jump</span>
+            <strong>Correlation can break</strong>
+            <img
+              class="factorization-gif"
+              src="/Bio-page/static/homepage/blog/idlm-factorization-large-step.gif?v=20260530-slower-gifs"
+              alt="Large factorized denoising jump producing a noun-verb agreement conflict">
+            <p>
+              Independent choices can create incompatible tokens, for example <code>cat</code> with
+              <code>are</code>.
+            </p>
+          </div>
+          <div class="factorization-card factorization-gif-card">
+            <span>Many small steps</span>
+            <strong>Small errors get repaired</strong>
+            <img
+              class="factorization-gif"
+              src="/Bio-page/static/homepage/blog/idlm-factorization-small-steps.gif?v=20260530-slower-gifs"
+              alt="Many small denoising steps correcting a noun-verb agreement conflict">
+            <p>
+              A short correction can use the partially cleaned context before choosing the next token.
+            </p>
+          </div>
+        </div>
+        <h3 id="image-distillation" class="blog-subheading">1.3 Distillation in Image Diffusion</h3>
+        <p>
+          Image diffusion made this tradeoff visible before language diffusion did. Models such as
+          <a href="https://arxiv.org/abs/2006.11239" target="_blank" rel="noopener noreferrer">DDPM</a>,
+          <a href="https://arxiv.org/abs/2011.13456" target="_blank" rel="noopener noreferrer">score-based SDEs</a>,
+          and <a href="https://arxiv.org/abs/2206.00364" target="_blank" rel="noopener noreferrer">EDM</a>
+          showed that a noisy sample can be transformed into a high-quality image by following a
+          reverse denoising process. In DDPM this process is a long reverse Markov chain, in
+          score-based SDEs it can be viewed as integrating a reverse-time stochastic or deterministic
+          dynamics.
+        </p>
+        <p>
+          The cost is that each reverse step requires another neural network evaluation. The
+          original DDPM-style samplers commonly used very long chains, while accelerated samplers
+          such as
+          <a href="https://arxiv.org/abs/2010.02502" target="_blank" rel="noopener noreferrer">DDIM</a>
+          and
+          <a href="https://arxiv.org/abs/2102.09672" target="_blank" rel="noopener noreferrer">Improved DDPM</a>
+          reduced the number of evaluations but did not remove the sequential nature of sampling.
+          This is why image diffusion became the natural testbed for distillation: if a student can
+          replace many small denoising moves with a few reliable jumps, we can keep most of the
+          teacher's visual quality while paying for far fewer forward passes.
+        </p>
+        <figure class="problem-figure image-diffusion-figure" aria-label="Sequential image denoising bottleneck">
+          <div class="problem-panels">
+            <div class="problem-panel image-diffusion-panel">
+              <div class="problem-panel-head">
+                <span>Image diffusion generation</span>
+                <strong>\(T\) sequential denoising steps</strong>
+              </div>
+              <div class="problem-steps image-diffusion-steps" aria-label="Cat image denoising timeline">
+                <div class="problem-node">
+                  <span class="problem-node-label">Input noise</span>
+                  <img class="cat-board" src="/Bio-page/static/homepage/blog/idlm-cat-step-noise.png?v=20260529-cat-blocks" alt="Random image noise before denoising">
+                </div>
+                <div class="problem-node">
+                  <span class="problem-node-label">Step&nbsp;\(1\)</span>
+                  <img class="cat-board" src="/Bio-page/static/homepage/blog/idlm-cat-step-1.png?v=20260529-cat-blocks" alt="First cat image denoising step">
+                  <span class="problem-model">Denoising model</span>
+                </div>
+                <div class="problem-node">
+                  <span class="problem-node-label">Step&nbsp;\(2\)</span>
+                  <img class="cat-board" src="/Bio-page/static/homepage/blog/idlm-cat-step-2.png?v=20260529-cat-blocks" alt="Second cat image denoising step">
+                  <span class="problem-model">Denoising model</span>
+                </div>
+                <div class="problem-node">
+                  <span class="problem-node-label">Step&nbsp;\(3\)</span>
+                  <img class="cat-board" src="/Bio-page/static/homepage/blog/idlm-cat-step-3.png?v=20260529-cat-blocks" alt="Third cat image denoising step with visible cat">
+                  <span class="problem-model">Denoising model</span>
+                </div>
+                <div class="problem-node problem-dots">
+                  <span class="problem-node-label" aria-hidden="true">...</span>
+                </div>
+                <div class="problem-node">
+                  <span class="problem-node-label">Step&nbsp;\(T-1\)</span>
+                  <img class="cat-board" src="/Bio-page/static/homepage/blog/idlm-cat-step-late.png?v=20260529-cat-blocks" alt="Late cat image denoising step near the final image">
+                  <span class="problem-model">Denoising model</span>
+                </div>
+                <div class="problem-node problem-final-node">
+                  <span class="problem-node-label">Step&nbsp;\(T\)</span>
+                  <img class="cat-board cat-board-final" src="/Bio-page/static/homepage/blog/idlm-cat-step-final.png?v=20260529-cat-blocks" alt="Final generated tabby cat image">
+                  <span class="problem-model">Denoising model</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <figcaption>A standard image diffusion sampler improves the whole image at each step, but still follows a sequential denoising chain.</figcaption>
+        </figure>
+        <p>
+          Distillation changed that story by asking a sharper question: can we keep the distribution
+          learned by a strong teacher while reducing the number of sequential denoising calls?
+          <a href="https://arxiv.org/abs/2202.00512" target="_blank" rel="noopener noreferrer">Progressive distillation</a>,
+          for example, trains a student sampler to imitate multiple teacher steps with one larger
+          step, then repeats this compression. <a href="https://arxiv.org/abs/2303.01469" target="_blank" rel="noopener noreferrer">Consistency models</a>
+          learn a shortcut from points along a diffusion trajectory back to the clean sample, which
+          makes one-step or few-step generation possible. This idea was later scaled in systems
+          such as <a href="https://arxiv.org/abs/2310.04378" target="_blank" rel="noopener noreferrer">latent consistency models</a>.
+          A complementary line,
+          <a href="https://arxiv.org/abs/2311.18828" target="_blank" rel="noopener noreferrer">distribution matching distillation</a> (DMD),
+          directly trains the student distribution to match the teacher-supported data distribution,
+          rather than only copying local transitions.
+        </p>
+        <p>
+          The lesson from image diffusion is that acceleration is not only a faster sampler, it is a
+          training problem. The student must take larger jumps without drifting away from the
+          teacher's distribution. This is the motivation for IDLM: keep the parallel, bidirectional
+          view of language diffusion, but transfer the successful distillation idea into the
+          discrete text domain, where tokens are not continuous pixels, gradients cannot flow through
+          token choices in the same way, and large factorized jumps can break cross-token structure.
+        </p>
+        <figure class="distill-figure" aria-label="Distilled image diffusion with k denoising steps">
+          <div class="problem-panel distill-panel">
+            <div class="problem-panel-head">
+              <span>Distilled image diffusion</span>
+              <strong>\(k\) student denoising steps, \(k \ll T\)</strong>
+            </div>
+            <div class="problem-steps distill-steps" aria-label="k-step distilled cat image denoising timeline">
+              <div class="problem-node">
+                <span class="problem-node-label">Input noise</span>
+                <img class="cat-board" src="/Bio-page/static/homepage/blog/idlm-cat-step-noise.png?v=20260529-cat-blocks" alt="Random image noise before distilled denoising">
+              </div>
+              <div class="problem-node">
+                <span class="problem-node-label">Step&nbsp;\(1\)</span>
+                <img class="cat-board" src="/Bio-page/static/homepage/blog/idlm-cat-step-1.png?v=20260529-cat-blocks" alt="First distilled cat image denoising step">
+                <span class="problem-model">Student denoiser</span>
+              </div>
+              <div class="problem-node">
+                <span class="problem-node-label">Step&nbsp;\(2\)</span>
+                <img class="cat-board" src="/Bio-page/static/homepage/blog/idlm-cat-step-3.png?v=20260529-cat-blocks" alt="Second distilled cat image denoising step with a visible cat">
+                <span class="problem-model">Student denoiser</span>
+              </div>
+              <div class="problem-node">
+                <span class="problem-node-label">Step&nbsp;\(3\)</span>
+                <img class="cat-board" src="/Bio-page/static/homepage/blog/idlm-cat-step-late.png?v=20260529-cat-blocks" alt="Third distilled cat image denoising step near the final image">
+                <span class="problem-model">Student denoiser</span>
+              </div>
+              <div class="problem-node problem-final-node">
+                <span class="problem-node-label">Step&nbsp;\(k\)</span>
+                <img class="cat-board cat-board-final" src="/Bio-page/static/homepage/blog/idlm-cat-step-final.png?v=20260529-cat-blocks" alt="Final distilled generated tabby cat image">
+                <span class="problem-model">Student denoiser</span>
+              </div>
+            </div>
+          </div>
+          <figcaption>
+            Distillation teaches a student to take larger, reliable jumps along the teacher's path.
+          </figcaption>
+        </figure>
+        <div class="blog-callout">
+          <strong>The question of the day</strong>
+          <span>
+            Can image-style distillation be transferred to diffusion language models? IDLM
+            approaches this question through inverse distillation.
+          </span>
+        </div>
+      </section>
+
+      <section id="inverse-distillation" class="blog-section">
+        <h2>2. Inverse Distillation</h2>
+        <div class="blog-callout">
+          <strong>TL;DR</strong>
+          <span>
+            Distillation can either shorten a teacher trajectory or directly match a student
+            distribution to the target distribution. Inverse distillation uses the pretrained
+            teacher \(f^\star\) to guide a student distribution \(p_\theta\) toward the data
+            distribution \(p^\star\), with a fake model \(f\) trained on current student samples.
+          </span>
+        </div>
+
+        <h3 id="distillation-families" class="blog-subheading">2.1 Two General Distillation Approaches</h3>
+        <p>
+          Continuous diffusion distillation is often organized into two families. The first is
+          consistency-like distillation. A teacher provides a denoising trajectory, and the student
+          learns to map different points on that trajectory to a consistent clean output. In plain
+          terms, it teaches the model to skip along the path. This idea is powerful and relatively
+          direct, and discrete-language variants such as
+          <a href="https://arxiv.org/abs/2410.21035" target="_blank" rel="noopener noreferrer">SDTT</a>
+          and <a href="https://openreview.net/forum?id=9P9Y8FOSOk" target="_blank" rel="noopener noreferrer">Duo-DCD</a>
+          show that trajectory-shortening can help diffusion language models too.
+        </p>
+        <p>
+          The second is distribution-matching distillation. Here we directly parameterize a student
+          distribution \(p_\theta\) and train it to match the teacher-supported data distribution
+          \(p^\star\). Image methods such as
+          <a href="https://arxiv.org/abs/2311.18828" target="_blank" rel="noopener noreferrer">DMD</a>
+          do this with an auxiliary model that estimates whether the current student distribution
+          matches the teacher distribution. This view is usually more involved, because the auxiliary
+          model must be trained while the student changes, but the target is stronger: match the
+          distribution, not merely a local denoising shortcut.
+        </p>
+        <figure class="distillation-map" aria-label="Two diffusion distillation views in a two-dimensional toy space">
+          <div class="distillation-map-grid">
+            <div class="distill-map-panel">
+              <div class="distill-map-head">
+                <span>Consistency-like</span>
+                <strong>shorten the trajectory</strong>
+              </div>
+              <svg class="distill-svg" viewBox="0 0 560 330" role="img" aria-labelledby="consistency-map-title consistency-map-desc">
+                <title id="consistency-map-title">Consistency-like distillation shortens a teacher trajectory</title>
+                <desc id="consistency-map-desc">A long teacher denoising curve is replaced by a few larger student jumps in a two-dimensional space.</desc>
+                <defs>
+                  <radialGradient id="noiseGlow" cx="50%" cy="50%" r="55%">
+                    <stop offset="0%" stop-color="#b86bff" stop-opacity="0.55" />
+                    <stop offset="100%" stop-color="#19c6ff" stop-opacity="0.04" />
+                  </radialGradient>
+                  <radialGradient id="dataGlow" cx="50%" cy="50%" r="58%">
+                    <stop offset="0%" stop-color="#b5f07c" stop-opacity="0.52" />
+                    <stop offset="100%" stop-color="#19c6ff" stop-opacity="0.05" />
+                  </radialGradient>
+                </defs>
+                <rect class="distill-map-window" x="24" y="28" width="512" height="258" rx="22" />
+                <g class="density-consistency-noise">
+                  <ellipse cx="95" cy="239" rx="72" ry="45" transform="rotate(-8 95 239)" />
+                  <ellipse cx="95" cy="239" rx="48" ry="29" transform="rotate(-8 95 239)" />
+                  <ellipse cx="95" cy="239" rx="25" ry="15" transform="rotate(-8 95 239)" />
+                </g>
+                <g class="density-consistency-data">
+                  <ellipse cx="470" cy="113" rx="88" ry="49" transform="rotate(-15 470 113)" />
+                  <ellipse cx="470" cy="113" rx="58" ry="32" transform="rotate(-15 470 113)" />
+                  <ellipse cx="470" cy="113" rx="30" ry="17" transform="rotate(-15 470 113)" />
+                </g>
+                <g class="distill-cloud noise-cloud">
+                  <circle cx="73" cy="240" r="7" />
+                  <circle cx="103" cy="220" r="7" />
+                  <circle cx="124" cy="248" r="7" />
+                  <circle cx="86" cy="266" r="7" />
+                  <circle cx="132" cy="211" r="7" />
+                  <circle cx="65" cy="215" r="7" />
+                </g>
+                <g class="distill-cloud data-cloud">
+                  <circle cx="456" cy="109" r="7" />
+                  <circle cx="489" cy="94" r="7" />
+                  <circle cx="504" cy="128" r="7" />
+                  <circle cx="430" cy="135" r="7" />
+                  <circle cx="474" cy="151" r="7" />
+                  <circle cx="516" cy="105" r="7" />
+                </g>
+                <g class="teacher-jump-curve">
+                  <path d="M86 246 C133 150 154 153 189 172" />
+                  <path d="M200 178 C235 130 263 119 290 135" />
+                  <path d="M300 141 C337 73 373 63 400 86" />
+                  <path d="M409 93 C443 64 481 39 495 93" />
+                </g>
+                <path class="teacher-arrow-head" d="M0 0 L-15 -8.5 L-15 8.5 Z" transform="translate(200 178) rotate(29)" />
+                <path class="teacher-arrow-head" d="M0 0 L-15 -8.5 L-15 8.5 Z" transform="translate(300 141) rotate(31)" />
+                <path class="teacher-arrow-head" d="M0 0 L-15 -8.5 L-15 8.5 Z" transform="translate(409 93) rotate(40)" />
+                <path class="teacher-arrow-head" d="M0 0 L-15 -8.5 L-15 8.5 Z" transform="translate(498 105) rotate(76)" />
+                <path id="teacherTracerPath" class="teacher-tracer-path" d="M86 246 C133 150 154 153 200 178 C235 130 263 119 300 141 C337 73 373 63 409 93 C443 64 481 39 498 105" />
+                <circle class="teacher-tracer" r="7">
+                  <animateMotion dur="7.2s" repeatCount="indefinite" rotate="auto">
+                    <mpath href="#teacherTracerPath" />
+                  </animateMotion>
+                </circle>
+                <path class="student-shortcut" d="M86 246 C179 170 286 158 369 111 C417 84 463 74 489 97" />
+                <path class="student-arrow-head" d="M0 0 L-18 -10 L-18 10 Z" transform="translate(498 105) rotate(42)" />
+                <g class="student-anchors">
+                  <circle cx="86" cy="246" r="7" />
+                  <circle cx="275" cy="150" r="7" />
+                  <circle cx="498" cy="105" r="7" />
+                </g>
+                <g class="consistency-callouts" aria-hidden="true">
+                  <g class="plot-callout plot-callout-blue" transform="translate(154 74)">
+                    <rect class="plot-callout-bg" width="146" height="27" rx="8" />
+                    <text x="14" y="18">few-step student path</text>
+                  </g>
+                  <g class="plot-callout plot-callout-orange" transform="translate(229 196)">
+                    <rect class="plot-callout-bg" width="96" height="27" rx="8" />
+                    <text x="14" y="18">teacher path</text>
+                  </g>
+                  <g class="plot-callout plot-callout-green" transform="translate(352 32)">
+                    <rect class="plot-callout-bg" width="151" height="27" rx="8" />
+                    <text x="14" y="18">target distribution p<tspan baseline-shift="super" font-size="8">*</tspan></text>
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <div class="distill-map-panel">
+              <div class="distill-map-head">
+                <span>Distribution matching</span>
+                <strong>match \(p_\theta\) to \(p^\star\)</strong>
+              </div>
+              <svg class="distill-svg" viewBox="0 0 560 330" role="img" aria-labelledby="matching-map-title matching-map-desc">
+                <title id="matching-map-title">Distribution matching aligns a student distribution with the target distribution</title>
+                <desc id="matching-map-desc">A student point cloud is pushed toward a target point cloud instead of following individual teacher trajectories.</desc>
+                <defs>
+                  <radialGradient id="targetDensity" cx="50%" cy="50%" r="60%">
+                    <stop offset="0%" stop-color="#b5f07c" stop-opacity="0.5" />
+                    <stop offset="100%" stop-color="#6ee8ff" stop-opacity="0.04" />
+                  </radialGradient>
+                  <radialGradient id="studentDensity" cx="50%" cy="50%" r="60%">
+                    <stop offset="0%" stop-color="#ffd3a2" stop-opacity="0.46" />
+                    <stop offset="100%" stop-color="#eb7a50" stop-opacity="0.04" />
+                  </radialGradient>
+                </defs>
+                <rect class="distill-map-window" x="24" y="28" width="512" height="258" rx="22" />
+                <g class="density-target">
+                  <ellipse cx="378" cy="150" rx="132" ry="76" transform="rotate(-11 378 150)" />
+                  <ellipse cx="378" cy="150" rx="92" ry="50" transform="rotate(-11 378 150)" />
+                  <ellipse cx="378" cy="150" rx="52" ry="29" transform="rotate(-11 378 150)" />
+                </g>
+                <g class="density-student">
+                  <ellipse cx="164" cy="201" rx="104" ry="56" transform="rotate(15 164 201)" />
+                  <ellipse cx="164" cy="201" rx="68" ry="34" transform="rotate(15 164 201)" />
+                </g>
+                <g class="match-arrows">
+                  <path d="M167 202 C228 178 272 153 321 140" />
+                  <path d="M132 174 C208 127 270 113 334 122" />
+                  <path d="M200 232 C251 225 307 203 363 187" />
+                </g>
+                <path class="match-arrow-head" d="M0 0 L-18 -10 L-18 10 Z" transform="translate(333 142) rotate(10)" />
+                <path class="match-arrow-head" d="M0 0 L-18 -10 L-18 10 Z" transform="translate(346 124) rotate(8)" />
+                <path class="match-arrow-head" d="M0 0 L-18 -10 L-18 10 Z" transform="translate(375 184) rotate(-16)" />
+                <g class="target-samples">
+                  <circle cx="333" cy="132" r="7" />
+                  <circle cx="360" cy="101" r="7" />
+                  <circle cx="392" cy="121" r="7" />
+                  <circle cx="425" cy="142" r="7" />
+                  <circle cx="373" cy="160" r="7" />
+                  <circle cx="326" cy="177" r="7" />
+                  <circle cx="460" cy="176" r="7" />
+                  <circle cx="401" cy="202" r="7" />
+                  <circle cx="458" cy="114" r="7" />
+                </g>
+                <g class="student-samples">
+                  <circle class="match-student m1" cx="110" cy="184" r="7" style="--dx: 218px; --dy: -54px" />
+                  <circle class="match-student m2" cx="150" cy="160" r="7" style="--dx: 206px; --dy: -56px" />
+                  <circle class="match-student m3" cx="177" cy="198" r="7" style="--dx: 196px; --dy: -36px" />
+                  <circle class="match-student m4" cx="202" cy="225" r="7" style="--dx: 190px; --dy: -26px" />
+                  <circle class="match-student m5" cx="136" cy="234" r="7" style="--dx: 190px; --dy: -58px" />
+                  <circle class="match-student m6" cx="221" cy="181" r="7" style="--dx: 208px; --dy: -38px" />
+                </g>
+                <path class="matched-outline" d="M285 161 C318 87 430 74 488 127 C537 173 488 237 395 235 C306 233 258 218 285 161Z" />
+                <g class="distribution-callouts" aria-hidden="true">
+                  <g class="plot-callout plot-callout-orange" transform="translate(62 91)">
+                    <rect class="plot-callout-bg" width="156" height="27" rx="8" />
+                    <text x="14" y="18">student distribution p<tspan baseline-shift="sub" font-size="8">&theta;</tspan></text>
+                  </g>
+                  <g class="plot-callout plot-callout-green" transform="translate(350 45)">
+                    <rect class="plot-callout-bg" width="151" height="27" rx="8" />
+                    <text x="14" y="18">target distribution p<tspan baseline-shift="super" font-size="8">*</tspan></text>
+                  </g>
+                </g>
+              </svg>
+            </div>
+          </div>
+        </figure>
+
+        <h3 id="inverse-view" class="blog-subheading">2.2 The Inverse Distillation View</h3>
+        <p>
+          Inverse Distillation is a distribution-matching-style distillation approach. The goal is
+          to train a fast student distribution \(p_\theta\) so that it matches the target data
+          distribution \(p^\star\). The central question is how to compare \(p_\theta\) with
+          \(p^\star\). Inverse distillation answers this by comparing the diffusion
+          models that would be learned from these two distributions.
+        </p>
+        <p>
+          First recall the ordinary, or forward, diffusion-training problem. We start with real data
+          samples \(x_0 \sim p^\star\), corrupt them with the prescribed noising process, and learn a
+          reverse denoising model by minimizing a diffusion training loss \(\mathcal{L}\). In the
+          notation below, the optimal diffusion model \(f^\star\) trained on \(p^\star\) satisfies:
+        </p>
+        <div class="blog-equation">
+          \[
+            f^\star = \arg\min_f \mathcal{L}(f,p^\star).
+          \]
+        </div>
+        <p>
+          Inverse distillation reverses this relationship. Instead of asking which diffusion model
+          is optimal for a known distribution, we are given the already-trained teacher \(f^\star\)
+          and ask which student distribution \(p_\theta\) would make this same teacher optimal. A
+          perfect student should therefore satisfy the inverse optimality condition
+        </p>
+        <div class="blog-equation">
+          \[
+            f^\star = \arg\min_f \mathcal{L}(f,p_\theta).
+          \]
+        </div>
+        <p>
+          This condition says more than "move samples toward the teacher." It says that if we took
+          samples from the current student \(p_\theta\), noised them, and trained a diffusion model
+          with the same loss, the model recovered by this training procedure should be \(f^\star\).
+          In practice, we approximate this test with a second, learnable diffusion model \(f\), often
+          called the fake model. This fake model is trained on the current student samples, so it
+          represents the best diffusion model that the student distribution itself can explain.
+        </p>
+        <p>
+          The inverse-distillation loss then compares two denoisers on the same student
+          distribution: the frozen teacher \(f^\star\), which encodes the target \(p^\star\), and the
+          fake model \(f\), which is optimized for the current \(p_\theta\). Minimizing the resulting
+          teacher-minus-fake gap encourages \(p_\theta\) to become a distribution for which the
+          teacher is already the optimal diffusion model:
+        </p>
+        <div class="blog-equation">
+          \[
+            \mathcal{L}_{\mathrm{inv}}(\theta)
+            =
+            \mathcal{L}(f^\star,p_\theta)
+            -
+            \min_f \mathcal{L}(f,p_\theta).
+          \]
+        </div>
+        <figure class="inverse-contrast-visual" aria-label="Inverse distillation compares teacher and fake reverse dynamics">
+          <svg class="distill-svg inverse-contrast-svg" viewBox="0 0 900 390" role="img" aria-labelledby="inverse-contrast-title inverse-contrast-desc">
+            <title id="inverse-contrast-title">Inverse distillation compares a frozen teacher with a fake model</title>
+            <desc id="inverse-contrast-desc">The teacher diffusion model and a fake diffusion model both start from the same terminal distribution. The teacher reverses toward the target distribution, while the fake model reverses toward the current student distribution. The loss compares these two reverse dynamics on student samples.</desc>
+            <rect class="distill-map-window" x="24" y="28" width="852" height="326" rx="22" />
+            <g class="inverse-density-terminal">
+              <ellipse cx="130" cy="205" rx="94" ry="58" transform="rotate(-8 130 205)" />
+              <ellipse cx="130" cy="205" rx="62" ry="37" transform="rotate(-8 130 205)" />
+              <ellipse cx="130" cy="205" rx="32" ry="20" transform="rotate(-8 130 205)" />
+            </g>
+            <g class="inverse-density-target">
+              <ellipse cx="728" cy="124" rx="126" ry="60" transform="rotate(-9 728 124)" />
+              <ellipse cx="728" cy="124" rx="82" ry="39" transform="rotate(-9 728 124)" />
+              <ellipse cx="728" cy="124" rx="42" ry="21" transform="rotate(-9 728 124)" />
+            </g>
+            <g class="inverse-density-student">
+              <ellipse cx="724" cy="270" rx="124" ry="58" transform="rotate(8 724 270)" />
+              <ellipse cx="724" cy="270" rx="82" ry="38" transform="rotate(8 724 270)" />
+              <ellipse cx="724" cy="270" rx="42" ry="20" transform="rotate(8 724 270)" />
+            </g>
+            <g class="inverse-target-particles">
+              <circle cx="680" cy="130" r="7" />
+              <circle cx="712" cy="102" r="7" />
+              <circle cx="746" cy="146" r="7" />
+              <circle cx="778" cy="119" r="7" />
+              <circle cx="716" cy="153" r="7" />
+              <circle cx="762" cy="94" r="7" />
+            </g>
+            <g class="inverse-student-particles">
+              <circle cx="680" cy="272" r="7" />
+              <circle cx="713" cy="247" r="7" />
+              <circle cx="748" cy="288" r="7" />
+              <circle cx="782" cy="263" r="7" />
+              <circle cx="718" cy="300" r="7" />
+              <circle cx="758" cy="230" r="7" />
+            </g>
+            <g class="inverse-terminal-particles">
+              <circle cx="95" cy="198" r="7" />
+              <circle cx="126" cy="174" r="7" />
+              <circle cx="157" cy="209" r="7" />
+              <circle cx="137" cy="237" r="7" />
+              <circle cx="106" cy="229" r="7" />
+            </g>
+            <g class="inverse-model-paths">
+              <path class="inverse-teacher-path" d="M155 185 C284 72 470 75 617 105 C680 118 724 118 766 122" />
+              <path class="inverse-fake-path" d="M155 224 C296 309 472 319 622 288 C685 274 728 270 770 267" />
+              <path id="inverseTeacherTrace" class="inverse-motion-path" d="M155 185 C284 72 470 75 617 105 C680 118 724 118 787 123" />
+              <path id="inverseFakeTrace" class="inverse-motion-path" d="M155 224 C296 309 472 319 622 288 C685 274 728 270 790 266" />
+              <path class="inverse-arrow-head inverse-teacher-arrow-head" d="M0 0 L-21 -11.5 L-21 11.5 Z" transform="translate(787 123) rotate(6)" />
+              <path class="inverse-arrow-head inverse-fake-arrow-head" d="M0 0 L-21 -11.5 L-21 11.5 Z" transform="translate(790 266) rotate(-4)" />
+              <circle class="inverse-moving-dot inverse-moving-teacher" r="7">
+                <animateMotion dur="6.4s" repeatCount="indefinite" rotate="auto">
+                  <mpath href="#inverseTeacherTrace" />
+                </animateMotion>
+              </circle>
+              <circle class="inverse-moving-dot inverse-moving-fake" r="7">
+                <animateMotion dur="6.4s" begin="0.35s" repeatCount="indefinite" rotate="auto">
+                  <mpath href="#inverseFakeTrace" />
+                </animateMotion>
+              </circle>
+            </g>
+            <g class="inverse-gap-lines">
+              <path d="M298 108 C328 150 331 239 305 285" />
+              <path d="M461 87 C511 145 516 247 467 304" />
+              <path d="M624 106 C669 151 672 241 629 287" />
+            </g>
+            <g class="inverse-path-dots inverse-teacher-dots">
+              <circle cx="298" cy="108" r="6" />
+              <circle cx="461" cy="87" r="6" />
+              <circle cx="624" cy="106" r="6" />
+            </g>
+            <g class="inverse-path-dots inverse-fake-dots">
+              <circle cx="305" cy="285" r="6" />
+              <circle cx="467" cy="304" r="6" />
+              <circle cx="629" cy="287" r="6" />
+            </g>
+            <g class="inverse-contrast-callouts" aria-hidden="true">
+              <g class="plot-callout plot-callout-blue" transform="translate(339 48)">
+                <rect class="plot-callout-bg" width="102" height="27" rx="8" />
+                <text x="14" y="18">teacher f<tspan baseline-shift="super" font-size="8">*</tspan></text>
+              </g>
+              <g class="plot-callout plot-callout-orange" transform="translate(351 312)">
+                <rect class="plot-callout-bg" width="73" height="27" rx="8" />
+                <text x="14" y="18">fake f</text>
+              </g>
+              <g class="plot-callout plot-callout-yellow" transform="translate(410 180)">
+                <rect class="plot-callout-bg" width="142" height="30" rx="9" />
+                <text x="14" y="20">compare f<tspan baseline-shift="super" font-size="8">*</tspan> vs f</text>
+              </g>
+              <g class="plot-callout plot-callout-green" transform="translate(642 50)">
+                <rect class="plot-callout-bg" width="151" height="27" rx="8" />
+                <text x="14" y="18">target distribution p<tspan baseline-shift="super" font-size="8">*</tspan></text>
+              </g>
+              <g class="plot-callout plot-callout-orange" transform="translate(621 310)">
+                <rect class="plot-callout-bg" width="151" height="27" rx="8" />
+                <text x="14" y="18">student distribution p<tspan baseline-shift="sub" font-size="8">&theta;</tspan></text>
+              </g>
+            </g>
+          </svg>
+          <figcaption>
+            The upper dashed path is the frozen teacher \(f^\star\), trained on the target
+            distribution \(p^\star\). The lower dashed path is the fake model \(f\), retrained on
+            current student samples from \(p_\theta\). Inverse Distillation updates the student by
+            minimizing the teacher-fake gap \(\mathcal{L}(f^\star,p_\theta)-\mathcal{L}(f,p_\theta)\).
+          </figcaption>
+        </figure>
+        <p>
+          If the inverse problem is solved perfectly, the generator recovers the same data
+          distribution that produced the teacher. This inverse-distillation line started from
+          <a href="https://arxiv.org/abs/2502.01362" target="_blank" rel="noopener noreferrer">Inverse Bridge Matching Distillation</a>,
+          was extended by
+          <a href="https://openreview.net/forum?id=8NuN5UzXLC" target="_blank" rel="noopener noreferrer">Universal Inverse Distillation</a>,
+          and was further clarified by
+          <a href="https://arxiv.org/abs/2503.13358" target="_blank" rel="noopener noreferrer">Residual Shifting Distillation</a>
+          in relation to DMD-like objectives. In continuous domains, this gives both a theoretical
+          uniqueness story and practical few-step generators.
+        </p>
+
+        <h3 id="language-transfer" class="blog-subheading">2.3 From Images to Language</h3>
+        <p>
+          Of course, we would like to transfer this inverse-distillation principle to the language
+          domain: start from a strong pretrained diffusion language model, train a faster student
+          distribution \(p_\theta\), and preserve the same distribution-matching interpretation.
+          However, language introduces difficulties that are absent, or much less severe, in the
+          continuous image setting. The main obstacle is that text lives on a discrete token space.
+          A token is a categorical state, not a point that can be moved infinitesimally along a
+          smooth pixel-space direction.
+        </p>
+        <p>
+          This discreteness creates an optimization problem. If the student generator outputs hard
+          one-hot tokens, the mapping from logits to tokens is non-smooth, and gradients cannot pass
+          through the sampling decision in the usual way. One can relax a token into a probability
+          vector on the simplex, which makes the generator output differentiable, but this introduces
+          a second problem: the pretrained teacher was typically trained on hard token states. As a
+          result, evaluating the teacher on relaxed intermediate states may produce unstable or
+          poorly calibrated training signals. Thus, simply copying the continuous inverse
+          distillation recipe into language is not mathematically or practically sufficient.
+        </p>
+        <p>
+          There is also a sequence-level issue. A language model should not generate a
+          sentence by choosing \(64\) tokens independently. The tokens must agree with one another:
+          they must maintain topic, syntax, agreement, discourse structure, style, and long-range
+          semantic dependencies. In other words, the object to be matched is not only a collection of
+          token-wise marginals, but a distribution over coherent sequences. A valid language
+          distillation objective must therefore preserve the distribution-matching promise of inverse
+          distillation while remaining differentiable, well-defined for discrete diffusion
+          processes, and sensitive to sequence-level structure. This is the role of IDLM.
+        </p>
+        <figure class="language-transfer-map" aria-label="Visual intuition for moving inverse distillation from images to language">
+          <div class="distillation-map-grid language-transfer-grid">
+            <div class="distill-map-panel language-transfer-panel">
+              <div class="distill-map-head">
+                <span>Continuous</span>
+              </div>
+              <div
+                class="continuous-interp-stage"
+                role="img"
+                aria-label="An interpolated preview moves on a dashed line from a dog image to a cat image, cross-fading between the same two images to show a continuous pixel interpolation.">
+                <figure class="interp-endpoint interp-endpoint-dog">
+                  <img src="/Bio-page/static/homepage/blog/idlm-dog-interpolation.png?v=20260601-real-dog" alt="Realistic dog portrait endpoint">
+                </figure>
+                <figure class="interp-endpoint interp-endpoint-cat">
+                  <img src="/Bio-page/static/homepage/blog/idlm-cat-step-final.png?v=20260529-cat-blocks" alt="Final tabby cat image from section 1.3">
+                </figure>
+                <div class="interp-track" aria-hidden="true"></div>
+                <div class="interp-sample" aria-hidden="true">
+                  <span class="interp-tether"></span>
+                  <div class="interp-sample-frame">
+                    <img class="interp-sample-dog" src="/Bio-page/static/homepage/blog/idlm-dog-interpolation.png?v=20260601-real-dog" alt="">
+                    <img class="interp-sample-cat" src="/Bio-page/static/homepage/blog/idlm-cat-step-final.png?v=20260529-cat-blocks" alt="">
+                  </div>
+                </div>
+                <div class="interp-smooth-caption" aria-hidden="true">smooth</div>
+              </div>
+            </div>
+            <div class="distill-map-panel language-transfer-panel token-transfer-panel">
+              <div class="distill-map-head">
+                <span>Discrete</span>
+              </div>
+              <svg class="distill-svg language-transfer-svg token-strip-svg" viewBox="0 0 560 180" role="img" aria-labelledby="token-space-title token-space-desc">
+                <title id="token-space-title">Language tokens are isolated word states</title>
+                <desc id="token-space-desc">The words the, met, and cat appear as three isolated token points. Red X marks show that there is no smooth transition between valid token states.</desc>
+                <rect class="token-state-rail" x="54" y="43" width="452" height="94" rx="47" />
+                <g class="token-nonsmooth-mark" transform="translate(198 90)">
+                  <line x1="-17" y1="-17" x2="17" y2="17" />
+                  <line x1="-17" y1="17" x2="17" y2="-17" />
+                </g>
+                <g class="token-nonsmooth-mark" transform="translate(362 90)">
+                  <line x1="-17" y1="-17" x2="17" y2="17" />
+                  <line x1="-17" y1="17" x2="17" y2="-17" />
+                </g>
+                <g class="token-word-point token-word-the" transform="translate(116 90)">
+                  <circle class="token-node-glow" r="48" />
+                  <circle class="token-node-core" r="34" />
+                  <text class="token-node-label" y="7">the</text>
+                </g>
+                <g class="token-word-point token-word-met" transform="translate(280 90)">
+                  <circle class="token-node-glow" r="48" />
+                  <circle class="token-node-core" r="34" />
+                  <text class="token-node-label" y="7">met</text>
+                </g>
+                <g class="token-word-point token-word-cat" transform="translate(444 90)">
+                  <circle class="token-node-glow" r="48" />
+                  <circle class="token-node-core" r="34" />
+                  <text class="token-node-label" y="7">cat</text>
+                </g>
+                <text class="token-nonsmooth-caption" x="280" y="160">non-smooth</text>
+              </svg>
+            </div>
+          </div>
+        </figure>
+      </section>
+
+      <section id="idlm" class="blog-section">
+        <h2>3. IDLM: Inverse-distilled Diffusion Language Models</h2>
+        <div class="blog-callout">
+          <strong>TL;DR</strong>
+          <span>
+            IDLM brings inverse distillation to discrete domain. It proves that the IDLM objective
+            has the right target solution, then makes the training usable with simplex-valued
+            generator outputs, process-specific relaxations for masked and uniform diffusion, and a
+            teacher-minus-fake signal that trains a few-step language generator.
+          </span>
+        </div>
+
+        <h3 id="theory" class="blog-subheading">3.1 Theoretical Guarantees</h3>
+        <p>
+          The first contribution of IDLM is to make the inverse-distillation objective well posed
+          for discrete diffusion. Let \(p^\star\) denote the target distribution over clean token
+          sequences, and let \(p_\theta\) be the distribution produced by the student generator
+          \(G_\theta\). The frozen teacher \(f^\star\) is the diffusion model trained on
+          \(p^\star\), while \(f\) is a fake diffusion model trained on samples from
+          \(p_\theta\). With \(\mathcal{L}(f,p)\) denoting the diffusion loss for model \(f\)
+          when the clean samples come from distribution \(p\), IDLM optimizes the inverse gap
+          \(\mathcal{L}(f^\star,p_\theta)-\min_f \mathcal{L}(f,p_\theta)\).
+        </p>
+        <p>
+          In a discrete space, this gap is not automatically meaningful: a poorly chosen objective
+          could have minimizers that do not recover the data distribution. The theorem shows that
+          for the losses underlying SEDD, MDLM, and Duo in the hard-token limit, the ideal IDLM
+          objective has the desired unique zero-loss solution:
+        </p>
+        <div class="blog-equation">
+          \[
+            \mathcal{L}_{\mathrm{IDLM}}(\theta)
+            \geq
+            D_{\mathrm{KL}}(p_\theta \,\Vert\, p^\star)
+            \geq 0,
+            \qquad
+            \mathcal{L}_{\mathrm{IDLM}}(\theta)=0
+            \iff
+            p_\theta=p^\star .
+          \]
+        </div>
+        <p>
+          Here \(D_{\mathrm{KL}}(p_\theta \Vert p^\star)\) measures the mismatch between the final
+          clean distributions. Therefore the inequality says something stronger than
+          non-negativity: if the IDLM loss goes to zero, then the student distribution itself must
+          converge to the target distribution. This rules out the most dangerous failure mode,
+          where the student satisfies the inverse objective but still generates from the wrong clean
+          distribution.
+        </p>
+        <p>
+          The proof also explains why the objective has this property. For a clean distribution
+          \(p\), run the corresponding discrete diffusion process and look at the entire stochastic
+          trajectory, not just the endpoint. Let \(\mathbb{P}^{\star}\) be the path distribution
+          induced by \(p^\star\), and let \(\mathbb{P}^{\theta}\) be the path distribution induced
+          by \(p_\theta\). If we could compute the losses exactly, the IDLM objective would be the KL
+          divergence between these full trajectory distributions:
+        </p>
+        <div class="blog-equation">
+          \[
+            \mathcal{L}_{\mathrm{IDLM}}(\theta)
+            =
+            D_{\mathrm{KL}}(\mathbb{P}^{\theta}\,\Vert\,\mathbb{P}^{\star}).
+          \]
+        </div>
+        <p>
+          This path-level view is the key difference from marginal-matching distillation. If
+          \(p_t^\theta\) and \(p_t^\star\) are the noised marginals obtained at diffusion time
+          \(t\) from \(p_\theta\) and \(p^\star\), a DMD-like objective compares these marginals
+          time by time:
+        </p>
+        <div class="blog-equation">
+          \[
+            \int_0^1 w(t)\,
+            D_{\mathrm{KL}}(p_t^\theta \,\Vert\, p_t^\star)\,dt,
+          \]
+        </div>
+        <p>
+          where \(w(t)\) is a time-dependent weight. This checks whether the student and teacher
+          look similar at sampled noise levels, but it does not directly compare how probability
+          mass moves across the whole reverse chain. IDLM instead compares the joint law of the
+          full path, so the objective keeps information about the coupling between consecutive
+          states. A stop-gradient simplification can make the IDLM update resemble a DMD-style
+          marginal update, but that is not the full inverse-distillation gradient. For MDLM, the
+          \(\mathrm{SUBS}\) parameterization hides part of this distinction because already revealed
+          tokens are copied and contribute zero loss. For uniform diffusion, tokens can be
+          revised repeatedly, so the path dependence remains visible and becomes important for
+          stable optimization.
+        </p>
+
+        <h3 id="discrete-practice" class="blog-subheading">3.2 Handling Discrete Non-Smoothness</h3>
+        <p>
+          In practice, IDLM does not store the student distribution \(p_\theta\) explicitly. It
+          represents it with a generator \(G_\theta\): sample a latent variable \(\epsilon\), pass it
+          through \(G_\theta\), and obtain a candidate clean sequence. The difficulty is that text is
+          discrete. If the generator immediately samples or chooses a hard one-hot token, the map
+          from its logits to the token is no longer smooth, so the IDLM loss cannot send a useful
+          gradient back into \(G_\theta\).
+        </p>
+        <p>
+          IDLM therefore trains the generator in a relaxed space. For each token position,
+          \(G_\theta(\epsilon)\) outputs a probability vector on the vocabulary simplex: all entries
+          are nonnegative and sum to one. This vector is still a valid distribution over words, but
+          it is differentiable with respect to the generator parameters. The teacher and fake
+          diffusion losses can then evaluate soft token probabilities during training, and their
+          difference can flow back through the simplex vector to update \(G_\theta\). At sampling
+          time, the model can still turn these probabilities into actual discrete tokens.
+        </p>
+        <figure class="discrete-smoothness-map discrete-compact-map" aria-label="Visual intuition for simplex relaxation">
+          <div class="discrete-map-grid discrete-single-grid">
+            <div class="discrete-map-panel discrete-simplex-panel">
+              <div class="distill-map-head">
+                <span>Simplex relaxation</span>
+              </div>
+              <svg class="distill-svg discrete-svg" viewBox="0 0 760 220" role="img" aria-labelledby="simplex-relax-title simplex-relax-desc">
+                <title id="simplex-relax-title">The student generator outputs a probability vector on the simplex</title>
+                <desc id="simplex-relax-desc">A latent input goes through the student generator. Instead of sampling one token during training, the generator outputs a horizontal vector of token probabilities that sums to one, and the same vector appears as a point inside the probability simplex.</desc>
+                <rect class="distill-map-window" x="24" y="26" width="712" height="144" rx="22" />
+                <g class="simplex-pipeline" transform="translate(54 62)">
+                  <g class="simplex-input-node token-pill-row" transform="translate(0 20)">
+                    <rect class="discrete-token-pill token-pill-muted" width="70" height="38" rx="12" />
+                    <text x="35" y="25">&epsilon;</text>
+                  </g>
+                  <path class="combined-solid-arrow-blue" d="M0 -3 L21 -3 L21 -9 L36 0 L21 9 L21 3 L0 3 Z" transform="translate(83 39)" />
+                  <g class="simplex-generator-node" transform="translate(138 8)">
+                    <rect width="86" height="62" rx="17" />
+                    <text class="simplex-generator-main" x="43" y="39">G<tspan baseline-shift="sub" font-size="12">&theta;</tspan></text>
+                  </g>
+                  <path class="combined-solid-arrow-blue" d="M0 -3 L21 -3 L21 -9 L36 0 L21 9 L21 3 L0 3 Z" transform="translate(241 39)" />
+                  <g class="simplex-vector-card" transform="translate(294 6)">
+                    <rect width="222" height="66" rx="18" />
+                    <g class="simplex-prob-chip prob-chip-cat" transform="translate(16 16)">
+                      <rect width="58" height="34" rx="10" />
+                      <text x="29" y="14">cat</text>
+                      <text class="simplex-prob-value" x="29" y="29">0.16</text>
+                    </g>
+                    <g class="simplex-prob-chip prob-chip-the" transform="translate(82 16)">
+                      <rect width="58" height="34" rx="10" />
+                      <text x="29" y="14">the</text>
+                      <text class="simplex-prob-value" x="29" y="29">0.68</text>
+                    </g>
+                    <g class="simplex-prob-chip prob-chip-mat" transform="translate(148 16)">
+                      <rect width="58" height="34" rx="10" />
+                      <text x="29" y="14">mat</text>
+                      <text class="simplex-prob-value" x="29" y="29">0.16</text>
+                    </g>
+                  </g>
+                  <path class="combined-solid-arrow-blue" d="M0 -3 L21 -3 L21 -9 L36 0 L21 9 L21 3 L0 3 Z" transform="translate(544 39)" />
+                </g>
+                <g class="simplex-diagram simplex-inline-diagram" transform="translate(600 50)">
+                  <polygon class="soft-simplex-face" points="40,102 86,18 134,102" />
+                  <g class="simplex-corner" transform="translate(40 102)">
+                    <circle r="9" />
+                    <text x="0" y="28" text-anchor="middle">cat</text>
+                  </g>
+                  <g class="simplex-corner" transform="translate(86 18)">
+                    <circle r="9" />
+                    <text x="0" y="-16" text-anchor="middle">the</text>
+                  </g>
+                  <g class="simplex-corner" transform="translate(134 102)">
+                    <circle r="9" />
+                    <text x="0" y="28" text-anchor="middle">mat</text>
+                  </g>
+                  <circle class="simplex-soft-state" cx="87" cy="58" r="8" />
+                </g>
+              </svg>
+            </div>
+          </div>
+          <figcaption>
+            During training, \(G_\theta\) outputs a soft point on the vocabulary simplex, not a hard
+            token. IDLM can therefore move probability mass with gradients before sampling.
+          </figcaption>
+        </figure>
+        <p>
+          Masked diffusion gives IDLM an important shortcut. In the \(\mathrm{SUBS}\)
+          parameterization, a token that has already been revealed is treated as fixed: later reverse
+          transitions simply copy it forward rather than resampling it. As a result, the teacher
+          model \(f^*\) and the fake model \(f\) make the same prediction on these copied
+          coordinates. Their loss difference cancels there, so the useful IDLM signal is concentrated
+          exactly on the positions that remain masked and still need to be predicted.
+        </p>
+        <p>
+          This is why IDLM-MDLM can use a clean mask-only update: it does not need to differentiate
+          through every sampled intermediate token in the reverse chain. Uniform diffusion does not
+          have this copy-once structure. A position can move from one token to another across multiple
+          reverse steps, so the training signal depends on the whole path through intermediate
+          categorical states. IDLM therefore uses the Duo relaxation to replace hard token samples
+          with differentiable simplex states during training. This keeps gradients flowing through
+          the intermediate transitions, which is essential when the model must learn both what token
+          should appear and how the reverse process should move toward it over time.
+        </p>
+        <figure class="discrete-smoothness-map discrete-wide-map" aria-label="Visual intuition comparing masked diffusion and uniform diffusion relaxation">
+          <div class="discrete-map-grid discrete-single-grid">
+            <div class="discrete-map-panel discrete-combined-panel">
+              <div class="distill-map-head">
+                <span>Discrete relaxations</span>
+              </div>
+              <svg class="distill-svg discrete-svg" viewBox="0 0 1180 330" role="img" aria-labelledby="combined-discrete-title combined-discrete-desc">
+                <title id="combined-discrete-title">Masked diffusion uses mask-only updates while uniform diffusion maps Gaussian logits through softmax</title>
+                <desc id="combined-discrete-desc">The left panel shows copied revealed tokens where teacher and fake outputs are equal, making the IDLM loss zero, while masked tokens keep the IDLM update. The right panel animates a Gaussian process point and the corresponding uniform process point on the simplex.</desc>
+                <rect class="distill-map-window" x="24" y="22" width="1132" height="296" rx="22" />
+                <line class="combined-divider" x1="590" y1="55" x2="590" y2="304" />
+
+                <g class="combined-mask-panel" transform="translate(57 56)">
+                  <text class="combined-panel-title" x="250" y="0">Masked diffusion</text>
+                  <g transform="translate(-43 36)">
+                    <g class="token-pill-row" transform="translate(86 10)">
+                      <rect class="discrete-token-pill token-pill-green" width="82" height="38" rx="13" />
+                      <text x="41" y="25">cat</text>
+                    </g>
+                    <path class="combined-solid-arrow-green" d="M0 -3 L21 -3 L21 -9 L36 0 L21 9 L21 3 L0 3 Z" transform="translate(193 29)" />
+                    <rect class="combined-zero-highlight" x="246" y="4" width="254" height="50" rx="16" />
+                    <g class="token-pill-row" transform="translate(258 10)">
+                      <rect class="discrete-token-pill token-pill-green" width="86" height="38" rx="13" />
+                      <text x="43" y="25">cat</text>
+                    </g>
+                    <text class="combined-equals" x="373" y="35">=</text>
+                    <g class="token-pill-row" transform="translate(400 10)">
+                      <rect class="discrete-token-pill token-pill-green" width="86" height="38" rx="13" />
+                      <text x="43" y="25">cat</text>
+                    </g>
+                    <g class="discrete-summary-chip chip-green combined-zero-chip" transform="translate(246 70)">
+                      <rect width="254" height="44" rx="13" />
+                      <text class="zero-main" x="127" y="18">teacher = fake</text>
+                      <text class="zero-sub" x="127" y="35">IDLM loss = 0</text>
+                    </g>
+                  </g>
+                  <g transform="translate(-62 166)">
+                    <g class="token-pill-row" transform="translate(86 24)">
+                      <rect class="discrete-token-pill token-pill-mask" width="82" height="38" rx="13" />
+                      <text x="41" y="25">[MASK]</text>
+                    </g>
+                    <path class="combined-solid-arrow-orange" d="M0 -3 L21 -3 L21 -9 L36 0 L21 9 L21 3 L0 3 Z" transform="translate(236 35) rotate(-10)" />
+                    <path class="combined-solid-arrow-orange combined-faint" d="M0 -3 L21 -3 L21 -9 L36 0 L21 9 L21 3 L0 3 Z" transform="translate(236 51) rotate(10)" />
+                    <g class="token-pill-row" transform="translate(330 8)">
+                      <rect class="discrete-token-pill token-pill-blue" width="108" height="36" rx="12" />
+                      <text x="54" y="24">teacher</text>
+                    </g>
+                    <g class="token-pill-row" transform="translate(330 56)">
+                      <rect class="discrete-token-pill token-pill-orange" width="108" height="36" rx="12" />
+                      <text x="54" y="24">fake</text>
+                    </g>
+                    <path class="combined-bracket" d="M452 26 L472 26 L472 74 L452 74" />
+                    <text class="combined-update-label" x="486" y="55">update</text>
+                  </g>
+                </g>
+
+                <g class="combined-duo-panel" transform="translate(626 56)">
+                  <text class="combined-panel-title" x="250" y="0">Uniform diffusion</text>
+                  <g class="duo-gaussian-contours combined-gaussian" transform="translate(0 50)">
+                    <ellipse cx="76" cy="78" rx="76" ry="42" transform="rotate(-12 76 78)" />
+                    <ellipse cx="76" cy="78" rx="48" ry="26" transform="rotate(-12 76 78)" />
+                    <ellipse cx="76" cy="78" rx="24" ry="13" transform="rotate(-12 76 78)" />
+                  </g>
+                  <path id="combinedGaussianMotionPath" class="duo-gaussian-trace" d="M34 136 C56 101 86 78 119 88 C142 94 157 115 166 136" />
+                  <circle class="combined-motion-dot combined-motion-orange" cx="58" cy="104" r="8">
+                    <animate attributeName="cx" values="34;52;72;95;119;135;148;158;166;158;148;135;119;95;72;52" dur="4.8s" repeatCount="indefinite" />
+                    <animate attributeName="cy" values="136;112;95;86;88;95;106;120;136;120;106;95;88;86;95;112" dur="4.8s" repeatCount="indefinite" />
+                    <animate attributeName="r" values="7;9;7" dur="4.8s" repeatCount="indefinite" />
+                  </circle>
+                  <g class="discrete-summary-chip chip-orange" transform="translate(18 226)">
+                    <rect width="156" height="32" rx="11" />
+                    <text x="78" y="21">gaussian process</text>
+                  </g>
+
+                  <path class="combined-solid-arrow-blue" d="M0 -3 L21 -3 L21 -9 L36 0 L21 9 L21 3 L0 3 Z" transform="translate(188 136)" />
+                  <g class="duo-softmax-node combined-softmax" transform="translate(228 104)">
+                    <rect width="116" height="64" rx="17" />
+                    <text class="duo-softmax-main" x="58" y="40">softmax</text>
+                  </g>
+                  <path class="combined-solid-arrow-blue" d="M0 -3 L21 -3 L21 -9 L36 0 L21 9 L21 3 L0 3 Z" transform="translate(352 136)" />
+
+                  <g class="combined-simplex" transform="translate(372 24)">
+                    <g class="combined-simplex-geometry" transform="scale(0.86)">
+                      <polygon class="soft-simplex-face" points="20,180 100,28 180,180" />
+                      <g class="simplex-corner" transform="translate(20 180)">
+                        <circle r="8" />
+                        <text x="0" y="26" text-anchor="middle">cat</text>
+                      </g>
+                      <g class="simplex-corner" transform="translate(100 28)">
+                        <circle r="8" />
+                        <text x="0" y="-14" text-anchor="middle">the</text>
+                      </g>
+                      <g class="simplex-corner" transform="translate(180 180)">
+                        <circle r="8" />
+                        <text x="0" y="26" text-anchor="middle">mat</text>
+                      </g>
+                      <path id="combinedSimplexMotionPath" class="duo-simplex-soft-path" d="M70 142 C88 114 112 104 132 114 C144 122 151 138 154 148" />
+                      <circle class="combined-motion-dot combined-motion-blue" cx="96" cy="121" r="8">
+                        <animate attributeName="cx" values="70;84;100;116;132;140;146;151;154;151;146;140;132;116;100;84" dur="4.8s" repeatCount="indefinite" />
+                        <animate attributeName="cy" values="142;124;114;110;114;121;130;140;148;140;130;121;114;110;114;124" dur="4.8s" repeatCount="indefinite" />
+                        <animate attributeName="r" values="7;9;7" dur="4.8s" repeatCount="indefinite" />
+                      </circle>
+                    </g>
+                    <g class="discrete-summary-chip chip-orange" transform="translate(8 202)">
+                      <rect width="156" height="32" rx="11" />
+                      <text x="78" y="21">uniform process</text>
+                    </g>
+                  </g>
+                </g>
+              </svg>
+            </div>
+          </div>
+          <figcaption>
+            Masked diffusion gets a clean mask-only update because copied revealed tokens give equal
+            teacher and fake outputs, so their IDLM loss is zero. Uniform diffusion: the orange and
+            blue dots trace the Gaussian process passing through softmax into the uniform
+            process on the simplex, so token revisions remain differentiable.
+          </figcaption>
+        </figure>
+
+        <h3 id="sequence-capacity" class="blog-subheading">3.3 Sequence-Level Generative Capacity</h3>
+        <p>
+          How can a generator produce coherent text if the generator still produces a product over
+          token positions? The answer is that the product is conditional, not marginal. IDLM
+          views the student as a mixture over a shared latent draw \(\varepsilon\): after
+          \(\varepsilon\) is sampled, the generator emits one categorical distribution for each
+          position, but all of these distributions are produced from the same latent state. This is
+          closely related to the motivation behind
+          <a href="https://arxiv.org/abs/2505.17384" target="_blank" rel="noopener noreferrer">VADD</a>
+          and
+          <a href="https://proceedings.mlr.press/v267/hayakawa25a.html" target="_blank" rel="noopener noreferrer">Di4C</a>:
+          high-dimensional discrete objects, including text, contain strong correlations across
+          dimensions, and few-step discrete generation needs a mechanism that can carry those
+          correlations rather than treating every coordinate as an isolated decision.
+        </p>
+        <p>
+          In the idealized picture, distribution matching encourages each conditional component to
+          become concentrated. For a fixed \(\varepsilon\), the token-level categorical
+          distributions can degenerate toward near-delta choices, so their product behaves like one
+          sequence-level atom: a complete sentence rather than a set of unrelated token marginals.
+          Different latent draws select different atoms, and averaging over \(\varepsilon\) recovers
+          a mixture over full sequences. Thus the conditional distribution may be factorized inside
+          one component, while the marginal student distribution remains capable of representing
+          coherent sentence-level choices such as topic, syntax, agreement, and long-range semantic
+          structure:
+        </p>
+        <div class="blog-equation">
+          \[
+            p_\theta(x_0^{1:L})
+            =
+            \mathbb{E}_{\varepsilon}
+            \left[
+              \prod_{i=1}^{L}
+              \mathrm{Cat}(x_0^{(i)};G_\theta^{(i)}(\varepsilon))
+            \right].
+          \]
+        </div>
+        <figure class="sequence-capacity-map distillation-map" aria-label="Two-dimensional intuition for sequence-level latent mixtures">
+          <div class="distillation-map-grid sequence-capacity-grid">
+            <div class="distill-map-panel sequence-capacity-panel">
+              <svg class="distill-svg sequence-capacity-svg" viewBox="0 0 900 330" role="img" aria-labelledby="latent-sequence-title latent-sequence-desc">
+                <title id="latent-sequence-title">Latent samples map to generated word sequences</title>
+                <desc id="latent-sequence-desc">Several latent variables are sampled from a latent prior. The generator maps each latent variable to one complete generated sequence, shown as rows of word tokens.</desc>
+                <defs>
+                  <radialGradient id="latentBasinGreen" cx="50%" cy="50%" r="58%">
+                    <stop offset="0%" stop-color="#b5f07c" stop-opacity="0.42" />
+                    <stop offset="100%" stop-color="#b5f07c" stop-opacity="0.04" />
+                  </radialGradient>
+                  <radialGradient id="latentBasinBlue" cx="50%" cy="50%" r="58%">
+                    <stop offset="0%" stop-color="#6ee8ff" stop-opacity="0.38" />
+                    <stop offset="100%" stop-color="#6ee8ff" stop-opacity="0.04" />
+                  </radialGradient>
+                  <radialGradient id="latentBasinPurple" cx="50%" cy="50%" r="58%">
+                    <stop offset="0%" stop-color="#b86bff" stop-opacity="0.36" />
+                    <stop offset="100%" stop-color="#b86bff" stop-opacity="0.04" />
+                  </radialGradient>
+                </defs>
+                <rect class="distill-map-window" x="24" y="24" width="852" height="278" rx="22" />
+                <g class="sequence-latent-basins">
+                  <ellipse class="latent-basin-green" cx="154" cy="173" rx="108" ry="118" transform="rotate(-12 154 173)" />
+                  <ellipse class="latent-basin-blue" cx="154" cy="173" rx="72" ry="78" transform="rotate(-12 154 173)" />
+                  <ellipse class="latent-basin-purple" cx="154" cy="173" rx="38" ry="42" transform="rotate(-12 154 173)" />
+                </g>
+                <text class="sequence-prior-label" x="154" y="41">p<tspan baseline-shift="sub" font-size="14">&#8496;</tspan></text>
+                <g class="latent-hub sequence-latent-points">
+                  <g transform="translate(128 100)">
+                    <circle r="12" />
+                    <text y="4">&epsilon;<tspan baseline-shift="sub" font-size="8">1</tspan></text>
+                  </g>
+                  <g transform="translate(190 175)">
+                    <circle r="12" />
+                    <text y="4">&epsilon;<tspan baseline-shift="sub" font-size="8">2</tspan></text>
+                  </g>
+                  <g transform="translate(120 244)">
+                    <circle r="12" />
+                    <text y="4">&epsilon;<tspan baseline-shift="sub" font-size="8">3</tspan></text>
+                  </g>
+                </g>
+                <g class="latent-rays sequence-latent-rays">
+                  <path d="M142 100 L520 96" />
+                  <path d="M204 175 L520 172" />
+                  <path d="M134 244 L520 248" />
+                  <path class="sequence-latent-arrow-head sequence-latent-arrow-green" d="M0 0 L-18 -10 L-18 10 Z" transform="translate(536 96) rotate(-0.6)" />
+                  <path class="sequence-latent-arrow-head sequence-latent-arrow-blue" d="M0 0 L-18 -10 L-18 10 Z" transform="translate(536 172) rotate(-0.5)" />
+                  <path class="sequence-latent-arrow-head sequence-latent-arrow-purple" d="M0 0 L-18 -10 L-18 10 Z" transform="translate(536 248) rotate(0.6)" />
+                </g>
+                <g class="sequence-atom-stack" transform="translate(552 60)">
+                  <g class="sequence-atom-row atom-green" transform="translate(0 0)">
+                    <line class="sequence-sentence-track" x1="0" y1="42" x2="278" y2="42" />
+                    <circle class="sequence-sentence-anchor" cx="0" cy="42" r="4" />
+                    <text class="sequence-sentence-text" x="28" y="31">Cats are cute.</text>
+                  </g>
+                  <g class="sequence-atom-row atom-blue" transform="translate(0 76)">
+                    <line class="sequence-sentence-track" x1="0" y1="42" x2="278" y2="42" />
+                    <circle class="sequence-sentence-anchor" cx="0" cy="42" r="4" />
+                    <text class="sequence-sentence-text" x="28" y="31">Penguins wear pajamas.</text>
+                  </g>
+                  <g class="sequence-atom-row atom-purple" transform="translate(0 152)">
+                    <line class="sequence-sentence-track" x1="0" y1="42" x2="278" y2="42" />
+                    <circle class="sequence-sentence-anchor" cx="0" cy="42" r="4" />
+                    <text class="sequence-sentence-text" x="28" y="31">The model writes text.</text>
+                  </g>
+                </g>
+                <text class="sequence-output-label" x="688" y="292">generated sequences</text>
+              </svg>
+            </div>
+          </div>
+          <figcaption>
+            Different latent draws \(\varepsilon\sim p_{\mathcal{E}}\) map to different full
+            generated sequences. Averaging over these draws gives the sequence-level mixture.
+          </figcaption>
+        </figure>
+
+        <h3 id="loss-intuition" class="blog-subheading">3.4 Loss Intuition</h3>
+        <p>
+          The practical training loop has two coupled parts. The student generator \(G_\theta\)
+          defines the current distribution \(p_\theta\). The fake model \(f\) is then trained as an
+          ordinary diffusion model on samples from this current student distribution. After this fake
+          model has adapted to what the student currently produces, IDLM freezes \(f\) and updates
+          \(G_\theta\) using the teacher-minus-fake gap:
+        </p>
+        <div class="blog-equation">
+          \[
+            \mathcal{L}_{\mathrm{IDLM}}(\theta)
+            =
+            \mathcal{L}(f^\star,p_\theta)
+            -
+            \mathcal{L}(f,p_\theta).
+          \]
+        </div>
+        <p>
+          Here \(f^\star\) is the frozen teacher trained on real data. The fake model \(f\) is
+          trained on the current student samples, so it describes what the student already knows how
+          to generate. During the generator update, both \(f^\star\) and \(f\) are fixed, and the
+          parameters \(\theta\) are trained to minimize \(\mathcal{L}_{\mathrm{IDLM}}\). The first
+          term is attractive: reducing \(\mathcal{L}(f^\star,p_\theta)\) encourages the student
+          distribution to place probability on token choices that have small teacher loss. The
+          second term is repulsive: because it is subtracted, the generator update minimizes
+          \(-\mathcal{L}(f,p_\theta)\), equivalently maximizing \(\mathcal{L}(f,p_\theta)\) with
+          \(f\) fixed. Therefore, tokens that are easy for the fake model but not consistently
+          supported by the teacher are pushed down.
+        </p>
+        <p>
+          For MDLM, the \(\mathrm{SUBS}\) parameterization makes this particularly transparent.
+          Revealed tokens are copied by both models, so they cancel out of the teacher-minus-fake
+          difference. Only masked positions remain. At a masked position, let \(m\) denote the mask
+          token and define the teacher-over-fake advantage vector
+          \(a_t=\log f^\star(m,t)-\log f(m,t)\). Each coordinate \(a_{t,i}\) compares how much the
+          teacher and fake model support vocabulary token \(i\) at time \(t\). The IDLM-MDLM loss
+          becomes
+        </p>
+        <div class="blog-equation">
+          \[
+            \mathcal{L}_{\mathrm{IDLM\text{-}MDLM}}(\theta)
+            =
+            -\mathbb{E}_{\epsilon,t}
+            \left[
+              w_t
+              \left\langle G_\theta(\epsilon), a_t\right\rangle
+            \right].
+          \]
+        </div>
+        <p>
+          Here \(G_\theta(\epsilon)\) is the student distribution over the vocabulary, while
+          \(w_t\ge0\) is the time-dependent weight inherited from the masked-diffusion loss.
+          The inner product \(\langle G_\theta(\epsilon),a_t\rangle\) is the student's current
+          expected teacher-over-fake advantage. Since the loss is the negative of this quantity,
+          minimizing it is equivalent to maximizing that expected advantage. Moving probability mass
+          toward a token with larger \(a_{t,i}\) increases the inner product and decreases the loss,
+          moving mass toward a token with smaller \(a_{t,i}\) has the opposite effect. If
+          \(G_\theta(\epsilon)=\mathrm{softmax}(z_\theta)\), this becomes even sharper after taking
+          the gradient with respect to the pre-softmax logit of token \(i\):
+        </p>
+        <div class="blog-equation">
+          \[
+            \frac{\partial \mathcal{L}_{\mathrm{IDLM\text{-}MDLM}}}{\partial z_{\theta,i}}
+            =
+            -w_t G_{\theta,i}(\epsilon)
+            \Big(a_{t,i}-\langle G_\theta(\epsilon),a_t\rangle\Big).
+          \]
+        </div>
+        <p>
+          This equation makes the sign of the update explicit. Since \(w_t\ge0\) and
+          \(G_{\theta,i}(\epsilon)>0\), gradient descent increases token \(i\)'s logit exactly when
+          \(a_{t,i}\) is larger than the current average advantage
+          \(\langle G_\theta(\epsilon),a_t\rangle\). The average term acts like a baseline: a token
+          is attractive only if the teacher prefers it over the fake model more than the generator's
+          current mixture does on average. Tokens below this baseline are pushed down, even if they
+          still have some teacher probability. When \(f\) catches up with \(f^\star\) on student
+          samples, \(a_t\approx0\), the bracket becomes zero, and the relative signal disappears.
+        </p>
+        <div class="intuition-strip" aria-label="Teacher fake loss intuition">
+          <div>
+            <span class="intuition-step">01</span>
+            <h4>Teacher attraction</h4>
+            <p>
+              If \(a_{t,i}>\langle G_\theta(\epsilon),a_t\rangle\), token \(i\)'s logit increases:
+              the teacher \(f^\star\) prefers this token more than the fake model \(f\) does.
+            </p>
+          </div>
+          <div>
+            <span class="intuition-step">02</span>
+            <h4>Fake repulsion</h4>
+            <p>
+              If \(a_{t,i}<\langle G_\theta(\epsilon),a_t\rangle\), token \(i\)'s logit decreases:
+              it is below the generator's current average advantage.
+            </p>
+          </div>
+          <div>
+            <span class="intuition-step">03</span>
+            <h4>Signal vanishes</h4>
+            <p>
+              If \(a_t\approx 0\), the fake model has caught up to the teacher on student samples,
+              so there is no relative teacher-over-fake signal.
+            </p>
+          </div>
+        </div>
+
+        <h3 id="final-algorithm" class="blog-subheading">3.5 Final Algorithm</h3>
+        <p>
+          In practice, one-step text generation is a difficult learning problem: the student would
+          need to recover global structure and token-level details from a highly noisy state in a
+          single jump. IDLM therefore trains the student as a few-step denoiser on a short reverse
+          trajectory. In this practical parameterization, the latent variable is chosen to be
+          \(\epsilon=(x_t,t)\): a noised state together with its diffusion time. At each training
+          step, this pair is sampled from the forward process and passed to \(G_\theta\). The
+          resulting prediction is evaluated under both \(f^\star\) and \(f\). The fake model
+          minimizes the ordinary diffusion loss on the student distribution, while the generator
+          minimizes the teacher-minus-fake objective. This alternating scheme implements the
+          inverse-distillation signal without differentiating through an exact inner argmin.
+        </p>
+        <p>
+          The final IDLM training loop can be read as a simple two-model comparison: use the frozen
+          teacher \(f^\star\) as a quality reference, train an auxiliary fake denoiser \(f\) to
+          recognize the current student samples, and update the student generator \(G_\theta\) using
+          the difference between the two losses. In other words, the fake model learns what the
+          student is currently producing, while the student is pushed toward samples that the teacher
+          explains better than the fake model.
+        </p>
+        <div class="algorithm-explainer">
+          <div class="algorithm-panel">
+            <div class="algorithm-head">
+              <span>Algorithm 1</span>
+              <strong>IDLM Training</strong>
+            </div>
+            <pre class="algorithm-code" aria-label="IDLM training pseudocode"><code><span class="alg-key">Algorithm</span> Train-IDLM(<span class="alg-teacher">f_star</span>, <span class="alg-fake">f</span>, <span class="alg-student">G_theta</span>, data)
+<span class="alg-comment">// f_star is frozen; f and G_theta are optimized.</span>
+<span class="alg-key">repeat</span>
+    x0 <span class="alg-op">&larr;</span> sample(data)              <span class="alg-comment">// clean sequence</span>
+    t  <span class="alg-op">&larr;</span> Uniform(0, 1)             <span class="alg-comment">// diffusion time</span>
+    xt <span class="alg-op">&larr;</span> q_t(. | x0)               <span class="alg-comment">// forward noising</span>
+
+    x_hat <span class="alg-op">&larr;</span> <span class="alg-student">G_theta</span>(xt, t)        <span class="alg-comment">// student proposal</span>
+
+    <span class="alg-comment">// fake model: learn the student's current samples</span>
+    <span class="alg-loss">L_fake</span> <span class="alg-op">&larr;</span> L_seq(<span class="alg-fake">f</span>, x_hat)
+    update <span class="alg-fake">f</span> using <span class="alg-loss">L_fake</span>
+
+    <span class="alg-comment">// student: prefer teacher-supported samples</span>
+    <span class="alg-loss">L_idlm</span> <span class="alg-op">&larr;</span> L_seq(<span class="alg-teacher">f_star</span>, x_hat) <span class="alg-op">-</span> L_seq(<span class="alg-fake">f</span>, x_hat)
+    update <span class="alg-student">G_theta</span> using <span class="alg-loss">L_idlm</span>
+<span class="alg-key">until</span> convergence</code></pre>
+          </div>
+          <div class="algorithm-panel">
+            <div class="algorithm-head">
+              <span>Algorithm 2</span>
+              <strong>Few-step Sampling</strong>
+            </div>
+            <pre class="algorithm-code" aria-label="IDLM sampling pseudocode"><code><span class="alg-key">Algorithm</span> Sample-IDLM(<span class="alg-student">G_theta</span>, process, K)
+<span class="alg-comment">// A short grid replaces the long teacher chain.</span>
+tau_K, ..., tau_0 <span class="alg-op">&larr;</span> reverse_grid(K)
+x_k <span class="alg-op">&larr;</span> terminal_noise(process)
+
+<span class="alg-key">for</span> k = K, ..., 1 <span class="alg-key">do</span>
+    x0_hat <span class="alg-op">&larr;</span> <span class="alg-student">G_theta</span>(x_k, tau_k)
+             <span class="alg-comment">// predicted clean sequence</span>
+
+    x_k <span class="alg-op">&larr;</span> reverse_step(
+        x_k, x0_hat, tau_k, tau_{k-1}
+    )
+             <span class="alg-comment">// MDLM mask step or Duo uniform step</span>
+<span class="alg-key">end for</span>
+
+<span class="alg-key">return</span> x_k</code></pre>
+          </div>
+        </div>
+        <p>
+          The notation \(L_{\mathrm{seq}}\) denotes the sequence-level diffusion loss for the chosen
+          teacher family. The training algorithm teaches \(G_\theta\) how to replace many small teacher denoising moves,
+          and the sampling algorithm then reuses the same reverse process on a much shorter grid.
+        </p>
+        <figure class="blog-figure">
+          <img src="/Bio-page/static/homepage/blog/idlm-method.png" alt="Current arXiv IDLM training loop with generator, teacher, and fake model">
+          <figcaption>IDLM training loop. The student proposal is scored by the frozen teacher and the auxiliary fake denoiser; the difference between these losses defines the generator update.</figcaption>
+        </figure>
+      </section>
+
+      <section id="results" class="blog-section">
+        <h2>4. Results</h2>
+        <div class="blog-callout">
+          <strong>TL;DR</strong>
+          <span>
+            The experiments ask whether a pretrained diffusion teacher can be compressed from a
+            long \(1024\)-step reverse chain into a few reliable student steps. TinyGSM evaluates
+            IDLM in the conditional-generation setting, while OpenWebText measures unconditional
+            text quality and diversity through GenPPL and entropy.
+          </span>
+        </div>
+        <section class="result-block">
+          <h3 id="gsm8k" class="blog-subheading">4.1 Conditional generation on TinyGSM</h3>
+          <p>
+            We follow the TinyGSM/GSM8K conditional-generation protocol used in
+            <a href="https://arxiv.org/abs/2605.11125" target="_blank" rel="noopener noreferrer">S-FLM</a>.
+            Models are trained on TinyGSM, a large synthetic set of GSM8K-like word problems whose
+            solutions are executable programs, and evaluated on the GSM8K test split. At sampling time,
+            the problem text is clamped as context and the model samples only the solution region. We use
+            the SmolLM-135M tokenizer with length \(512\), generate one completion per problem, extract
+            the predicted numerical answer with the execution-based scorer, and report exact-match
+            accuracy against the GSM8K answer. This is a stricter test than local fluency: the generated
+            sequence must keep enough reasoning structure to execute to the right number. IDLM recovers
+            diffusion-teacher accuracy with far fewer reverse steps: IDLM-MDLM matches the \(1024\)-step
+            MDLM teacher at \(128\) steps, while IDLM-Duo reaches teacher-level accuracy at \(64\) steps.
+          </p>
+          <div class="tinygsm-examples" aria-label="TinyGSM conditional generation examples">
+            <article class="tinygsm-example">
+              <div class="tinygsm-example-head">
+                <span>IDLM-MDLM</span>
+                <strong>\(128\) steps</strong>
+              </div>
+              <p><b>Prompt.</b> A baseball coach buys \(9\) baseballs for &#36;3 each, and a basketball coach buys \(8\) basketballs for &#36;14 each. How much more did the basketball coach spend?</p>
+              <span class="tinygsm-code-label">Generated program</span>
+              <pre><code><span class="py-kw">def</span> <span class="py-fn">simple_math_problem</span>() <span class="py-op">-&gt;</span> <span class="py-type">int</span>:
+    <span class="py-name">baseball_cost</span> <span class="py-op">=</span> <span class="py-num">9</span> <span class="py-op">*</span> <span class="py-num">3</span>
+    <span class="py-name">basketball_cost</span> <span class="py-op">=</span> <span class="py-num">8</span> <span class="py-op">*</span> <span class="py-num">14</span>
+    <span class="py-name">difference</span> <span class="py-op">=</span> <span class="py-name">basketball_cost</span> <span class="py-op">-</span> <span class="py-name">baseball_cost</span>
+    <span class="py-name">result</span> <span class="py-op">=</span> <span class="py-name">difference</span>
+    <span class="py-kw">return</span> <span class="py-name">result</span></code></pre>
+            </article>
+            <article class="tinygsm-example">
+              <div class="tinygsm-example-head">
+                <span>IDLM-Duo</span>
+                <strong>\(64\) steps</strong>
+              </div>
+              <p><b>Prompt.</b> The red car is \(40\%\) cheaper than the blue car. The price of the blue car is &#36;100. How much do both cars cost?</p>
+              <span class="tinygsm-code-label">Generated program</span>
+              <pre><code><span class="py-kw">def</span> <span class="py-fn">simple_math_problem</span>() <span class="py-op">-&gt;</span> <span class="py-type">int</span>:
+    <span class="py-name">blue_car</span> <span class="py-op">=</span> <span class="py-num">100</span>
+    <span class="py-name">red_car</span> <span class="py-op">=</span> <span class="py-name">blue_car</span> <span class="py-op">*</span> <span class="py-num">0.60</span>
+    <span class="py-name">total_cost</span> <span class="py-op">=</span> <span class="py-name">blue_car</span> <span class="py-op">+</span> <span class="py-name">red_car</span>
+    <span class="py-name">result</span> <span class="py-op">=</span> <span class="py-name">total_cost</span>
+    <span class="py-kw">return</span> <span class="py-name">result</span></code></pre>
+            </article>
+          </div>
+          <figure class="gsm8k-chart" aria-label="GSM8K accuracy comparison by method">
+            <div class="gsm8k-chart-head">
+              <div>
+                <span class="gsm8k-chart-title">GSM8K accuracy</span>
+              </div>
+              <div class="gsm8k-legend" aria-hidden="true">
+                <span class="gsm8k-key-teacher">Teacher</span>
+                <span class="gsm8k-key-student">IDLM student</span>
+              </div>
+            </div>
+            <div class="gsm8k-plot" aria-label="Accuracy histogram with a zoomed 16 to 22 percent scale">
+              <div class="gsm8k-y-axis" aria-hidden="true">
+                <span>22%</span>
+                <span>20%</span>
+                <span>18%</span>
+                <span>16%</span>
+              </div>
+              <div class="gsm8k-bars">
+                <div class="gsm8k-column gsm8k-teacher" style="--height: 33.3%;">
+                  <strong class="gsm8k-score">\(18.0\%\)</strong>
+                  <div class="gsm8k-column-bar"><i></i></div>
+                  <div class="gsm8k-model">
+                    <span>Teacher</span>
+                    <strong>MDLM Teacher</strong>
+                    <em>\(1024\) steps</em>
+                  </div>
+                </div>
+                <div class="gsm8k-column gsm8k-student" style="--height: 64.3%;">
+                  <strong class="gsm8k-score">\(19.86\%\)</strong>
+                  <div class="gsm8k-column-bar"><i></i></div>
+                  <div class="gsm8k-model">
+                    <span>Student</span>
+                    <strong>IDLM-MDLM</strong>
+                    <em>\(128\) steps</em>
+                  </div>
+                </div>
+                <div class="gsm8k-column gsm8k-teacher" style="--height: 20%;">
+                  <strong class="gsm8k-score">\(17.2\%\)</strong>
+                  <div class="gsm8k-column-bar"><i></i></div>
+                  <div class="gsm8k-model">
+                    <span>Teacher</span>
+                    <strong>Duo Teacher</strong>
+                    <em>\(1024\) steps</em>
+                  </div>
+                </div>
+                <div class="gsm8k-column gsm8k-student gsm8k-best" style="--height: 89.7%;">
+                  <strong class="gsm8k-score">\(21.38\%\)</strong>
+                  <div class="gsm8k-column-bar"><i></i></div>
+                  <div class="gsm8k-model">
+                    <span>Student</span>
+                    <strong>IDLM-Duo</strong>
+                    <em>\(128\) steps</em>
+                  </div>
+                </div>
+                <div class="gsm8k-column gsm8k-student" style="--height: 50.5%;">
+                  <strong class="gsm8k-score">\(19.03\%\)</strong>
+                  <div class="gsm8k-column-bar"><i></i></div>
+                  <div class="gsm8k-model">
+                    <span>Student</span>
+                    <strong>IDLM-Duo</strong>
+                    <em>\(64\) steps</em>
+                  </div>
+                </div>
+                <div class="gsm8k-group gsm8k-group-masked"><span>Masked Diffusion</span></div>
+                <div class="gsm8k-group gsm8k-group-uniform"><span>Uniform Diffusion</span></div>
+              </div>
+            </div>
+          </figure>
+        </section>
+
+        <section class="result-block">
+          <h3 id="openwebtext" class="blog-subheading">4.2 Unconditional generation on OpenWebText</h3>
+          <p>
+            OpenWebText is the main unconditional generation test: unlike TinyGSM, there is no
+            clamped prompt, and the model must generate full \(1024\)-token sequences from the
+            terminal noise distribution. We follow the prior DLM protocol: OpenWebText is tokenized
+            with the GPT-2 tokenizer, documents are concatenated and wrapped with \(\texttt{eos}\)
+            tokens, the final \(100{,}000\) documents are held out for validation, and sampling is
+            evaluated in \(\texttt{float64}\) precision using the official <a href="https://arxiv.org/abs/2506.10892" target="_blank" rel="noopener noreferrer">Duo</a> evaluation code. The
+            question is how far we can compress pretrained teacher samplers: IDLM-MDLM replaces the
+            \(1024\)-step MDLM teacher with \(16\) reverse steps, while IDLM-DCD pushes the greedy
+            Duo-DCD teacher down to \(4\) steps. We report GenPPL from a fixed GPT-2 Large evaluator
+            together with token entropy, but the main story is teacher acceleration under much smaller
+            reverse-step budgets.
+          </p>
+          <div class="owt-examples-block" aria-label="OpenWebText generated text examples">
+            <div class="owt-examples">
+              <article class="owt-example">
+                <div class="owt-example-head">
+                  <span>IDLM-MDLM</span>
+                  <strong>\(16\) steps</strong>
+                </div>
+                <div class="owt-example-metrics" aria-label="IDLM-MDLM sample metrics">
+                  <span><b>GenPPL</b><em>\(32.75\)</em></span>
+                  <span><b>Entropy</b><em>\(5.42\)</em></span>
+                </div>
+                <p>
+                  &hellip; In the wake of angry remarks from the media, Sam Kicks Radio decided to
+                  take a shot, claiming that he had only ever learned how to get away with something
+                  bad. I want to get over it, he says, while the exchange returns to the same public
+                  dispute. &hellip;
+                </p>
+              </article>
+              <article class="owt-example">
+                <div class="owt-example-head">
+                  <span>IDLM-DCD<sup>g</sup></span>
+                  <strong>\(4\) steps</strong>
+                </div>
+                <div class="owt-example-metrics" aria-label="IDLM-DCD greedy sample metrics">
+                  <span><b>GenPPL</b><em>\(77.47\)</em></span>
+                  <span><b>Entropy</b><em>\(5.28\)</em></span>
+                </div>
+                <p>
+                  &hellip; This device is not the only way to use features in this article. People who
+                  conduct interviews in secure environments are attracted by a two-way monitor, making
+                  it an ideal candidate for an interviewee who can adapt to secure systems. &hellip;
+                </p>
+              </article>
+            </div>
+          </div>
+          <figure class="gsm8k-chart owt-chart" aria-label="OpenWebText GenPPL and entropy comparison">
+            <div class="gsm8k-chart-head">
+              <div>
+                <span class="gsm8k-chart-title">OpenWebText generation</span>
+              </div>
+              <div class="gsm8k-legend" aria-hidden="true">
+                <span class="owt-key-teacher">Teacher</span>
+                <span class="owt-key-idlm">IDLM student</span>
+              </div>
+            </div>
+            <div class="owt-panel-grid">
+              <article class="owt-panel" aria-label="Masked diffusion OpenWebText GenPPL comparison">
+                <div class="owt-panel-head">
+                  <span>Masked Diffusion</span>
+                </div>
+                <div class="owt-plot">
+                  <div class="owt-y-axis" aria-hidden="true">
+                    <strong class="owt-y-label">GenPPL ↓</strong>
+                    <span>50</span>
+                    <span>40</span>
+                    <span>30</span>
+                    <span>20</span>
+                    <span>10</span>
+                    <span>0</span>
+                  </div>
+                  <div class="owt-bars owt-bars-masked">
+                    <div class="owt-column owt-teacher" style="--height: 82.6%;">
+                      <strong class="owt-score">\(41.29\)</strong>
+                      <div class="owt-column-bar"><i></i></div>
+                      <div class="owt-model">
+                        <span>Teacher</span>
+                        <strong>MDLM</strong>
+                        <em>\(1024\) steps</em>
+                        <small>Entropy&nbsp;\(5.3\)</small>
+                      </div>
+                    </div>
+                    <div class="owt-column owt-idlm owt-best" style="--height: 65.5%;">
+                      <strong class="owt-score">\(32.75\)</strong>
+                      <div class="owt-column-bar"><i></i></div>
+                      <div class="owt-model">
+                        <span>Student</span>
+                        <strong>IDLM-MDLM</strong>
+                        <em>\(16\) steps</em>
+                        <small>Entropy&nbsp;\(5.4\)</small>
+                      </div>
+                    </div>
+                    <div class="owt-group owt-group-masked"><span>Distilled</span></div>
+                  </div>
+                </div>
+              </article>
+              <article class="owt-panel" aria-label="Uniform diffusion OpenWebText GenPPL comparison">
+                <div class="owt-panel-head">
+                  <span>Uniform Diffusion</span>
+                </div>
+                <div class="owt-plot">
+                  <div class="owt-y-axis" aria-hidden="true">
+                    <strong class="owt-y-label">GenPPL ↓</strong>
+                    <span>80</span>
+                    <span>60</span>
+                    <span>40</span>
+                    <span>20</span>
+                    <span>0</span>
+                  </div>
+                  <div class="owt-bars owt-bars-uniform">
+                    <div class="owt-column owt-teacher" style="--height: 89.7%;">
+                      <strong class="owt-score">\(71.72\)</strong>
+                      <div class="owt-column-bar"><i></i></div>
+                      <div class="owt-model">
+                        <span>Teacher</span>
+                        <strong>\(\mathrm{Duo}^{g}\)</strong>
+                        <em>\(1024\) steps</em>
+                        <small>Entropy&nbsp;\(5.2\)</small>
+                      </div>
+                    </div>
+                    <div class="owt-column owt-idlm owt-best" style="--height: 85.1%;">
+                      <strong class="owt-score">\(68.04\)</strong>
+                      <div class="owt-column-bar"><i></i></div>
+                      <div class="owt-model">
+                        <span>Student</span>
+                        <strong>\(\mathrm{IDLM\mbox{-}Duo}^{g}\)</strong>
+                        <em>\(16\) steps</em>
+                        <small>Entropy&nbsp;\(5.6\)</small>
+                      </div>
+                    </div>
+                    <div class="owt-column owt-idlm" style="--height: 96.9%;">
+                      <strong class="owt-score">\(77.47\)</strong>
+                      <div class="owt-column-bar"><i></i></div>
+                      <div class="owt-model">
+                        <span>Student</span>
+                        <strong>\(\mathrm{IDLM\mbox{-}DCD}^{g}\)</strong>
+                        <em>\(4\) steps</em>
+                        <small>Entropy&nbsp;\(5.3\)</small>
+                      </div>
+                    </div>
+                    <div class="owt-group owt-group-uniform"><span>Distilled</span></div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </figure>
+          <p>
+            Although recent diffusion language models show strong unconditional generation quality,
+            <a href="https://samacquaviva.com/projects/flow-evals/" target="_blank" rel="noopener noreferrer">recent research discussions</a>
+            have emphasized that GenPPL should be interpreted together with diversity, since
+            GenPPL is computed by an external language-model evaluator and changing the sampling
+            temperature can move a method along an entropy-perplexity tradeoff, from lower-entropy
+            samples with lower measured GenPPL to higher-entropy samples with higher measured
+            GenPPL. The frontier view is therefore a way to ask a fairer question: at a
+            comparable level of token entropy, which sampler achieves lower GenPPL?
+          </p>
+          <p>
+            In the frontier below, the desired direction is down and to the right: lower GenPPL while
+            maintaining comparable or higher entropy. IDLM-MDLM at \(16\) steps lands on the strong
+            masked-diffusion branch, improving over the \(1024\)-step MDLM teacher without moving into
+            an obviously collapsed low-entropy regime. For uniform diffusion, the IDLM-DCD points show
+            the main acceleration story: the \(16\)-step students remain in the competitive
+            high-entropy region.
+          </p>
+          <figure class="blog-figure">
+            <img src="/Bio-page/static/homepage/blog/idlm-owt-frontier.png" alt="Current arXiv GenPPL and entropy tradeoff plot on OpenWebText">
+            <figcaption>OpenWebText GenPPL-entropy frontier. Each point is annotated by Method / Sampling steps.</figcaption>
+          </figure>
+        </section>
+      </section>
+
+      <section id="conclusion" class="blog-section">
+        <h2>5. Conclusion</h2>
+        <p>
+          Diffusion language models offer parallel, bidirectional generation, but their long
+          denoising chains make inference slow. An attractive approach is Inverse Distillation:
+          instead of only shortening a reverse trajectory, it learns a fast student distribution
+          whose induced diffusion training process remains compatible with the pretrained teacher.
+          IDLM adapts this distribution-matching view to the language domain.
+        </p>
+        <p>
+          The result is a few-step generator with a clean target: match the teacher-supported data
+          distribution. The theory gives a unique optimum, the practical method handles discrete
+          non-smoothness, and the experiments show substantial step reductions on GSM8K and
+          OpenWebText while keeping the teacher's quality.
+        </p>
+      </section>
+
+      <section id="bibtex" class="blog-section">
+        <h2>6. BibTeX</h2>
+        <div class="bibtex-panel">
+          <button class="bibtex-copy" type="button" data-copy-target="idlm-bibtex" aria-label="Copy BibTeX entry" title="Copy BibTeX">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="8" y="8" width="12" height="12" rx="2"></rect>
+              <path d="M4 16V6a2 2 0 0 1 2-2h10"></path>
+            </svg>
+          </button>
+          <pre id="idlm-bibtex" class="algorithm-code bibtex-code"><code>@article{li2026idlm,
+  title={IDLM: Inverse-distilled Diffusion Language Models},
+  author={Li, David and Gushchin, Nikita and Abulkhanov, Dmitry and Moulines, Eric and Oseledets, Ivan and Panov, Maxim and Korotin, Alexander},
+  journal={arXiv preprint arXiv:2602.19066},
+  year={2026}
+}</code></pre>
+        </div>
+      </section>
+    </article>
+  </main>
+  <script>
+    const copyBibtex = async (text) => {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    };
+
+    document.querySelectorAll('.bibtex-copy').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const target = document.getElementById(button.dataset.copyTarget);
+        if (!target) return;
+        const text = target.textContent.trim();
+        const defaultLabel = 'Copy BibTeX entry';
+        try {
+          await copyBibtex(text);
+          button.classList.add('is-copied');
+          button.setAttribute('aria-label', 'Copied BibTeX entry');
+          button.setAttribute('title', 'Copied');
+          window.setTimeout(() => {
+            button.classList.remove('is-copied');
+            button.setAttribute('aria-label', defaultLabel);
+            button.setAttribute('title', 'Copy BibTeX');
+          }, 1600);
+        } catch (error) {
+          button.setAttribute('aria-label', 'Copy failed');
+          button.setAttribute('title', 'Copy failed');
+          window.setTimeout(() => {
+            button.setAttribute('aria-label', defaultLabel);
+            button.setAttribute('title', 'Copy BibTeX');
+          }, 1800);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

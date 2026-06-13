@@ -1,0 +1,342 @@
+\section{\texorpdfstring{SEDD Formulation, Theory, and Experiments}{SEDD Formulation, Theory, and Experiments}}
+\label{app:details of considered processes}
+
+This appendix collects the material needed to use SEDD within the IDLM framework. Appendix~\ref{app:sedd-formulation-theory} gives the CTMC score-entropy formulation and its sequence factorization. Appendix~\ref{app:sedd-reverse-distillation} specializes the IDLM objective to SEDD and explains the resulting teacher--fake advantage. Appendix~\ref{app:sedd-experiments} reports the SEDD experimental validation. We use the notation of Section~\ref{sec:discrete diffusion models}: $x_0,x_t,y\in\VC$ are one-hot tokens, $p^*$ is the data distribution, $p_\theta$ is the student distribution, and $q_t(x_t\mid x_0)$ is the forward noising kernel. For a matrix $A$, write $\langle u,v\rangle_A\vcentcolon=u^\top A v$; when the subscript is omitted, $\langle u,v\rangle=u^\top v$.
+
+\subsection{\texorpdfstring{SEDD Formulation and Theory}{SEDD Formulation and Theory}}
+\label{app:sedd-formulation-theory}
+
+\paragraph{Forward process.}
+As stated in Section~\ref{sec:discrete diffusion models}, the main text focuses on absorbing and uniform diffusion and defers the general CTMC formulation to this appendix. A SEDD forward process defines noised data marginals $p_t\in\Delta$ through
+\begin{equation}
+    \frac{dp_t}{dt} = Q_t p_t, \quad p_0 = p^*,
+    \label{eq:forward diffusion}
+\end{equation}
+where each diffusion matrix $Q_t \in \RR^{N \times N}$ has nonnegative off-diagonal entries and columns summing to zero. The off-diagonal entries are transition rates between tokens. The zero column-sum condition preserves total probability in Eq.~\eqref{eq:forward diffusion}, because probability mass that leaves a token is balanced by mass assigned to outgoing transitions. In the common parameterization $Q_t=\sigma_t Q$, the fixed matrix $Q$ determines the diffusion process, including which token-to-token transitions are allowed, while $\sigma_t$ controls the noise rate. Let $\bar{\sigma}_t \vcentcolon= \int_0^t \sigma_s ds$. Then $\exp(\bar{\sigma}_t Q)$ is the matrix exponential of $\bar{\sigma}_t Q$, and for a fixed clean token $x_0$ we write
+\begin{equation}
+    q_t(x_t \mid x_0)
+    \vcentcolon= \mathrm{Cat}\bigl(x_t;\exp(\bar{\sigma}_t Q)x_0\bigr).
+    \label{eq:conditional_distribution}
+\end{equation}
+The corresponding noised data marginal is $p_t(x_t)=\int q_t(x_t\mid x_0)\,p^*(dx_0)$. Absorbing and uniform diffusion are specific choices of $Q$ and are described in Appendices~\ref{app:absorbing process} and~\ref{app:uniform process}.
+
+\paragraph{Training loss.}
+In Section~\ref{sec:unified notations sequence loss}, SEDD is one instance of the unified token-level objective $\LC(f,p)$. SEDD~\citep{lou2024discrete} learns a positive score model $f\colon \VC\times[0,1]\to\RR_{+}^{N}$ that estimates reverse-process probability ratios. For a fixed clean token $x_0$, define the conditional score ratio
+\[
+    \langle s(x_t,t\mid x_0),y\rangle
+    \vcentcolon=
+    \frac{q_t(y\mid x_0)}{q_t(x_t\mid x_0)}.
+\]
+For any clean-token distribution $p$, the score-entropy objective has the same distribution-level form as the MDLM and Duo losses:
+\begin{equation}
+\label{eq:sedd loss}
+\begin{aligned}
+\LC_{\mathrm{SEDD}}(f,p)
+&\vcentcolon=
+\EE_{p(x_0),\,t,\,q_t}
+\bigl[
+    g_{\mathrm{SEDD}}\bigl(x_t,x_0,f(x_t,t)\bigr)
+\bigr],
+\\
+g_{\mathrm{SEDD}}\bigl(x_t,x_0,f(x_t,t)\bigr)
+&\vcentcolon=
+\sum_{y \neq x_t} \langle x_t,y\rangle_{Q_t}
+\biggl(
+\langle f(x_t,t),y\rangle
+- \langle s(x_t,t\mid x_0),y\rangle
+\log \langle f(x_t,t),y\rangle
+\biggr).
+\end{aligned}
+\end{equation}
+Here $\langle x_t,y\rangle_{Q_t}$ weights the loss by the forward transition rate from $y$ to $x_t$, so transitions not allowed by $Q_t$ do not contribute. For a generic training distribution $p$, we use the same notation $p_t$ for the noised marginal induced by $p$:
+\[
+    p_t(x)=\int q_t(x\mid x_0)\,p(dx_0).
+\]
+At a minimizer of Eq.~\eqref{eq:sedd loss}, the model satisfies
+\begin{equation}
+\label{eq:sedd-generic-optimum}
+    \langle f(x_t,t),y\rangle
+    =
+    \EE_{p(x_0\mid x_t)}
+    \bigl[
+    \langle s(x_t,t\mid x_0),y\rangle
+    \bigr]
+    =
+    \frac{p_t(y)}{p_t(x_t)}, \qquad y\neq x_t .
+\end{equation}
+In particular, when $p=p^*$ we denote the trained teacher by $f^*$, which gives
+\begin{equation}
+    \langle f^{*}(x_t,t),y\rangle
+    =
+    \frac{p_t(y)}{p_t(x_t)}, \qquad y\neq x_t .
+    \label{eq:sedd optimal ratio}
+\end{equation}
+Thus, the trained SEDD model provides the marginal ratios required by the reverse process.
+
+\paragraph{Sampling procedure.}
+Sampling uses the learned score model to instantiate a reverse-time CTMC. The reverse process starts from the tractable terminal distribution $\pi$ and evolves backward in time:
+\begin{equation}
+    \frac{dp_{1-t}}{dt} = \overline{Q}_{1-t}^{f} p_{1-t}, \quad p_1 = \pi.
+    \label{eq:backward diffusion}
+\end{equation}
+For $y\neq x_t$, the reverse transition rate induced by $f$ is
+\begin{equation}
+\label{eq:sedd-reverse-rates}
+    \langle y,x_t\rangle_{\overline Q_t^f}
+    \vcentcolon=
+    \langle f(x_t,t),y\rangle
+    \langle x_t,y\rangle_{Q_t},
+    \qquad
+    \langle x_t,x_t\rangle_{\overline Q_t^f}
+    =-
+    \sum_{y\neq x_t}
+    \langle y,x_t\rangle_{\overline Q_t^f}.
+\end{equation}
+With the teacher $f^*$, Eq.~\eqref{eq:sedd-reverse-rates} becomes the exact reverse rate
+\[
+    \langle y,x_t\rangle_{\overline Q_t^{f^*}}
+    =
+    \frac{p_t(y)}{p_t(x_t)}
+    \langle x_t,y\rangle_{Q_t}.
+\]
+Therefore, SEDD learns the probability ratios that convert the forward CTMC rates into reverse CTMC rates. Equivalently, for a small reverse step $h>0$, these rates define the transition probabilities
+\[
+    \PP(X_{t-h}=y\mid X_t=x_t)
+    =
+    \delta_{y,x_t}
+    +
+    h\langle y,x_t\rangle_{\overline Q_t^f}
+    +
+    o(h),
+\]
+where $\delta_{y,x_t}$ is the Kronecker delta. For $y\neq x_t$, this reduces to
+\[
+    \PP(X_{t-h}=y\mid X_t=x_t)
+    =
+    h\langle y,x_t\rangle_{\overline Q_t^f}
+    +
+    o(h),
+\]
+while the diagonal term gives the probability of staying at $x_t$ up to order $h$. Since $X_{t-h}$ is a discrete random vector, its expected one-step displacement is
+\[
+    \begin{aligned}
+    \EE[X_{t-h}-x_t\mid X_t=x_t]
+    =
+    \sum_{y\in\VC}
+    (y-x_t)\PP(X_{t-h}=y\mid X_t=x_t)
+    =
+    \sum_{y\neq x_t}
+    (y-x_t)\PP(X_{t-h}=y\mid X_t=x_t),
+    \end{aligned}
+\]
+where the two sums are equal because the $y=x_t$ term is zero.
+Substituting the small-step probabilities yields
+\[
+\begin{aligned}
+    \EE[X_{t-h}-x_t\mid X_t=x_t]
+    &=
+    h\sum_{y\neq x_t}
+    (y-x_t)
+    \langle y,x_t\rangle_{\overline Q_t^f}
+    +
+    o(h).
+\end{aligned}
+\]
+The delta and diagonal terms do not contribute to the displacement because they correspond to $y=x_t$, where $y-x_t=0$. Thus the reverse CTMC rates determine both the probabilities of individual jumps and the average local reverse update.
+We use this quantity below to interpret IDLM-SEDD. For a fixed corrupted token $x_t$, a SEDD model does not choose a single denoised token directly; it assigns rates to possible reverse jumps $x_t\to y$. The expectation $\EE[X_{t-h}-x_t\mid X_t=x_t]$ compresses these local jump rates into the average one-step denoising motion induced by the model. Thus, it gives a compact summary of how the model locally moves $x_t$ toward cleaner tokens; related local-move views are used in discrete flow matching~\citep{gat2024discrete}.
+
+\paragraph{Loss for sequences.}
+For language modeling, directly comparing all token pairs in a full sequence is expensive for large vocabularies. SEDD avoids this by using a coordinate-wise CTMC: each transition changes one position, while the forward conditional distribution factorizes across positions,
+\[
+    q_t(x_t^{1:L}\mid x_0^{1:L})
+    =
+    \prod_{\ell=1}^{L}q_t(x_t^\ell\mid x_0^\ell).
+\]
+Consequently, the conditional score ratio also factorizes. If $y^{1:L}$ differs from $x_t^{1:L}$ only at position $\ell$, then all unchanged-position factors cancel:
+\[
+\begin{aligned}
+    \frac{q_t(y^{1:L}\mid x_0^{1:L})}
+         {q_t(x_t^{1:L}\mid x_0^{1:L})}
+    &=
+    \prod_{j=1}^{L}
+    \frac{q_t(y^j\mid x_0^j)}
+         {q_t(x_t^j\mid x_0^j)}
+    =
+    \frac{q_t(y^\ell\mid x_0^\ell)}
+         {q_t(x_t^\ell\mid x_0^\ell)},
+    \qquad y^j=x_t^j\ \text{for }j\neq \ell .
+\end{aligned}
+\]
+The sequence-level objective follows the unified notation of Section~\ref{sec:unified notations sequence loss}:
+\[
+    \LC_{\mathrm{SEDD}}^{1:L}(f,p)
+    =
+    \EE_{p(x_0^{1:L}),\,t,\,q_t}
+    \biggl[
+    \sum_{\ell=1}^{L}
+    g_{\mathrm{SEDD}}
+    \bigl(x_t^\ell,x_0^\ell,f^\ell(x_t^{1:L},t)\bigr)
+    \biggr],
+\]
+where the score at position $\ell$ may condition on the full noised sequence. This factorization makes the general CTMC formulation practical for sequence models.
+
+\subsection{\texorpdfstring{Inverse Distillation for SEDD}{Inverse Distillation for SEDD}}
+\label{app:sedd-reverse-distillation}
+
+We now specialize the IDLM objective from Section~\ref{sec:idlm} to the SEDD loss above. The teacher $f^*$ is fixed and estimates reverse ratios for the data distribution. The fake model $f$ is trained on the current student distribution $p_\theta$ and estimates reverse ratios for student samples. IDLM-SEDD updates the student by comparing these two SEDD losses on the same student-generated examples.
+
+\paragraph{Student samples.}
+The expectations in $\LC_{\mathrm{SEDD}}(f,p_\theta)$ are taken over
+\[
+    x_0\sim p_\theta(x_0),
+    \qquad
+    t\sim\UC[0,1],
+    \qquad
+    x_t\sim q_t(\cdot\mid x_0).
+\]
+Equivalently, when $p_\theta$ is induced by the generator used in Section~\ref{sec:technical aspects}, we may write $x_0=G_\theta(\epsilon)$. The real data distribution affects this update only through the fixed teacher $f^*$; the fake model and the student are evaluated on samples from $p_\theta$.
+
+\paragraph{IDLM-SEDD objective.}
+Using Eq.~\eqref{eq:inverse discrete diffusion distillation}, the inverse-distillation objective for SEDD is
+\begin{equation}
+\label{eq:idlm-sedd-compact}
+    \LC_{\mathrm{IDLM\text{-}SEDD}}(\theta)
+    \vcentcolon=
+    \LC_{\mathrm{SEDD}}(f^*,p_\theta)
+    -
+    \min_f \LC_{\mathrm{SEDD}}(f,p_\theta).
+\end{equation}
+In practice, as in the main IDLM algorithm, we alternate between fitting the fake model and updating the student. With $\theta$ fixed, the fake model minimizes $\LC_{\mathrm{SEDD}}(f,p_\theta)$. With $f$ fixed, the student minimizes
+\begin{equation}
+\label{eq:idlm-sedd-fixed-compact}
+    \LC_{\mathrm{IDLM\text{-}SEDD}}(\theta)
+    \vcentcolon=
+    \LC_{\mathrm{SEDD}}(f^*,p_\theta)
+    -
+    \LC_{\mathrm{SEDD}}(f,p_\theta).
+\end{equation}
+Substituting Eq.~\eqref{eq:sedd loss} into both terms gives
+\begin{equation}
+\label{eq:idlm-sedd-expanded}
+\begin{aligned}
+\LC_{\mathrm{IDLM\text{-}SEDD}}(\theta)
+&=
+\EE_{p_\theta(x_0),\,t,\,q_t}
+\biggl[
+\sum_{y\neq x_t}
+\langle x_t,y\rangle_{Q_t}
+\biggl(
+\langle f^*(x_t,t),y\rangle
+-
+\langle s(x_t,t\mid x_0),y\rangle
+\log\langle f^*(x_t,t),y\rangle
+\biggr)
+\biggr]
+\\
+&\quad-
+\EE_{p_\theta(x_0),\,t,\,q_t}
+\biggl[
+\sum_{y\neq x_t}
+\langle x_t,y\rangle_{Q_t}
+\biggl(
+\langle f(x_t,t),y\rangle
+-
+\langle s(x_t,t\mid x_0),y\rangle
+\log\langle f(x_t,t),y\rangle
+\biggr)
+\biggr].
+\end{aligned}
+\end{equation}
+Since both expectations use the same $p_\theta(x_0)$, $t$, and $q_t(x_t\mid x_0)$, this simplifies to
+\begin{equation}
+\label{eq:idlm-sedd-simplified}
+\begin{aligned}
+\LC_{\mathrm{IDLM\text{-}SEDD}}(\theta)
+&=
+\EE_{p_\theta(x_0),\,t,\,q_t}
+\biggl[
+\sum_{y\neq x_t}
+\langle x_t,y\rangle_{Q_t}
+\biggl(
+\langle f^*(x_t,t)-f(x_t,t),y\rangle
+-
+\langle s(x_t,t\mid x_0),y\rangle
+\log
+\frac{\langle f^*(x_t,t),y\rangle}{\langle f(x_t,t),y\rangle}
+\biggr)
+\biggr].
+\end{aligned}
+\end{equation}
+Equation~\eqref{eq:idlm-sedd-simplified} is the fully substituted IDLM-SEDD loss with fixed fake model $f$.
+
+\paragraph{Advantage intuition.}
+Following the local-advantage notation of Section~\ref{sec:loss intuition}, for a sampled pair $(x_0,x_t)$ define
+\[
+\begin{aligned}
+    a_t
+    &\vcentcolon=
+    g_{\mathrm{SEDD}}\bigl(x_t,x_0,f^*(x_t,t)\bigr)
+    -
+    g_{\mathrm{SEDD}}\bigl(x_t,x_0,f(x_t,t)\bigr)
+    \\
+    &=
+    \sum_{y\neq x_t}
+    \langle x_t,y\rangle_{Q_t}
+    \biggl(
+    \langle f^*(x_t,t)-f(x_t,t),y\rangle
+    -
+    \langle s(x_t,t\mid x_0),y\rangle
+    \log
+    \frac{\langle f^*(x_t,t),y\rangle}
+         {\langle f(x_t,t),y\rangle}
+    \biggr).
+\end{aligned}
+\]
+In SEDD, $a_t$ compares teacher and fake local score-entropy losses on the same corrupted student sample. The comparison is made over the same jumps that define the reverse CTMC motion in Appendix~\ref{app:sedd-formulation-theory}: each candidate jump $x_t\to y$ contributes according to its forward rate $\langle x_t,y\rangle_{Q_t}$ and the teacher--fake difference in the score assigned to that jump. Equivalently, the teacher $f^*$ and the fake model $f$ induce two average local reverse updates,
+\[
+    d_{f^*}(x_t,t)
+    =
+    \sum_{y\neq x_t}
+    (y-x_t)\langle y,x_t\rangle_{\overline Q_t^{f^*}},
+    \qquad
+    d_f(x_t,t)
+    =
+    \sum_{y\neq x_t}
+    (y-x_t)\langle y,x_t\rangle_{\overline Q_t^f}.
+\]
+The quantity $a_t$ should be read as a local teacher-minus-fake loss, not as a Euclidean distance between $d_{f^*}$ and $d_f$. Since IDLM-SEDD minimizes $a_t$, the generator is encouraged to produce samples $x_0$ whose corrupted versions $x_t$ are better explained by the teacher reverse CTMC than by the fake reverse CTMC. In jump terms, a low teacher loss means that the teacher assigns plausible rates to reverse moves $x_t\to y$ that are compatible with denoising $x_t$ toward $x_0$; equivalently, its average local update $d_{f^*}(x_t,t)$ gives a useful teacher signal. The fake model contributes the opposite side of the comparison, so the student is pushed away from samples whose local reverse jumps are explained only by the fake model.
+
+The sign of $a_t=g_{\mathrm{SEDD}}(f^*)-g_{\mathrm{SEDD}}(f)$ gives the corner cases. If $a_t<0$, then the teacher has lower local SEDD loss than the fake model: the teacher likes the reverse jumps around this corrupted sample more, and the generator receives an attractive signal for such samples. If $a_t>0$, then the fake model has lower local loss: the sample is better explained by the current student-trained dynamics than by the teacher, so minimizing the objective discourages the generator from producing it. If $a_t\approx0$, the two models give nearly the same local explanation, and the relative teacher-versus-fake signal is weak.
+
+At the sequence level, we use the factorized SEDD loss from Appendix~\ref{app:sedd-formulation-theory}:
+\[
+    \LC_{\mathrm{IDLM\text{-}SEDD}}^{1:L}(\theta)
+    \vcentcolon=
+    \LC_{\mathrm{SEDD}}^{1:L}(f^*,p_\theta)
+    -
+    \min_f \LC_{\mathrm{SEDD}}^{1:L}(f,p_\theta).
+\]
+
+\subsection{\texorpdfstring{SEDD Experimental Validation}{SEDD Experimental Validation}}
+\label{app:sedd-experiments}
+
+\begin{figure}[!htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{images/sedd_bars_2.pdf}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{images/sedd_2.pdf}
+  \end{minipage}
+  \vspace{-1mm}
+  \caption{\small\textbf{IDLM-SEDD comparison with SEDD.} \textit{Left:} IDLM-SEDD matches SEDD generation quality and diversity while reducing sampling from $1024$ to $256$ steps ($4\times$). \textit{Right:} IDLM-SEDD improves GenPPL across sampling steps while preserving high entropy.}
+  \label{fig:sedd-results}
+  \vspace{-3mm}
+\end{figure}
+
+We use SEDD to evaluate IDLM under the general CTMC score-entropy formulation. Since only checkpoints for the absorbing-process SEDD variant are publicly available, we distill this variant and refer to it simply as SEDD for clarity.
+
+As shown in Figure~\ref{fig:sedd-results}, IDLM-SEDD improves GenPPL over SEDD across the evaluated sampling-step range while preserving high sequence entropy at low step counts. In particular, it achieves a $4\times$ reduction in sampling steps, accelerating generation from $1024$ to $256$ steps while maintaining both GenPPL and output diversity. Uncurated samples are provided in Appendix~\ref{app: qualitative samples}.

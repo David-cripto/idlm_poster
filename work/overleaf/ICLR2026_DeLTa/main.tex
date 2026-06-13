@@ -1,0 +1,233 @@
+\documentclass{article} % For LaTeX2e
+\usepackage{iclr2026_delta,times}
+
+% Optional math commands from https://github.com/goodfeli/dlbook_notation.
+\input{math_commands.tex}
+
+\usepackage{hyperref}
+\usepackage{url}
+
+% --- Packages from main.tex ---
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs} % for professional tables
+\usepackage{multirow}
+\usepackage{listings}
+\usepackage[ruled,vlined]{algorithm2e}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{enumitem}
+\usepackage{wasysym}
+\usepackage{xcolor}
+\definecolor{myorange}{HTML}{C04000}
+\usepackage[most]{tcolorbox}
+
+\tcbuselibrary{breakable}
+
+\tcbset{
+  bluebox/.style={
+    breakable,
+    colback=blue!5,
+    colframe=blue!30,
+    boxrule=0.8pt,
+    arc=3pt,
+    left=6pt,
+    right=6pt,
+    top=4pt,
+    bottom=4pt
+  },
+  orangebox/.style={
+    breakable,
+    colback=orange!10,
+    colframe=orange!40,
+    boxrule=0.8pt,
+    arc=3pt,
+    left=6pt,
+    right=6pt,
+    top=4pt,
+    bottom=4pt
+  }
+}
+
+\newtcolorbox{Box1}[2][]{
+  lower separated=false,
+  colback=white,
+  colframe=black,fonttitle=\bfseries,
+  colbacktitle=white,
+  coltitle=black,
+  %colbacktitle=black,
+  %coltitle=white,
+  boxrule=1pt,
+  boxsep=1pt,
+  left=2mm,
+  right=2mm,
+  enhanced,
+  attach boxed title to top left={yshift=-0.1in,xshift=0.15in},
+                 boxed title style={colframe=black},
+  title={#2},#1
+}
+
+% --- Custom Commands from main.tex ---
+% \DeclareMathOperator*{\argmin}{arg\,min} % Already in math_commands.tex
+% \DeclareMathOperator*{\argmax}{arg\,max} % Already in math_commands.tex
+\newcommand{\david}[1]{{\scriptsize\textbf{\color{red} DL: #1}}}
+\newcommand{\DC}{\mathcal{D}}
+\newcommand{\LC}{\mathcal{L}}
+\newcommand{\NC}{\mathcal{N}}
+\newcommand{\OC}{\mathcal{O}}
+\newcommand{\UC}{\mathcal{U}}
+\newcommand{\VC}{\mathcal{V}}
+\newcommand{\XC}{\mathcal{X}}
+\newcommand{\ZC}{\mathcal{Z}}
+\newcommand{\EE}{\mathbb{E}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\RR}{\mathbb{R}}
+\def\atnew{{\mathcal{T}}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\m}{\mathbf{m}}
+\newcommand{\z}{\mathbf{z}}
+\newcommand{\piv}{\mathbf{\pi}}
+% \newcommand{\softmax}{\mathrm{softmax}} % Already in math_commands.tex
+\usepackage{colortbl}
+\newcommand{\shade}{\cellcolor{gray!20}}
+\def\prior{\text{$\boldsymbol{\mathit{\pi}}$}}
+\newcommand{\ecoparagraph}[1]{%\vspace{-0.05cm}
+\noindent\textbf{#1}}
+\usepackage{wasysym}
+
+\usepackage{enumitem}
+
+\allowdisplaybreaks
+\everypar{\looseness=-1}
+
+% if you use cleveref..
+\usepackage[capitalize,noabbrev]{cleveref}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% THEOREMS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\definecolor{pearDark}{HTML}{2980B9}
+\definecolor{MyRed}{HTML}{C0392B}
+\newcommand{\cbox}[1]{\colorbox{MyRed!20}{#1}}
+
+% Todonotes is useful during development; simply uncomment the next line
+%    and comment out the line below the next line to turn off comments
+%\usepackage[disable,textsize=tiny]{todonotes}
+\usepackage[textsize=tiny]{todonotes}
+
+\newcommand{\rewriteit}[1]{\textcolor{red}{\textbf{#1}}}
+
+% --- Graphicspath ---
+\graphicspath{{}}
+
+\title{Inverse-distilled Diffusion Language Models}
+
+% Authors must not appear in the submitted version. They should be hidden
+% as long as the \iclrfinalcopy macro remains commented out below.
+% Non-anonymous submissions will be rejected without review.
+
+\author{Firstname1 Lastname1\thanks{Equal contribution} \\
+Department of XXX, University of YYY\\
+Location, Country\\
+\texttt{first1.last1@xxx.edu} \\
+\And
+Firstname2 Lastname2\footnotemark[1] \\
+Department of XXX, University of YYY\\
+Company Name\\
+Location, Country\\
+\texttt{first2.last2@www.uk} \\
+\And
+Firstname3 Lastname3 \\
+Company Name\\
+Location, Country\\
+\And
+Firstname4 Lastname4 \\
+School of ZZZ, Institute of WWW\\
+Location, Country\\
+\And
+Firstname5 Lastname5 \\
+Department of XXX, University of YYY\\
+Location, Country\\
+\And
+Firstname6 Lastname6 \\
+School of ZZZ, Institute of WWW\\
+Department of XXX, University of YYY\\
+Company Name\\
+Location, Country\\
+\And
+Firstname7 Lastname7 \\
+Company Name\\
+Location, Country\\
+\And
+Firstname8 Lastname8 \\
+School of ZZZ, Institute of WWW\\
+Department of XXX, University of YYY\\
+Company Name
+}
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to \LaTeX{} to determine where to break
+% the lines. Using \AND forces a linebreak at that point. So, if \LaTeX{}
+% puts 3 of 4 authors names on the first line, and the last on the second
+% line, try using \AND instead of \And before the third author name.
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+%\iclrfinalcopy % Uncomment for camera-ready version, but NOT for submission.
+\begin{document}
+
+
+\maketitle
+
+\input{sec/abstract}
+\input{sec/introduction}
+% \input{sec/prelim_without_sedd}
+\input{sec/preliminaries}
+\input{sec/method}
+\input{sec/experiments}
+% \input{sec/related_works}
+
+\clearpage
+%\section*{Impact Statement}
+%  This paper presents work whose goal is to advance the field of Machine
+%  Learning. There are many potential societal consequences of our work, none
+%  which we feel must be specifically highlighted here.
+
+\nocite{langley00}
+
+\bibliography{iclr2026_delta}
+\bibliographystyle{iclr2026_delta}
+
+\newpage
+\appendix
+\section*{Appendix}
+\input{appendix/related_works}
+\input{appendix/details_of_considered_processes}
+\input{appendix/method_details}
+\input{appendix/proofs}
+\input{appendix/algorithm}
+\input{appendix/experimental_details}
+\input{appendix/quantitative_results}
+\input{appendix/qualitative_samples}
+% \input{appendix/unified_loss}
+
+
+\end{document}

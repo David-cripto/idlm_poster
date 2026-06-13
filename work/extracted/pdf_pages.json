@@ -1,0 +1,354 @@
+[
+  {
+    "page": 1,
+    "text": "\u041f\u0440\u0438\u043c\u0435\u0440 \u0441\u043b\u0430\u0439\u0434\u0430 \u0441 \u0441\u043e\u0434\u0435\u0440\u0436\u0430\u043d\u0438\u0435\u043c \u043f\u0440\u0435\u0437\u0435\u043d\u0442\u0430\u0446\u0438\u0438.\n\u041f\u0435\u0440\u0435\u0447\u0438\u0441\u043b\u0438 \u0437\u0434\u0435\u0441\u044c \u0441\u043c\u044b\u0441\u043b\u043e\u0432\u044b\u0435 \u0447\u0430\u0441\u0442\u0438 \u0441\u0432\u043e\u0435\u0439 \u043f\u0440\u0435\u0437\u0435\u043d\u0442\u0430\u0446\u0438\u0438, \n\u0447\u0442\u043e\u0431\u044b \u0440\u0430\u0441\u0441\u043a\u0430\u0437\u0430\u0442\u044c \u0441\u043b\u0443\u0448\u0430\u0442\u0435\u043b\u044f\u043c \u043e \u0445\u043e\u0434\u0435 \u0432\u044b\u0441\u0442\u0443\u043f\u043b\u0435\u043d\u0438\u044f.\n\u0418\u041d\u0421\u0422\u0420\u0423\u041a\u0426\u0418\u0418\nIDLM\ue092 Inverse-distilled Diffusion Language Models\nDavid Li*; 1, Nikita Gushchin*; 2,3, Dmitry Abulkhanov, Eric Moulines1,4, Ivan Oseledets2,3, \nMaxim Panov1, Alexander Korotin2,3\n1 MBZUAI, Abu Dhabi, UAE\n2 Applied AI Institute, Moscow, Russia\n3 AXXX, Moscow, Russia\n4 EPITA, Paris, France\n6 BRAIn Lab, Moscow, Russia\n* Equal contribution\nAccepted to ICML 2026"
+  },
+  {
+    "page": 2,
+    "text": "\u041f\u0440\u0438\u043c\u0435\u0440 \u0441\u043b\u0430\u0439\u0434\u0430 \u0441 \u0441\u043e\u0434\u0435\u0440\u0436\u0430\u043d\u0438\u0435\u043c \u043f\u0440\u0435\u0437\u0435\u043d\u0442\u0430\u0446\u0438\u0438.\n\u041f\u0435\u0440\u0435\u0447\u0438\u0441\u043b\u0438 \u0437\u0434\u0435\u0441\u044c \u0441\u043c\u044b\u0441\u043b\u043e\u0432\u044b\u0435 \u0447\u0430\u0441\u0442\u0438 \u0441\u0432\u043e\u0435\u0439 \u043f\u0440\u0435\u0437\u0435\u043d\u0442\u0430\u0446\u0438\u0438, \n\u0447\u0442\u043e\u0431\u044b \u0440\u0430\u0441\u0441\u043a\u0430\u0437\u0430\u0442\u044c \u0441\u043b\u0443\u0448\u0430\u0442\u0435\u043b\u044f\u043c \u043e \u0445\u043e\u0434\u0435 \u0432\u044b\u0441\u0442\u0443\u043f\u043b\u0435\u043d\u0438\u044f.\n\u0418\u041d\u0421\u0422\u0420\u0423\u041a\u0426\u0418\u0418\nTeam\nDavid Li* Dmitry AbulkhanovNikita Gushchin*\nAlexander KorotinMaxim PanovIvan Oseledets\nEric Moulines"
+  },
+  {
+    "page": 3,
+    "text": "RoadmapFace \nmask to \nimage\nReference\n1. Motivation & Overview of Distillation\n2. Inverse Distillation\n3. IDLM\ue092 Theoretical Contribution\n4. IDLM\ue092 Non-Smoothness of Discrete Space\na. Masked Diffusion\nb. Uniform Diffusion\n5. Sequence-Level Semantics in few-steps?\n6. Practical Aspects\n7 .Experiments"
+  },
+  {
+    "page": 4,
+    "text": "OutlineFace \nmask to \nimage\nReference\n1. Motivation & Overview of Distillation\n2. Inverse Distillation\n3. IDLM\ue092 Theoretical Contribution\n4. IDLM\ue092 Non-Smoothness of Discrete Space\na. Masked Diffusion\nb. Uniform Diffusion\n5. Sequence-Level Semantics in few-steps?\n6. Practical Aspects\n7 .Experiments"
+  },
+  {
+    "page": 5,
+    "text": "Challenge: Slow InferenceFace \nmask to \nimage\nReference"
+  },
+  {
+    "page": 6,
+    "text": "Challenge: Slow InferenceFace \nmask to \nimage\nReference\nSolved via distillation\nNot exhaustively explored"
+  },
+  {
+    "page": 7,
+    "text": "Distillation of continuous Diffusion ModelsFace \nmask to \nimage\nReference\ndistillation\nConsistency-like paradigm \ue0831\ue084\nDistribution Matching paradigm \ue0832\ue084"
+  },
+  {
+    "page": 8,
+    "text": "Distillation of continuous Diffusion ModelsFace \nmask to \nimage\nReference\nConsistency-like paradigm \ue0831\ue084\nDistribution Matching paradigm \ue0832\ue084\nBetter quality \n\nExpensive to train \nWorse quality \n\nCheaper to train"
+  },
+  {
+    "page": 9,
+    "text": "OutlineFace \nmask to \nimage\nReference\n1. Motivation & Overview of Distillation\n2. Inverse Distillation\n3. IDLM\ue092 Theoretical Contribution\n4. IDLM\ue092 Non-Smoothness of Discrete Space\na. Masked Diffusion\nb. Uniform Diffusion\n5. Sequence-Level Semantics in few-steps?\n6. Practical Aspects\n7 .Experiments"
+  },
+  {
+    "page": 10,
+    "text": "Inverse DistillationFace \nmask to \nimage\nReference\nForward training Inverse Distillation\nGiven: data distribution\nFind: diffusion model\nGiven: pretrained diffusion model\nFind: distribution s.t.\nIntuition\nWe want to train it so that the optimal diffusion \nmodel learned from its samples matches the given \npretrained diffusion model"
+  },
+  {
+    "page": 11,
+    "text": "Inverse DistillationFace \nmask to \nimage\nReference\nForward training Inverse Distillation\nGiven: data distribution\nFind: diffusion model\nGiven: pretrained diffusion model\nFind: distribution \nExample of continuous diffusion models \nGoal\nGiven Goal\nGiven"
+  },
+  {
+    "page": 12,
+    "text": "Inverse DistillationFace \nmask to \nimage\nReference\nForward training Inverse Distillation\nGiven: samples from\nFind: diffusion model\nGiven: pretrained diffusion model\nFind: distribution \nExample of continuous diffusion models \nOptimization through argmin is not feasible"
+  },
+  {
+    "page": 13,
+    "text": "Inverse Distillation loss functionFace \nmask to \nimage\nReference\nProperties \n \u25cf \u0438\n\u25cf if then: \nIntuition\nThe inner optimization finds the best diffusion model \ntrained on (fake model)\nThe generator then minimizes the gap"
+  },
+  {
+    "page": 14,
+    "text": "Inverse Distillation loss functionFace \nmask to \nimage\nReference\nProperties \n \u25cf \u0438\n\u25cf if then: \nConverse is not true in general\nTrain \u201cfake\u02ee model\nIntuition\nThe inner optimization finds the best diffusion model \ntrained on (fake model)\nThe generator then minimizes the gap"
+  },
+  {
+    "page": 15,
+    "text": "DMD as inverse distillationFace \nmask to \nimage\nReference\n\u201cFake\u02ee model\nConsider loss:\nTrue and fake \nminimizers\nInverse loss\nGradient of it:"
+  },
+  {
+    "page": 16,
+    "text": "History of Inverse Distillation Face \nmask to \nimage\nReference\nAccepted to ICML 2025\nContributions\n\u25cf Introduced the concept of Inverse Distillation\n\u25cf Established the uniqueness for Bridge Models\nAccepted to ICLR 2026 \ue081Oral\ue082\nContributions\n\u25cf Extended the theory for matching models\n\u25cf Expanded framework with true data\nAccepted to ICML 2026\nContributions\n\u25cf Extended the theory for discrete time\n\u25cf Theoretically compare with DMD framework\nIBMD \ue0833\ue084\nRealUID \ue0834\ue084\nRSD \ue0835\ue084"
+  },
+  {
+    "page": 17,
+    "text": "OutlineFace \nmask to \nimage\nReference\n1. Motivation & Overview of Distillation\n2. Inverse Distillation\n3. IDLM\ue092 Theoretical Contribution\n4. IDLM\ue092 Non-Smoothness of Discrete Space\na. Masked Diffusion\nb. Uniform Diffusion\n5. Sequence-Level Semantics in few-steps?\n6. Practical Aspects\n7 .Experiments"
+  },
+  {
+    "page": 18,
+    "text": "Contributions of IDLMFace \nmask to \nimage\nReference\nPossible problems:\nWe want to extend Inverse Distillation for Discrete Diffusion Models\n\u25cf Theoretical groundness:\n???\n\u25cf Non-smooth discrete domain (will clarify later):"
+  },
+  {
+    "page": 19,
+    "text": "Theoretical properties:\nTheoretical ContributionFace \nmask to \nimage\nReference\nIBMD\ue0833\ue084, RSD\ue0835\ue084, \nSiD\ue0836\ue084, FGM\ue0837\ue084\nDMD\ue0838\ue084, D\ue088MMD\ue0839\ue084, \nDiDi-Instruct[10]\nRSD\ue0835\ue084"
+  },
+  {
+    "page": 20,
+    "text": "Theoretical ContributionFace \nmask to \nimage\nReference\nTheoretical properties:"
+  },
+  {
+    "page": 21,
+    "text": "Theoretical ContributionFace \nmask to \nimage\nReference\nTheoretical properties:\n IDLM DMD-like"
+  },
+  {
+    "page": 22,
+    "text": "Connection between Inverse Distillation and DMD-like methodsFace \nmask to \nimage\nReference\nIBMD\ue0833\ue084, RSD\ue0835\ue084, SiD\ue0836\ue084, FGM\ue0837\ue084\nDMD\ue0838\ue084, D\ue088MMD\ue0839\ue084, DiDi-Instruct[10], DiMO\ue08311\ue084\nDMD-like Inverse distillation"
+  },
+  {
+    "page": 23,
+    "text": "Face \nmask to \nimage\nReference\nIBMD\ue0833\ue084, RSD\ue0835\ue084, SiD\ue0836\ue084, FGM\ue0837\ue084\nDMD\ue0838\ue084, D\ue088MMD\ue0839\ue084, DiDi-Instruct[10], DiMO\ue08311\ue084\nDMD-like Inverse distillation\nExample of continuous diffusion models \nConnection between Inverse Distillation and DMD-like methods"
+  },
+  {
+    "page": 24,
+    "text": "Face \nmask to \nimage\nReference\nIBMD\ue0833\ue084, RSD\ue0835\ue084, SiD\ue0836\ue084, FGM\ue0837\ue084\nDMD\ue0838\ue084, D\ue088MMD\ue0839\ue084, DiDi-Instruct[10], DiMO\ue08311\ue084\nDMD-like Inverse distillation\nExample of continuous diffusion models \nConnection between Inverse Distillation and DMD-like methods\nHow to take gradients?"
+  },
+  {
+    "page": 25,
+    "text": "Difference between Inverse Distillation and DMD-like methodsFace \nmask to \nimage\nReference\nIBMD\ue0833\ue084, RSD\ue0835\ue084, SiD\ue0836\ue084, FGM\ue0837\ue084\nDMD\ue0838\ue084, D\ue088MMD\ue0839\ue084, DiDi-Instruct[10], DiMO\ue08311\ue084\nDMD-like Inverse distillation"
+  },
+  {
+    "page": 26,
+    "text": "Difference between Inverse Distillation and DMD-like methodsFace \nmask to \nimage\nReference\nIBMD\ue0833\ue084, RSD\ue0835\ue084, SiD\ue0836\ue084, FGM\ue0837\ue084\nDMD\ue0838\ue084, D\ue088MMD\ue0839\ue084, DiDi-Instruct[10], DiMO\ue08311\ue084\nDMD-like Inverse distillation\nDMD loss"
+  },
+  {
+    "page": 27,
+    "text": "Difference between Inverse Distillation and DMD-like methodsFace \nmask to \nimage\nReference\nIBMD\ue0833\ue084, RSD\ue0835\ue084, SiD\ue0836\ue084, FGM\ue0837\ue084\nDMD\ue0838\ue084, D\ue088MMD\ue0839\ue084, DiDi-Instruct[10], DiMO\ue08311\ue084\n\u201cTo reduce Inverse Distillation to the standard VSD \ue081DMD-like) formulation, the application of a stop-gradient operator is required to \nsuppress the influence of these auxiliary gradient terms\u02ee\nSG leads to this connection, which was noted in RSD \ue0835\ue084\nDMD-like Inverse distillation\nChange the full gradient"
+  },
+  {
+    "page": 28,
+    "text": "Difference between Inverse Distillation and DMD-like methodsFace \nmask to \nimage\nReference\nIBMD\ue0833\ue084, RSD\ue0835\ue084, SiD\ue0836\ue084, FGM\ue0837\ue084\nDMD\ue0838\ue084, D\ue088MMD\ue0839\ue084, DiDi-Instruct[10], DiMO\ue08311\ue084\nDMD-like Inverse distillation\nChange the full gradient\nD\ue088MMD as an example:"
+  },
+  {
+    "page": 29,
+    "text": "OutlineFace \nmask to \nimage\nReference\n1. Motivation & Overview of Distillation\n2. Inverse Distillation\n3. IDLM\ue092 Theoretical Contribution\n4. IDLM\ue092 Non-Smoothness of Discrete Space\na. Masked Diffusion\nb. Uniform Diffusion\n5. Sequence-Level Semantics in few-steps?\n6. Practical Aspects\n7 .Experiments"
+  },
+  {
+    "page": 30,
+    "text": "Intuition of Masked Diffusion (Teacher model)Face \nmask to \nimage\nReference\nIntuition\nUnmasking occurs only once during generation, so the transition timestep does not matter. We only need to move to the \ncorrect token.\nMDLM\ue08311\ue084"
+  },
+  {
+    "page": 31,
+    "text": "Intuition of Masked Diffusion (Teacher model)Face \nmask to \nimage\nReference\nIntuition\nUnmasking occurs only once during generation, so the transition timestep does not matter. We only need to move to the \ncorrect token.\nMDLM\ue08311\ue084\nSUBS parameterization"
+  },
+  {
+    "page": 32,
+    "text": "Practical Contribution: IDLM-MDLMFace \nmask to \nimage\nReference\nMasked Diffusion"
+  },
+  {
+    "page": 33,
+    "text": "Face \nmask to \nimage\nReference\nMasked Diffusion\nHow to take gradient through it?\n1 2\n1\nPractical Contribution: IDLM-MDLM\nReparametrization"
+  },
+  {
+    "page": 34,
+    "text": "Face \nmask to \nimage\nReference\nMasked Diffusion\nHow to take gradient through it?\n1 2\n1\nPractical Contribution: IDLM-MDLM\nReparametrization"
+  },
+  {
+    "page": 35,
+    "text": "Face \nmask to \nimage\nReference\nMasked Diffusion\nHow to take gradient through it?\n1 2\n1\n Reparametrization\nGradient-stable operation?\nPractical Contribution: IDLM-MDLM"
+  },
+  {
+    "page": 36,
+    "text": "Face \nmask to \nimage\nReference\nPractical Contribution: IDLM-MDLM\n1 Simplex relaxation\nLet the model output points in the simplex"
+  },
+  {
+    "page": 37,
+    "text": "Face \nmask to \nimage\nReference\nPractical Contribution: IDLM-MDLM\n1 Simplex relaxation\nLet the model output points in the simplex\nPotential Issues?"
+  },
+  {
+    "page": 38,
+    "text": "Face \nmask to \nimage\nReference\nPractical Contribution: IDLM-MDLM\n1 Simplex relaxation\nLet the model output points in the simplex\nOne-hot\n Simplex\n!The distribution is still valid (sums up to 1\ue082!"
+  },
+  {
+    "page": 39,
+    "text": "Face \nmask to \nimage\nReference\nPractical Contribution: IDLM-MDLM\n1 Simplex relaxation\nLet the model output points in the simplex\nOne-hot Simplex\n!Use a weighted sum, not a single value!"
+  },
+  {
+    "page": 40,
+    "text": "Face \nmask to \nimage\nReference\nMasked Diffusion\nHow to take gradient through it?\n2\nPractical Contribution: IDLM-MDLM\nSUBS parameterization"
+  },
+  {
+    "page": 41,
+    "text": "Face \nmask to \nimage\nReference\nPractical Contribution: IDLM-MDLM\nMasked Diffusion\nSUBS \nparameterization"
+  },
+  {
+    "page": 42,
+    "text": "Face \nmask to \nimage\nReference\nPractical Contribution: IDLM-MDLM\nMasked Diffusion\nSUBS \nparameterization\nIn practice, stop-gradient is \nunnecessary, SUBS parameterization \nhandles everything\nD\ue088MMD \ue0839\ue084 \ue081DMD-like distillation)"
+  },
+  {
+    "page": 43,
+    "text": "Face \nmask to \nimage\nReference\nPractical Contribution: IDLM-MDLM\nD\ue088MMD \ue0839\ue084 \ue081DMD-like distillation)\n\u201cTo reduce Inverse Distillation to the standard VSD \n\ue081DMD-like) formulation, the application of a \nstop-gradient operator is required to suppress the \ninfluence of these auxiliary gradient terms\u02ee\nSG leads to this connection, which was \nnoted in RSD \ue0835\ue084"
+  },
+  {
+    "page": 44,
+    "text": "Face \nmask to \nimage\nReference\nPractical Contribution: IDLM-MDLM\nD\ue088MMD \ue0839\ue084 \ue081DMD-like distillation)\nThis situation is unique to the Masked Diffusion \nsetting because of the SUBS parameterization used \nin the MDLM model. In general, this property does \nnot hold. We will later demonstrate this difference in \nthe case of Uniform Diffusion.\nUnique case of MDLM"
+  },
+  {
+    "page": 45,
+    "text": "Face \nmask to \nimage\nReference\nBeyond SUBS parameterization\n\u25cf SUBS\n\u25cf Gumbel\n\u25cf Argmax\nTo pass gradients through the intermediate state, it must be continuous. However, the teacher model was trained on one-hot \nvectors and may produce poor signals for continuous inputs.\nNon-smoothness of teachers\u02bc input"
+  },
+  {
+    "page": 46,
+    "text": "Intuition of IDLM loss: Masked DiffusionFace \nmask to \nimage\nReference\nIntuition\nThe model maximize the signal from the teacher \nmodel (attraction):\nThe model minimize the signal from the fake model \n(repulsion):"
+  },
+  {
+    "page": 47,
+    "text": "OutlineFace \nmask to \nimage\nReference\n1. Motivation & Overview of Distillation\n2. Inverse Distillation\n3. IDLM\ue092 Theoretical Contribution\n4. IDLM\ue092 Non-Smoothness of Discrete Space\na. Masked Diffusion\nb. Uniform Diffusion\n5. Sequence-Level Semantics in few-steps?\n6. Practical Aspects\n7 .Experiments"
+  },
+  {
+    "page": 48,
+    "text": "Intuition of Uniform Diffusion (Teacher model)Face \nmask to \nimage\nReference\nIntuition\nWe need to determine both the timestep at which to make the jump and the specific token to jump to at that timestep.\nGIDD\ue08312\ue084"
+  },
+  {
+    "page": 49,
+    "text": "Practical Contribution: IDLM-DuoFace \nmask to \nimage\nReference\nUniform Diffusion\nHow to take gradient through it?\n1 2"
+  },
+  {
+    "page": 50,
+    "text": "Practical Contribution: IDLM-DuoFace \nmask to \nimage\nReference\nUniform Diffusion\nHow to take gradient through it?\n2The same as in MDLM"
+  },
+  {
+    "page": 51,
+    "text": "Practical Contribution: IDLM-DuoFace \nmask to \nimage\nReference\nUniform Diffusion\nHow to take gradient through it?\n2The same as in MDLM\n2 Duo parameterization gives Gaussian reparameterization trick\nThe Duo model can accept points from the simplex as inputs, which makes this possible. As a result, the input is smooth.\nSmoothness of teachers\u02bc input"
+  },
+  {
+    "page": 52,
+    "text": "DMD-like Uniform Diffusion DistillationFace \nmask to \nimage\nReference\nUniform Diffusion\n\u25cf with SG\n\u25cf without SG\nDMD-like distillation is ineffective in practice for uniform diffusion. In contrast, using gradients from intermediate states yields a \nsubstantially more stable training procedure.\nStop gradient \neffect"
+  },
+  {
+    "page": 53,
+    "text": "Intuition of IDLM loss: Uniform DiffusionFace \nmask to \nimage\nReference"
+  },
+  {
+    "page": 54,
+    "text": "Intuition of IDLM loss: Uniform DiffusionFace \nmask to \nimage\nReference\nIt has the same \nintuition as in \nIDLM\ue088MDLM, but \nfor distribution at \ntimestep \u201ct\u02ee"
+  },
+  {
+    "page": 55,
+    "text": "Intuition of IDLM loss: Uniform DiffusionFace \nmask to \nimage\nReference\nConnected with the holding time in the \nintermediate state\nIntuition\n\u25cf If a generator token has low teacher probability after noising at timestep , the teacher has a short \nholding time there, which discourages the generator from predicting it.\n\u25cf If a generator token has high teacher probability but low fake probability, the generator is even more \nstrongly discouraged from predicting it. (An attraction/repulsion analogy formulated in terms of \nholding times)"
+  },
+  {
+    "page": 56,
+    "text": "Overall Intuition of Distribution Matching ParadigmFace \nmask to \nimage\nReference\nIn the optimum"
+  },
+  {
+    "page": 57,
+    "text": "OutlineFace \nmask to \nimage\nReference\n1. Motivation & Overview of Distillation\n2. Inverse Distillation\n3. IDLM\ue092 Theoretical Contribution\n4. IDLM\ue092 Non-Smoothness of Discrete Space\na. Masked Diffusion\nb. Uniform Diffusion\n5. Sequence-Level Semantics in few-steps?\n6. Practical Aspects\n7 .Experiments"
+  },
+  {
+    "page": 58,
+    "text": "Capture semantic of sequences: Mixture of distributionsFace \nmask to \nimage\nReference\nHow the model can capture correlation between tokens in factorized regime?"
+  },
+  {
+    "page": 59,
+    "text": "Capture semantic of sequences: Mixture of distributionsFace \nmask to \nimage\nReference\nHow the model can capture correlation between tokens in factorized regime?\nMixture of distributions!\nIntuition\nIn theory, the generator should sample from the vocabulary space. Thus, during training, its output \ndistribution is encouraged to approach a delta distribution over vocabulary tokens."
+  },
+  {
+    "page": 60,
+    "text": "Capture semantic of sequences: convergence to the deltaFace \nmask to \nimage\nReference\nTraining\nIntuition\nFor each latent variable, we generate a distinct \ndelta distribution over the entire sentence, \ncorresponding to that specific sentence."
+  },
+  {
+    "page": 61,
+    "text": "OutlineFace \nmask to \nimage\nReference\n1. Motivation & Overview of Distillation\n2. Inverse Distillation\n3. IDLM\ue092 Theoretical Contribution\n4. IDLM\ue092 Non-Smoothness of Discrete Space\na. Masked Diffusion\nb. Uniform Diffusion\n5. Sequence-Level Semantics in few-steps?\n6. Practical Aspects\n7 .Experiments"
+  },
+  {
+    "page": 62,
+    "text": "Practical implementationFace \nmask to \nimage\nReference\nWhat latent space do we use in practice?\n1 Model initialization & parameterization\n2 Challenges in one-step generation\nA strong initialization, as the teacher already captures text semantics and only its input process requires acceleration.\nSingle-step text generator distillation remains challenging, likely because each latent must collapse to a delta \ndistribution, causing instability.\nInspired by DMD2 \ue08313\ue084, we adopt multi-step distillation to address this issue, enabling the model to generate samples in a few-step regime\nSolution"
+  },
+  {
+    "page": 63,
+    "text": "Multistep DistillationFace \nmask to \nimage\nReference\nIn theory\n&"
+  },
+  {
+    "page": 64,
+    "text": "Multistep DistillationFace \nmask to \nimage\nReference\nIn theory\n&\nWe sample timestep1"
+  },
+  {
+    "page": 65,
+    "text": "Multistep DistillationFace \nmask to \nimage\nReference\nIn theory\n&\nWe sample data from dataset2"
+  },
+  {
+    "page": 66,
+    "text": "Multistep DistillationFace \nmask to \nimage\nReference\nIn theory\n&\nWe noise it to the chosen timestep3"
+  },
+  {
+    "page": 67,
+    "text": "Multistep DistillationFace \nmask to \nimage\nReference\nIn theory\n&\nWe give it as the input to the model4"
+  },
+  {
+    "page": 68,
+    "text": "Multistep DistillationFace \nmask to \nimage\nReference\nIn theory\n&\nTraining the model for few-step generation allows us to use the same sampling procedure as the teacher model\nSampling\nMDLM\ue08311\ue084"
+  },
+  {
+    "page": 69,
+    "text": "Putting everything togetherFace \nmask to \nimage\nReference"
+  },
+  {
+    "page": 70,
+    "text": "OutlineFace \nmask to \nimage\nReference\n1. Motivation & Overview of Distillation\n2. Inverse Distillation\n3. IDLM\ue092 Theoretical Contribution\n4. IDLM\ue092 Non-Smoothness of Discrete Space\na. Masked Diffusion\nb. Uniform Diffusion\n5. Sequence-Level Semantics in few-steps?\n6. Practical Aspects\n7 .Experiments"
+  },
+  {
+    "page": 71,
+    "text": "Experiments: IDLM-MDLMFace \nmask to \nimage\nReference\nBest model: 64x acceleration"
+  },
+  {
+    "page": 72,
+    "text": "Experiments: IDLM-MDLM (Scaling)Face \nmask to \nimage\nReference"
+  },
+  {
+    "page": 73,
+    "text": "Experiments: IDLM-Duo/DCDFace \nmask to \nimage\nReference\nBest model: 128x acceleration Best model: 256x acceleration"
+  },
+  {
+    "page": 74,
+    "text": "Experiments: IDLM-Duo/DCDFace \nmask to \nimage\nReference"
+  },
+  {
+    "page": 75,
+    "text": "Links"
+  },
+  {
+    "page": 76,
+    "text": "References\n1. Yang Song, Jascha Sohl-Dickstein, Diederik P Kingma, Abhishek Kumar, Stefano Ermon, and Ben Poole. Score-based generative \nmodeling through stochastic differential equations. In International Conference on Learning Representations, 2021. URL \nhttps://openreview.net/forum?id=PxTIG12RRHS.\n1. Yaron Lipman, Ricky T. Q. Chen, Heli Ben-Hamu, Maximilian Nickel, and Matthew Le. Flow matching for generative modeling. In \nThe Eleventh International Conference on Learning Representations, 2023. URL https://openreview.net/forum?id=PqvMRDCJT9t.\n1. Valentin De Bortoli, Guan-Horng Liu, Tianrong Chen, Evangelos A Theodorou, and Weilie Nie. Augmented bridge matching. arXiv \npreprint arXiv:2311.06978, 2023.\n1. Ling Yang, Zixiang Zhang, Zhilong Zhang, Xingchao Liu, Minkai Xu, Wentao Zhang, Chenlin Meng, Stefano Ermon, and Bin Cui. \nConsistency flow matching: Defining straight flows with velocity consistency. arXiv preprint arXiv:2407.02398, 2024.\n1. Mingyuan Zhou, Huangjie Zheng, Zhendong Wang, Mingzhang Yin, and Hai Huang. Score identity distillation: Exponentially fast \ndistillation of pretrained diffusion models for one-step generation. In Forty-first International Conference on Machine Learning, \n2024.\n1. Zemin Huang, Zhengyang Geng, Weijian Luo, and Guo-jun Qi. Flow generator matching. arXiv preprint arXiv:2410.19310, 2024.\n1. Nikita Gushchin, David Li, Daniil Selikhanovych, Evgeny Burnaev, Dmitry Baranchuk, and Alexander Korotin. Inverse bridge \nmatching distillation. 2025\n1. Tianwei Yin, Micha \u00a8el Gharbi, Taesung Park, Richard Zhang, Eli Shechtman, Fredo Durand, and Bill Freeman. Improved distribution \nmatching distillation for fast image synthesis. Advances in neural information processing systems, 37\ue09247455\ue08947487, 2024."
+  },
+  {
+    "page": 77,
+    "text": "AppendixFace \nmask to \nimage\nReference\n1. Motivation & Overview of Distillation\n2. Inverse Distillation\n3. IDLM\ue092 Theoretical Contribution\n4. IDLM\ue092 Non-Smoothness of Discrete Space\na. Masked Diffusion\nb. Uniform Diffusion\n5. Loss Intuition: Sequence-Level Semantics in few-steps\n6. Practical Aspects\n7 .Experiments"
+  },
+  {
+    "page": 78,
+    "text": "Inverse DistillationFace \nmask to \nimage\nReference\nForward training Inverse Distillation\nGiven: samples from\nFind: diffusion model\nGiven: pretrained diffusion model\nFind: distribution"
+  },
+  {
+    "page": 79,
+    "text": "Loss Intuition (Teacher model)Face \nmask to \nimage\nReference\nMasked Diffusion\nUniform Diffusion\nIntuition\nRemasking occurs only once during generation, so \nthe transition timestep does not matter. We only need \nto move to the correct token.\nIntuition\nWe need to determine both the timestep at which to make the \njump and the specific token to jump to at that timestep."
+  },
+  {
+    "page": 80,
+    "text": "Face \nmask to \nimage\nReference\nBeyond SUBS parameterization: Gumbel Reparameterization"
+  },
+  {
+    "page": 81,
+    "text": "Face \nmask to \nimage\nReference\nBeyond SUBS parameterization: Gumbel Reparameterization\nPotential Problem:\nThe model operates on simplex \nvectors but is trained only on \none-hot vectors"
+  },
+  {
+    "page": 82,
+    "text": "Face \nmask to \nimage\nReference\nBeyond SUBS parameterization: Argmax Reparameterization\nPotential Problem:\nThe model operates on simplex \nvectors but is trained only on \none-hot vectors"
+  },
+  {
+    "page": 83,
+    "text": "Practical Contribution: IDLM-DuoFace \nmask to \nimage\nReference\nUniform Diffusion\nHow to take gradient through it?\n1 2\n1 Reparametrization + Simplex relaxation\n2 Duo parameterization gives Gaussian reparameterization trick"
+  },
+  {
+    "page": 84,
+    "text": "Capture semantic of sequences: What about Entropy?Face \nmask to \nimage\nReference\nTraining\nIntuition\nFor each latent variable, we generate a distinct \ndelta distribution over the entire sentence, \ncorresponding to that specific sentence.\n+"
+  },
+  {
+    "page": 85,
+    "text": "Capture semantic of sequences: What about Entropy?Face \nmask to \nimage\nReference\nEntropy = +\nEntropy of distribution\nReduced\nIn practice, the entropy decreases during training \nand may eventually collapse, primarily because the \nobjective minimizes the reverse KL divergence.\nIn practice"
+  },
+  {
+    "page": 86,
+    "text": "Related worksFace \nmask to \nimage\nReference"
+  },
+  {
+    "page": 87,
+    "text": "Experiments: IDLM-MDLM (Additional Latent)Face \nmask to \nimage\nReference\nOne step generation is not feasible even in theory for Masked Diffusion\nIdea\nAdd some additional noise (we tested gaussian)\nProbably we should test another types of noise, for example Gumbel"
+  },
+  {
+    "page": 88,
+    "text": ""
+  }
+]

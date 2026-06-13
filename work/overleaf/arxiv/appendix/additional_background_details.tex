@@ -1,0 +1,143 @@
+\section{Additional Background Details}
+\label{app:additional background details}
+    \subsection{Score Entropy Discrete Diffusion (SEDD)}
+        Score Entropy Discrete Diffusion (SEDD)~\citep{lou2024discrete} introduces a general framework for discrete diffusion models parameterized by an arbitrary time-dependent diffusion matrix $Q_t$, thereby enabling the modeling of a broad family of forward processes. Within this framework, Concrete Score Matching~\citep{meng2022concrete, lou2024discrete} aims to approximate the ratio of marginal probabilities, $\frac{p_t(y)}{p_t(x)}$, which plays a central role in discrete diffusion dynamics. To this end, \citet{lou2024discrete} propose learning a score function $\widehat{s} \colon \mathcal{V} \times [0,1] \to \mathbb{R}+^N$ using the \emph{Score Entropy Discrete Diffusion} (SEDD) objective. For a data sample $x_0 \sim p^*(x_0)$, the loss is defined as
+        \begin{gather}
+           \LC_{\text{SEDD}} = \int_0^1 \EE_{p_{t|0}(x_t|x_0)} g_{\text{SEDD}} (x_t, x_0, \widehat{s}(x_t, t)) dt,
+           \nonumber 
+        \end{gather}
+        where
+        \begin{gather}
+        \label{eq:g sedd}
+            g_{\text{SEDD}} (x_t, x_0, \widehat{s}(x_t, t)) = \sum_{y \neq x_t} \langle x_t, y \rangle_{Q_t} \biggl(\langle \widehat{s}(x_t,t), y\rangle - \frac{p_{t \mid 0}(y \mid x_0)}{p_{t \mid 0}(x_t \mid x_0)} \log  \langle \widehat{s}(x_t, t), y\rangle \biggr)
+        \end{gather}
+        Although \citet{lou2024discrete} present SEDD as a general framework for discrete diffusion modeling, a naïve extension of fully general diffusion processes to the sequence setting is computationally infeasible. In particular, modeling sequences directly entails an exponentially large state space, which in turn gives rise to an intractably large diffusion matrix. This scalability limitation has motivated subsequent work to focus on more structured and tractable diffusion processes. Building upon the SEDD framework, several approache, including MDLM~\citep{sahoo2024simple}, UDLM~\citep{schiff2024discreteguidance}, and Duo~\citep{sahoo2025the}, instantiate specific diffusion dynamics and adopt tailored parameterizations and training objectives. In most practical settings, the time-dependent diffusion matrix is parameterized as $Q_t = \sigma_t Q$, where $Q$ is a fixed base matrix defining the structure of the process, and $\sigma_t$ is a time-dependent scalar that governs the diffusion rate. Defining the cumulative diffusion schedule as $\overline{\sigma}_t \coloneqq \int_{0}^t \sigma_s \, ds$, one can further express the cumulative transition dynamics using the matrix exponential $\exp(\overline{\sigma}_t Q)$. Two principal classes of diffusion processes have emerged in practice: the \textit{absorbing} and \textit{uniform} processes, instantiated by selecting $Q = Q_{\text{abs}}$ and $Q = Q_{\text{uni}}$, respectively.
+    \subsection{Absorbing process (MDLM)}
+        \label{app:absorbing process}
+        MDLM~\citep{sahoo2024simple} build upon the SEDD framework by selecting specific diffusion dynamics and adopting distinct parameterizations and training objectives.
+        More formally, without loss of generality, we define the mask token as $m \in \mathcal{V}$ such that $m_N = 1$. An important special case of discrete diffusion is the \textit{absorbing process}, in which the terminal distribution converges to a delta distribution concentrated on a designated mask token: $$\pi = m.$$ This process is realized by choosing a specific base diffusion matrix~\citep{lou2024discrete}:
+        \begin{equation}
+            Q_{\text{abs}} =
+            \begin{bmatrix}
+                -1 & 0 & \cdots & 0 & 0 \\
+                0 & -1 & \cdots & 0 & 0 \\
+                \vdots & \vdots & \ddots & \vdots & \vdots \\
+                0 & 0 & \cdots & -1 & 0 \\
+                1 & 1 & \cdots & 1 & 0
+            \end{bmatrix}.
+        \end{equation}
+        This choice induces the time-dependent diffusion matrix
+        \begin{equation}
+            \label{eq: absorbing diffusion matrix}
+            Q_t = \sigma_t Q_{\text{abs}} =
+            \begin{bmatrix}
+                -\sigma_t & 0 & \cdots & 0 & 0 \\
+                0 & -\sigma_t & \cdots & 0 & 0 \\
+                \vdots & \vdots & \ddots & \vdots & \vdots \\
+                0 & 0 & \cdots & -\sigma_t & 0 \\
+                \sigma_t & \sigma_t & \cdots & \sigma_t & 0
+            \end{bmatrix}.
+        \end{equation}
+        
+        The corresponding cumulative transition matrix is given by the matrix exponential
+        \begin{equation}
+            \exp(\overline{\sigma}_t Q_{\text{abs}}) =
+            \begin{bmatrix}
+                \exp(-\overline{\sigma}_t) & 0 & \cdots & 0 & 0 \\
+                0 & \exp(-\overline{\sigma}_t) & \cdots & 0 & 0 \\
+                \vdots & \vdots & \ddots & \vdots & \vdots \\
+                0 & 0 & \cdots & \exp(-\overline{\sigma}_t) & 0 \\
+                1 - \exp(-\overline{\sigma}_t) & 1 - \exp(-\overline{\sigma}_t) & \cdots & 1 - \exp(-\overline{\sigma}_t) & 1
+            \end{bmatrix}.
+        \end{equation}
+        
+        In MDLM~\citep[Appendix C]{sahoo2024simple}, an alternative parameterization of the diffusion schedule is employed by defining $\alpha_t \coloneqq \exp(-\overline{\sigma}_t)$. Under this notation, the diffusion matrix can be expressed as
+        \begin{equation}
+            Q_t = -\frac{\alpha_t'}{\alpha_t} Q_{\text{abs}} =
+            \begin{bmatrix}
+                \frac{\alpha_t'}{\alpha_t} & 0 & \cdots & 0 & 0 \\
+                0 & \frac{\alpha_t'}{\alpha_t} & \cdots & 0 & 0 \\
+                \vdots & \vdots & \ddots & \vdots & \vdots \\
+                0 & 0 & \cdots & \frac{\alpha_t'}{\alpha_t} & 0 \\
+                -\frac{\alpha_t'}{\alpha_t} & -\frac{\alpha_t'}{\alpha_t} & \cdots & -\frac{\alpha_t'}{\alpha_t} & 0
+            \end{bmatrix},
+        \end{equation}
+        and in the same way the cumulative diffusion matrix can be equivalently expressed as
+        \begin{equation}
+            \exp(\overline{\sigma}_t Q_{\text{abs}}) =
+            \begin{bmatrix}
+                \alpha_t & 0 & \cdots & 0 & 0 \\
+                0 & \alpha_t & \cdots & 0 & 0 \\
+                \vdots & \vdots & \ddots & \vdots & \vdots \\
+                0 & 0 & \cdots & \alpha_t & 0 \\
+                1 - \alpha_t & 1 - \alpha_t & \cdots & 1 - \alpha_t & 1 
+            \end{bmatrix}.
+        \end{equation}
+        In MDLM, the authors propose, rather than directly parameterizing the probability ratios $\frac{p_t(y)}{p_t(x)}$, to follow the approach of \citet{ho2020denoising, austin2021structured, campbell2022continuous} and instead learn the reverse conditional density $p_{0\mid t}(x_0 \mid x_t)$. To this end, they introduce an alternative parameterization $\widehat{x}_0\colon \VC \times [0, 1] \to \Delta$, which induces the following training objective for a fixed datapoint $x_0~\sim~p^*(x_0)$:
+        \begin{gather}
+          \LC_{\text{MDLM}}(\widehat{x}_0, x_0) \vcentcolon= \int_0^1 \, \EE_{p_{t|0}(x_t \mid x_0)} \left[ g_{\text{MDLM}}(x_t, x_0, \widehat{x}_0(x_t, t))\right]dt, \nonumber
+        \end{gather}
+        where 
+        \begin{gather}
+        \label{eq:g mdlm}
+            g_{\text{MDLM}}(x_t, x_0, \widehat{x}_0(x_t, t)) = \frac{\alpha_t'}{1-\alpha_t} \langle \log\widehat{x}_0(x_t, t), x_0 \rangle.
+        \end{gather}
+        Here, $\log \widehat{x}_0(x_t, t)$ denotes the element-wise logarithm of $\widehat{x}_0(x_t, t)$. Note that in the original work, the authors use the notation $\log \langle \widehat{x}_0(x_t, t), x_0 \rangle$, which is equivalent.
+    \subsection{Uniform process}
+        \label{app:uniform process}
+        Another important special case of discrete diffusion is the \textit{uniform process}, in which the terminal distribution is uniform: 
+        $$\pi = \frac{1}{N} \vec{1}.$$
+        This process is realized by selecting the following base diffusion matrix~\citep{lou2024discrete}:
+        \begin{equation}
+            Q_{\text{uni}} =
+            \begin{bmatrix}
+                1 - N & 1 & \cdots & 1 \\
+                1 & 1 - N & \cdots & 1 \\
+                \vdots & \vdots & \ddots & \vdots \\
+                1 & 1 & \cdots & 1 - N
+            \end{bmatrix}.
+        \end{equation}
+        Given a diffusion rate $\sigma_t$, this leads to the time-dependent diffusion matrix:
+        \begin{equation}
+        \label{eq: uniform diffusion matrix}
+            Q_t = \sigma_t Q_{\text{uni}} =
+            \begin{bmatrix}
+                \sigma_t(1 - N) & \sigma_t & \cdots & \sigma_t \\
+                \sigma_t & \sigma_t(1 - N) & \cdots & \sigma_t \\
+                \vdots & \vdots & \ddots & \vdots \\
+                \sigma_t & \sigma_t & \cdots & \sigma_t(1 - N)
+            \end{bmatrix}.
+        \end{equation}
+        The corresponding cumulative transition matrix is given by the matrix exponential:
+        \begin{equation}
+            \exp(\overline{\sigma}_t Q_{\text{uni}}) =
+            \begin{bmatrix}
+                \exp(-\overline{\sigma}_t N) + \frac{1 - \exp(-\overline{\sigma}_t N)}{N} & \frac{1 - \exp(-\overline{\sigma}_t N)}{N} & \cdots & \frac{1 - \exp(-\overline{\sigma}_t N)}{N} \\
+                \frac{1 - \exp(-\overline{\sigma}_t N)}{N} & \exp(-\overline{\sigma}_t N) + \frac{1 - \exp(-\overline{\sigma}_t N)}{N} & \cdots & \frac{1 - \exp(-\overline{\sigma}_t N)}{N} \\
+                \vdots & \vdots & \ddots & \vdots \\
+                \frac{1 - \exp(-\overline{\sigma}_t N)}{N} & \frac{1 - \exp(-\overline{\sigma}_t N)}{N} & \cdots & \exp(-\overline{\sigma}_t N) + \frac{1 - \exp(-\overline{\sigma}_t N)}{N}
+            \end{bmatrix}.
+        \end{equation}
+        
+        In UDLM~\citep{schiff2024discreteguidance}, an alternative parameterization of the diffusion schedule is adopted by defining $\alpha_t \coloneqq \exp(-\overline{\sigma}_t N)$. Under this parameterization, the diffusion matrix becomes:
+        \begin{equation}
+            Q_t = -\frac{\alpha_t'}{N\alpha_t} Q_{\text{uni}} =
+            \begin{bmatrix}
+                - \frac{\alpha_t'}{N\alpha_t}(1 - N) & -\frac{\alpha_t'}{N\alpha_t} & \cdots & -\frac{\alpha_t'}{N\alpha_t} \\
+                -\frac{\alpha_t'}{N\alpha_t} & -\frac{\alpha_t'}{N\alpha_t}(1 - N) & \cdots & -\frac{\alpha_t'}{N\alpha_t} \\
+                \vdots & \vdots & \ddots & \vdots \\
+                -\frac{\alpha_t'}{N\alpha_t} & -\frac{\alpha_t'}{N\alpha_t} & \cdots & -\frac{\alpha_t'}{N\alpha_t}(1 - N)
+            \end{bmatrix}.
+        \end{equation}
+        
+        Likewise, the cumulative transition matrix under this parameterization is expressed as:
+        \begin{equation}
+            \exp(\overline{\sigma}_t Q_{\text{uni}}) =
+            \begin{bmatrix}
+                \alpha_t + \frac{1 - \alpha_t}{N} & \frac{1 - \alpha_t}{N} & \cdots & \frac{1 - \alpha_t}{N} \\
+                \frac{1 - \alpha_t}{N} & \alpha_t + \frac{1 - \alpha_t}{N} & \cdots & \frac{1 - \alpha_t}{N} \\
+                \vdots & \vdots & \ddots & \vdots \\
+                \frac{1 - \alpha_t}{N} & \frac{1 - \alpha_t}{N} & \cdots & \alpha_t + \frac{1 - \alpha_t}{N}
+            \end{bmatrix}.
+        \end{equation}
+

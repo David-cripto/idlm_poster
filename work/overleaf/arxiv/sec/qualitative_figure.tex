@@ -1,0 +1,124 @@
+\begin{figure*}[t]
+\centering
+\begin{tcolorbox}[
+    enhanced,
+    colframe=owtgreen,
+    colback=green!3!white,
+    boxrule=0.65pt,
+    arc=4pt,
+    left=5pt,
+    right=5pt,
+    top=3pt,
+    bottom=3pt,
+    width=\textwidth,
+    before upper={\setlength{\parindent}{0pt}}]
+\noindent
+\begin{minipage}[c]{0.04\linewidth}
+\centering
+\begin{tikzpicture}[baseline=-0.5ex, x=1cm, y=1cm]
+    \filldraw[fill=owtgreen, draw=owtgreen, rounded corners=1.5pt] (0,0) rectangle (0.31,0.31);
+    \draw[white, line width=0.95pt, line join=round, rounded corners=0.5pt]
+        (0.08,0.10) -- (0.17,0.24) -- (0.25,0.20) -- (0.15,0.06) -- cycle;
+    \draw[white, line width=0.8pt, line join=round]
+        (0.08,0.10) -- (0.06,0.03) -- (0.15,0.06);
+    \draw[white, line width=0.65pt, line cap=round] (0.18,0.23) -- (0.24,0.19);
+    \draw[white, line width=0.85pt, line cap=round]
+        (0.14,0.05) .. controls (0.18,0.01) and (0.22,0.06) .. (0.27,0.05);
+\end{tikzpicture}
+\end{minipage}%
+\begin{minipage}[c]{0.94\linewidth}
+{\normalsize\bfseries\textcolor{owtgreen}{Unconditional Generation (OpenWebText)}}
+\end{minipage}
+
+\vspace{-0.9mm}
+\noindent\begin{tikzpicture}
+\draw[owtgreen, densely dashed, line width=0.5pt] (0,0) -- (\linewidth,0);
+\end{tikzpicture}
+\vspace{-2.35mm}
+
+\begin{minipage}[t]{0.485\linewidth}
+{\footnotesize\bfseries\textcolor{owtgreen}{IDLM-MDLM / 16 Sampling steps}}\\[-0.2mm]
+{\scriptsize\bfseries\textcolor{owtgreen}{Gen. PPL:} 34.1 \quad \textcolor{owtgreen}{H:} 5.43}\\[-0.1mm]
+{\scriptsize
+\ldots{} After this short presentation, let me briefly describe the layout of the grid. I initially intended to drag the page away from the phone screen and place it onto the grid platform. \ldots{}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.485\linewidth}
+{\footnotesize\bfseries\textcolor{owtgreen}{IDLM-DCD$^g$ / 4 Sampling steps}}\\[-0.2mm]
+{\scriptsize\bfseries\textcolor{owtgreen}{Gen. PPL:} 77.5 \quad \textcolor{owtgreen}{H:} 5.28}\\[-0.1mm]
+{\scriptsize
+\ldots{} The thing, programs are a language, and structures are highly hierarchical. With the complexity of a programming language, the underlying structure grows, and you improve that structure. \ldots{}}
+\end{minipage}
+\end{tcolorbox}
+\vspace{-1mm}
+\begin{tcolorbox}[
+    enhanced,
+    colframe=tinyorange,
+    colback=orange!3!white,
+    boxrule=0.65pt,
+    arc=4pt,
+    left=5pt,
+    right=5pt,
+    top=3pt,
+    bottom=3pt,
+    width=\textwidth,
+    before upper={\setlength{\parindent}{0pt}}]
+\noindent
+\begin{minipage}[c]{0.04\linewidth}
+\centering
+\begin{tikzpicture}[baseline=-0.5ex, x=1cm, y=1cm]
+    \filldraw[fill=tinyorange, draw=tinyorange, rounded corners=1.5pt] (0,0) rectangle (0.31,0.31);
+    \draw[white, line width=0.85pt, rounded corners=0.35pt]
+        (0.085,0.055) -- (0.085,0.255) -- (0.205,0.255) -- (0.255,0.205) -- (0.255,0.055) -- cycle;
+    \draw[white, line width=0.65pt] (0.205,0.255) -- (0.205,0.205) -- (0.255,0.205);
+    \draw[white, line width=0.65pt, line cap=round] (0.12,0.175) -- (0.22,0.175);
+    \draw[white, line width=0.65pt, line cap=round] (0.12,0.135) -- (0.22,0.135);
+    \draw[white, line width=0.65pt, line cap=round] (0.12,0.095) -- (0.19,0.095);
+\end{tikzpicture}
+\end{minipage}%
+\begin{minipage}[c]{0.94\linewidth}
+{\normalsize\bfseries\textcolor{tinyorange}{Conditional Generation (TinyGSM)}}
+\end{minipage}
+
+\vspace{-0.9mm}
+\noindent\begin{tikzpicture}
+\draw[tinyorange, densely dashed, line width=0.5pt] (0,0) -- (\linewidth,0);
+\end{tikzpicture}
+\vspace{-2.35mm}
+
+\begin{minipage}[t]{0.485\linewidth}
+{\footnotesize\bfseries\textcolor{tinyorange}{IDLM-MDLM / 128 Sampling steps}}\\[-0.2mm]
+{\scriptsize\bfseries\textcolor{tinyorange}{Accuracy:} 19.9\%}\\[-0.1mm]
+{\scriptsize\bfseries Prompt.}
+{\scriptsize A baseball coach buys 9 baseballs for \$3 each, and a basketball coach buys 8 basketballs for \$14 each. How much more did the basketball coach spend?}\\[-0.1mm]
+{\scriptsize\bfseries Generation.}\\[-2.4mm]
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\tiny,columns=fullflexible,keepspaces=true,breaklines=true,aboveskip=0pt,belowskip=0pt,xleftmargin=0.08\linewidth,xrightmargin=0.08\linewidth]
+def simple_math_problem() -> int:
+    baseball_cost = 9 * 3
+    basketball_cost = 8 * 14
+    difference = basketball_cost - baseball_cost
+    result = difference
+    return result
+\end{lstlisting}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.485\linewidth}
+{\footnotesize\bfseries\textcolor{tinyorange}{IDLM-Duo / 64 Sampling steps}}\\[-0.2mm]
+{\scriptsize\bfseries\textcolor{tinyorange}{Accuracy:} 19.0\%}\\[-0.1mm]
+{\scriptsize\bfseries Prompt.}
+{\scriptsize The red car is 40\% cheaper than the blue car. The price of the blue car is \$100. How much do both cars cost?}\\[-0.1mm]
+{\scriptsize\bfseries Generation.}\\[-2.4mm]
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\tiny,columns=fullflexible,keepspaces=true,breaklines=true,aboveskip=0pt,belowskip=0pt,xleftmargin=0.08\linewidth,xrightmargin=0.08\linewidth]
+def simple_math_problem() -> int:
+    blue_car = 100
+    red_car = blue_car * 0.60
+    total_cost = blue_car + red_car
+    result = total_cost
+    return result
+\end{lstlisting}
+\end{minipage}
+\end{tcolorbox}
+\caption{\textbf{Qualitative examples.} Representative IDLM samples. Additional qualitative samples are provided in Appendix~\ref{app: qualitative samples}.}
+\label{fig:owt-qualitative}
+\vspace{-4mm}
+\end{figure*}

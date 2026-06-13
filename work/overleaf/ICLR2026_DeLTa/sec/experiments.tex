@@ -1,0 +1,101 @@
+% !TEX root = ../main.tex
+
+\begin{figure*}[t]
+  \centering
+  \begin{subfigure}[t]{0.24\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{ICLR2026_DeLTa/../images/sedd_bars.pdf}\\[-1mm]
+    \includegraphics[width=\linewidth]{ICLR2026_DeLTa/../images/sedd.pdf}
+    \caption{SEDD}
+    \label{fig: sedd results}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.24\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{ICLR2026_DeLTa/../images/mdlm_bars.pdf}\\[-1mm]
+    \includegraphics[width=\linewidth]{ICLR2026_DeLTa/../images/mdlm.pdf}
+    \caption{MDLM/SDTT}
+    \label{fig: mdlm results}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.24\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{ICLR2026_DeLTa/../images/duo_ancestral_bars.pdf}\\[-1mm]
+    \includegraphics[width=\linewidth]{ICLR2026_DeLTa/../images/duo_ancestral.pdf}
+    \caption{Duo Ancestral ($^{\mathrm{a}}$)}
+    \label{fig: duo results}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.24\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{ICLR2026_DeLTa/../images/duo_greedy_bars.pdf}\\[-1mm]
+    \includegraphics[width=\linewidth]{ICLR2026_DeLTa/../images/duo_greedy.pdf}
+    \caption{Duo Greedy-Tail ($^{\mathrm{g}}$)}
+    \label{fig:duo-greedy-results}
+  \end{subfigure}
+
+  \caption{\textbf{Performance comparisons across all benchmarks.} \textit{Top row:} Generation quality/diversity metrics at specific step counts. IDLM-SEDD matches baseline quality with $4\times$ fewer steps ($1024\rightarrow256$), IDLM-MDLM achieves $64\times$ reduction ($1024\rightarrow16$), and IDLM-DCD further reduces to $8$ steps ($128\times$) under Ancestral and $4$ steps ($256\times$) under Greedy-Tail sampling. \textit{Bottom row:} GenPPL efficiency curves. IDLM variants consistently achieve better GenPPL across all step counts while maintaining comparable \textcolor{myorange}{entropy}, with particularly strong improvements in the \underline{low-step} regime.}
+  \label{fig:all-results}
+  \vspace{-4mm}
+\end{figure*}
+
+\vspace{-2mm}
+\section{Experiments}
+\label{sec:exps}
+\vspace{-2mm}
+  This section demonstrates the applicability of our IDLM distillation method across various types of DLMs. To this end,
+  we conduct experiments using \underline{available checkpoints} of pretrained SEDD, MDLM, and Duo teacher models trained
+on OpenWebText (OWT; \citealp{gokaslan2019openwebtext}). For evaluation, we follow the protocol of prior
+works~\citep{dieleman2022continuous, lou2024discrete, deschenaux2024beyond, sahoo2024simple, sahoo2025the}
+and report GPT-2 Large~\citep{radford2019language} generative perplexity (GenPPL) as well as average sequence entropy to
+measure diversity. Comprehensive results are summarized in Table~\ref{tab:all results}. Additional
+\underline{technical details} for all evaluated methods are provided in Appendix~\ref{app: experimental details}.
+We also provide the \underline{uncurated} text samples in Appendix~\ref{app: qualitative samples}.
+All implementations were developed in PyTorch, and the code will be published.
+
+
+\ecoparagraph{Distillation of SEDD.}
+  To the best of our knowledge, no distillation methods have been developed specifically for the SEDD model.
+  This section therefore focuses on demonstrating the effectiveness of our distillation approach in reducing the number
+  of sampling steps required to achieve comparable generation quality of the teacher model. In the case of SEDD, only
+  checkpoints for the absorbing-process variant are available, so we distill this version and refer to it simply as SEDD
+  for clarity.
+  As shown in Figure~\ref{fig: sedd results}, our method, \texttt{IDLM-SEDD}, consistently outperforms SEDD in terms of
+GenPPl across all sampling steps. Notably, IDLM-SEDD maintains high sequence entropy at low sampling steps. IDLM-SEDD
+achieves a $4\times$ reduction in sampling steps, accelerating generation from $1024$ to $256$ steps, while preserving
+both GenPPL and output diversity.
+
+\ecoparagraph{Distillation of MDLM.}
+  This section addresses two primary objectives: (1) demonstrating the feasibility of MDLM model distillation within our
+  framework and (2) comparing with the SDTT~\citep{deschenaux2024beyond} a leading method for MDLM distillation.
+As shown in Figure~\ref{fig: mdlm results}, our method, \texttt{IDLM-MDLM}, exhibits reduced entropy at large sampling steps, indicating lower diversity in that regime. However, in the low–sampling-step regime, IDLM-MDLM achieves strong performance in terms of both GenPPL and entropy. In particular, IDLM-MDLM attains a $64\times$ acceleration for both MDLM and SDTT, reducing the number of sampling steps from $1024$ to $16$ while preserving comparable generation quality and diversity metrics.
+
+\ecoparagraph{Distillation of Duo.}
+  We focus on Duo~\citep{sahoo2025the} and its distillation baseline, Duo-DCD. We distill both the original Duo and
+Duo-DCD (treating it as a teacher), denoted \texttt{IDLM-Duo} and \texttt{IDLM-DCD}. Results are in Figure~\ref{fig: duo results}.
+With Ancestral sampling, IDLM-Duo matches Duo-DCD with $64\times$ fewer steps ($1024 \to 16$).
+IDLM-DCD yields a $128\times$ speed-up ($1024 \to 8$) over the original Duo. With Greedy-Tail sampling,
+IDLM-Duo achieves a $64\times$ reduction ($1024 \to 16$), while IDLM-DCD reaches a $256\times$ acceleration ($1024 \to 4$),
+all while maintaining comparable metrics.
+\vspace{-2mm}
+\section{Conclusion}
+\vspace{-2mm}
+\label{sec:conclusion}
+In this work, we introduce \emph{Inverse-distilled Diffusion Language Models} (IDLM), a framework that accelerates
+discrete diffusion models by extending Inverse Distillation to the discrete domain.
+To ensure valid and stable training, we establish the \emph{theoretical uniqueness} of the objective and propose
+\emph{gradient-stable relaxations} using a simplex-parameterized generator.
+Empirically, IDLM achieves strong performance across diverse architectures, accelerating \textbf{SEDD by
+  $\mathbf{4\times}$},
+\textbf{MDLM by $\mathbf{64\times}$}, and \textbf{Duo by up to $\mathbf{256\times}$}, reducing $\mathbf{1024}$ steps to
+just $\mathbf{4}$,
+while \textit{\textbf{matching}} the teacher's generation quality.
+These results position IDLM as a robust solution for practical, low-latency text generation with diffusion models.
+
+
+
+
+
+
+% \subsection{Concerns regarding the evaluation protocol used in prior works}
+%   TODO

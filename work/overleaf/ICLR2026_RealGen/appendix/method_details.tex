@@ -1,0 +1,47 @@
+\section{Gradient-Stable Training Details}
+\label{app:method_details}
+
+\subsection{Simplex Relaxation and Gradient Estimation}
+To address the non-differentiability of discrete data, we relax the output space of the student generator from the discrete set $\VC$ to the probability simplex $\Delta$, and accordingly redefine the generator as $G_{\theta}\colon \ZC \to \Delta$. This relaxation enables smooth gradient flow but introduces a nontrivial question regarding the computation of the training objective, since the generator outputs no longer lie in the original discrete space. Specifically, under this reparameterization, the $\LC_{\text{IDLM}}(\theta)$ objective becomes:
+\begin{gather}
+  \EE_{p_{\theta}(x_0)}\!\Bigl[\LC(f^*, x_0) - \min_{\widehat{f}}\LC(\widehat{f}, x_0)\Bigr]
+  = \EE_{p_{\ZC}(z)}\!\Bigl[\LC(f^*, G_{\theta}(z)) - \min_{\widehat{f}}\LC(\widehat{f}, G_{\theta}(z))\Bigr],
+  \nonumber
+\end{gather}
+where $z \sim p_{\ZC}(z)$ denotes a latent variable. Since $x_0$ appears only within the teacher loss $\LC$, we must ensure that this loss remains computable when substituting discrete samples $x_0 \in \VC$ with relaxed outputs $G_{\theta}(z) \in \Delta$. To this end, we note that all teacher losses under consideration $\LC \in \{\LC_{\text{SEDD}}, \LC_{\text{MDLM}}, \LC_{\text{Duo}}\}$ incorporate $x_0$ in one of two mathematically compatible forms: (i) through scalar products $\langle \cdot, x_0 \rangle$, or (ii) via the distribution $p_{t|0}(\cdot \mid x_0)$, which can be expressed as a matrix-vector product:
+\begin{gather}
+    p_{t \mid 0}(\cdot \mid x_0) = \exp\left(\bar{\sigma}_t Q\right)x_0.
+    \nonumber
+\end{gather}
+%
+Consequently, each of the considered teacher losses is mathematically well-defined not only for one-hot vectors from $\VC$ but also for any input from the probability simplex $\Delta$. This reparameterization enables end-to-end training of the generator using standard differentiable operations, such as the $\softmax$ function, thereby avoiding the need for unstable discrete relaxation methods like the hard Gumbel--Softmax.
+
+\paragraph{Case of Duo.} The training objective in the Duo setting is given in equation~\eqref{eq:duo loss} as
+\begin{gather}
+  \textstyle \LC_{\text{Duo}}(\widehat{x}_0, x_0)\vcentcolon=
+  \int_0^1 \EE_{\tilde{p}_{t\mid 0}(w_t\mid x_0)} \left[g(x_t(w_t),x_0, \widehat{x}_0(x_t^{\tau}(w_t), t))\right]dt. \nonumber
+\end{gather}
+Here we can apply the standard reparameterization trick for Gaussians by expressing the latent variable $w_t$ as:
+\begin{gather}
+  \textstyle w_t(x_0, \epsilon) = \tilde{\alpha}_t x_0 + \sqrt{1 - \tilde{\alpha}_t^2} \, \epsilon,
+\end{gather}
+where $\epsilon \sim \NC(0, I)$ is sampled independently of $x_0$. Substituting this into the objective yields
+\begin{gather}
+  \textstyle \LC_{\text{Duo}}(\widehat{x}_0, x_0)\vcentcolon=
+  \int_0^1 \EE_{\epsilon \sim \NC(0, I)} \, \left[g(x_t(w_t),x_0, \widehat{x}_0(x_t^{\tau}(w_t), t))\right] \, dt,
+\end{gather}
+which eliminates the need to differentiate through the sampling operation itself, as the randomness is now isolated in $\epsilon$, which is independent of $x_0$. This reparameterization thus enables gradient-based optimization of the Duo objective.
+
+\paragraph{Case of MDLM (SEDD absorbing).} In the case of MDLM, the forward transition distribution $p(x_t \mid x_0)$ does not admit a standard reparameterization. However, we can leverage the \textsc{subs} parameterization of the MDLM model introduced in~\citep[see Section 3.2.3]{sahoo2024simple}. Specifically, for unmasked tokens (i.e., $x_t \neq m$), the following properties hold: (a) the optimal denoiser satisfies $\widehat{x}_0(x_t, t) = x_t$, and (b) $x_t = x_0$, since the forward process either preserves the token or replaces it with a fixed mask token $m$. As a result, in this case, $\widehat{x}_0(x_t, t) = x_t = x_0$, and the loss becomes $\LC_{\text{MDLM}}(x_0, x_0) = 0.$
+Thus, all nonzero contributions to the loss arise from instances where $x_t = m$. In this case, $x_t$ is independent of $x_0$, as the mask token is fixed and does not result from a stochastic transformation conditioned on $x_0$. Consequently, there is no need to backpropagate through the sampling of $p_{t \mid 0}(x_t \mid x_0)$. This allows us to rewrite the loss as:
+\begin{gather}
+  \textstyle \int_0^1 \, \EE_{p_{t \mid 0}(x_t \mid \text{sg}(G_{\theta}(z)))} \left[
+  \lambda_t \, \langle \log \widehat{x}_0(x_t, t), G_{\theta}(z) \rangle
+  \right] dt,
+  \nonumber
+\end{gather}
+where $\text{sg}(\cdot)$ denotes the stop-gradient operator. This formulation enables efficient training without requiring differentiable sampling from the discrete forward process.
+
+\subsection{Multistep Parameterization}
+To enable few-step inference, and given that the student generator is initialized from the pretrained teacher model, we adopt the same latent space $\ZC$ as for the teacher. Therefore, the generator is parameterized as $G_{\theta} \colon \VC \times [0, 1] \to \Delta$ in the SEDD and MDLM settings, and as $G_{\theta} \colon \Delta \times [0, 1] \to \Delta$ in the Duo setting. To avoid notational ambiguity, we denote samples from the target data distribution as $\tilde{x}_0 \sim p^*(\tilde{x}_0)$. Under this parameterization, the generator receives as input either: (i) samples $x_{\tilde{t}} \sim p_{\tilde{t} \mid 0}(x_{\tilde{t}} \mid \tilde{x}_0)$ in the SEDD and MDLM settings, or (ii) soft embeddings $x_{\tilde{t}}^{\tau}(w_{\tilde{t}}(\tilde{x}_0, \epsilon))$ in the Duo setting, where $\epsilon \sim \mathcal{N}(0, I)$ and $\tilde{x}_0 \sim p^*(\tilde{x}_0)$ is drawn from the data distribution.
+This design enables the generator to leverage supervision from ground-truth data samples, which can lead to improved generation quality. As a result, the generator is capable of performing multistep inference in the same manner as the teacher model, by numerically integrating the reverse-time dynamics.

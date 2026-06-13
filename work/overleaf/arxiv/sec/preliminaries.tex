@@ -1,0 +1,170 @@
+% !TEX root = ../main.tex
+
+\section{Preliminaries}
+\label{sec:preliminaries}
+
+\ecoparagraph{Notations.}
+    We represent scalar discrete random variables over $N$ categories as one-hot column vectors, with ${\VC = \{x \in \{0,1\}^N\colon \sum_{i=1}^N x_i = 1\}}$ denoting the set of such vectors. We further define the probability simplex $\Delta \vcentcolon= \{ z \in \RR^N\colon z \ge 0, \langle z, \vec{1} \rangle = 1 \}$ as the convex hull of $\VC$, where $\vec{1} \in \RR^N$ denotes the all-ones vector. 
+
+\subsection{Diffusion Language Models}
+\label{sec:discrete diffusion models}
+    Diffusion Language Models (DLMs; \citealp{austin2021structured, campbell2022continuous, lou2024discrete}) generate samples from a data distribution $p^*(x_0)$ by learning to reverse a prescribed forward noising process. In this work, we focus on two tractable process families that are widely used in language modeling: the \textit{absorbing} process, which underlies MDLM, and the \textit{uniform} process, which underlies UDLM and Duo. \reviewchange{We defer the general CTMC formulation and its SEDD score-entropy instantiation to Appendix~\ref{app:details of considered processes}. The process-specific details for masked diffusion and uniform diffusion are expanded in Appendices~\ref{app:absorbing process} and~\ref{app:uniform process}, respectively.}
+
+\subsubsection{Absorbing Process}
+\label{sec:absorbing process mdlm}
+    \paragraph{Forward process.}
+    The absorbing process corrupts tokens by replacing them with the mask token $m$. Its terminal distribution is concentrated on $m$, and under the usual schedule $\alpha_t \in [0,1]$, the forward transition from a clean token $x_0$ is
+    \[
+        q_t(x_t \mid x_0)
+        = \mathrm{Cat}\bigl(x_t; \alpha_t x_0 + (1-\alpha_t)m\bigr).
+    \]
+    Thus, a token is either still equal to $x_0$ or has already become masked.
+
+    \paragraph{Training loss.}
+    MDLM~\citep{sahoo2024simple, shi2024simplified} parameterizes the denoiser as $f\colon \VC \times [0,1]\to\Delta$ and trains it with the weighted masked prediction objective
+    \begin{equation}
+    \label{eq:mdlm loss}
+    \begin{aligned}
+    \LC_{\text{MDLM}}(f, p^*)
+    \vcentcolon= -
+    \EE_{p^*(x_0), t, q_t}
+    \bigl[
+        \lambda_{t} \langle  x_0, \log f(x_t, t) \rangle
+    \bigr].
+    \end{aligned}
+    \end{equation}
+    where $\lambda_t$ is a positive weighting function and the logarithm is applied element-wise.
+
+    \paragraph{Sampling procedure.}
+    The \textsc{subs} parameterization of MDLM encodes two useful properties: unmasked tokens are copied forward, and the model assigns zero probability to predicting the mask token as clean data. For $0\leq s<t\leq1$, the learned reverse transition is the absorbing posterior with the clean token replaced by the model prediction, define $f_t\vcentcolon=f(x_t,t)$:
+    \begin{equation}        
+    \!\!p^{f}_{s\mid t}(x_s\!\mid\! x_t)
+    \!\!=\!\!
+    \begin{cases}
+    \mathrm{Cat}(x_s; x_t),\!\! & \!\!x_t\neq m,\\[2pt]
+    \mathrm{Cat}\!\left(
+    \!x_s;
+    \!\!\begin{gathered}
+    \dfrac{(1\!-\!\alpha_s) m \! +\! (\alpha_s\!-\!\alpha_t)f_t}{1-\alpha_t}
+    \end{gathered}\!\!
+    \right), \!\! & \!\!x_t=m .
+    \end{cases} \nonumber
+    \end{equation}
+    Sampling starts from a fully masked sequence $x_1\sim\delta_m(\cdot)$ and repeatedly draws $x_s\sim p^{f}_{s\mid t}(\cdot\mid x_t)$ along a decreasing time grid. Once a token is revealed, it is carried over in later denoising steps. The masked-diffusion sampling process is visualized in Figure~\ref{fig:masked-diffusion-sampling-intuition}. The full MDLM formulation is given in Appendix~\ref{app:mdlm-formulation-theory}.
+
+\subsubsection{Uniform Process}
+\label{sec:uniform process duo}
+    \paragraph{Forward process.}
+    The uniform process corrupts tokens toward the uniform distribution $\frac{1}{N}\vec{1}$. With the same notation $\alpha_t$, its forward transition can be written compactly as
+    \[
+        q_t(x_t \mid x_0)
+        = \mathrm{Cat}\bigl(x_t; \alpha_t x_0 + (1-\alpha_t)\tfrac{1}{N}\vec{1}\bigr).
+    \]
+    Unlike absorbing diffusion, an intermediate token can be changed again at later reverse steps. This makes the process self-correcting: generation must decide both \textit{which} token to move to and \textit{when} to move.
+
+    \paragraph{Training loss.}
+    UDLM~\citep{schiff2024discreteguidance} uses the clean-token predictor as MDLM. Duo~\citep{sahoo2025the} keeps the same uniform discrete process but evaluates the model on a Gaussian-relaxed input, which gives smoother gradients during training while recovering the hard uniform process in the low-temperature limit, which makes the following parameterization of the model $f\colon \Delta \times [0,1]\to\Delta$. We write the objective as
+    \begin{equation}
+    \label{eq:duo loss}
+    \LC_{\text{Duo}}(f,p^*)
+    \vcentcolon=
+      \textstyle
+    \EE_{p^*(x_0), t, q_t}
+      \bigl[
+        g_{\mathrm{Duo}}\bigl(x_t ,x_0,f(x_t,t)\bigr)
+      \bigr].
+    \end{equation}
+    All details of $g_{\mathrm{Duo}}$ are deferred to Appendix~\ref{app:uniform process}.
+
+    \paragraph{Sampling procedure.}
+    Sampling starts from a sequence of tokens sampled independently from the uniform distribution, $x_1\sim\mathrm{Cat}(\vec{1}/N)$. Then the sequence is iteratively refined by the learned uniform reverse posterior. For $0\leq s<t\leq1$, define $\alpha_{t\mid s}\vcentcolon=\alpha_t/\alpha_s$ and $f_t\vcentcolon=f(x_t,t)$. The ancestral sampler uses
+    % {\small
+    \begin{gather}
+    \label{eq:uniform reversed}
+    p^f_{s\mid t}(x_s\mid x_t) =
+        \mathrm{Cat}\!\Bigl(x_s;
+        \frac{N\alpha_t\,x_t\odot f_t
+        +(\alpha_{t\mid s}-\alpha_t)x_t}{N\alpha_t\langle x_t,f_t\rangle+1-\alpha_t} \nonumber \\[-1pt]
+        +\frac{(\alpha_s-\alpha_t)f_t
+        +(1-\alpha_{t\mid s})(1-\alpha_s)\vec{1}/N}{{N\alpha_t\langle x_t,f_t\rangle+1-\alpha_t}} \Bigr). \nonumber
+    \end{gather}
+    % }
+    \noindent In the sampling procedure each reverse step can revise the whole sequence.
+    The uniform-diffusion sampling process is visualized in Figure~\ref{fig:appendix process intuition}. The full UDLM/Duo formulation is given in Appendix~\ref{app:uniform process}.
+    
+    The Duo paper also introduces an additional greedy sampling procedure. In the experiments, we report both variants and denote ancestral sampling by superscript ($^{\mathrm{a}}$) and greedy sampling by ($^{\mathrm{g}}$).
+
+
+\subsubsection{Unified Notations \& Sequence Level Loss}
+\label{sec:unified notations sequence loss}
+    \paragraph{Unified token-level objective.}
+    SEDD~\eqref{eq:sedd loss}, MDLM~\eqref{eq:mdlm loss}, and Duo~\eqref{eq:duo loss} use different losses, but they share the same structure. We write $\LC \in \{\LC_{\text{SEDD}}, \LC_{\text{MDLM}}, \LC_{\text{Duo}}\}$ in order to generalize our distillation scheme. Each loss can be expressed by the integrand $g$ of respective loss, so for any distribution $p$ we define:
+    \[
+    \begin{aligned}
+    \LC(f,p)
+    &=
+    \EE_{p(x_0), t, q_t}\bigl[
+        g\bigl(x_t,x_0,f(x_t,t)\bigr)
+    \bigr].
+    \end{aligned}
+    \]
+
+    \paragraph{Sequence-level objective.}
+    In practical applications, we are interested in generating sequences $x_0^{1:L}$ of length $L$. To avoid an exponentially large state space, DLMs usually apply the forward corruption independently across sequence positions~\citep{lou2024discrete}. Under this assumption, the forward distribution factorizes as
+    \[
+        q_t(x_t^{1:L} \mid x_0^{1:L})
+        = \prod_{l=1}^L q_t(x_t^l \mid x_0^l).
+    \]
+    The corresponding sequence-level diffusion loss becomes
+    \begin{equation}
+    \label{eq:sequence level loss}
+    \begin{aligned}
+    \LC^{1:L}(f,p^*)
+    &=
+    \EE_{p^*(x_0), t, q_t}\biggl[
+        \sum_{l=1}^L
+        g\bigl(
+        x_t^l,x_0^l,f^l(x_t^{1:L},t)
+        \bigr) \nonumber
+    \biggr].
+    \end{aligned}
+    \end{equation}
+
+
+\subsection{Inverse Distillation}
+\label{sec:inverse distillation}
+
+\ecoparagraph{Main goal.}
+    The goal of inverse distillation is to directly train a student distribution $p_\theta(x_0)$, represented by a fast generator, so that it approximates the true data distribution $p^*(x_0)$. We use the pretrained diffusion model $f^*$, which was trained on samples from $p^*$. The good $p_\theta$ should be one for which the same diffusion training procedure would recover $f^*$.
+
+\ecoparagraph{Diffusion training.}
+    In usual diffusion training problem: given samples from $p^*$, we train the diffusion model by solving
+    \begin{equation}
+        f^* = \arg\min\nolimits_{f} \LC(f, p^*).
+        \label{eq:teacher_objective_discr}
+    \end{equation}
+    Thus, the pretrained model $f^*$ is the diffusion model whose predictions are optimal for the real data distribution, we call this model the \textit{teacher}.
+
+\ecoparagraph{Inverse viewpoint.}
+    Inverse distillation reverses the roles of the known and unknown objects. We are given the pretrained diffusion model $f^*$ and seek a student distribution $p_\theta(x_0)$, such that training the same diffusion objective on samples from $p_\theta$ would recover the teacher:
+    \begin{equation}
+        f^* = \arg\min\nolimits_{f} \LC(f, p_{\theta}).
+        \label{eq:inverse_optimality_condition}
+    \end{equation}
+    In words, diffusion training asks which diffusion model fits a distribution, while inverse distillation asks which distribution would make the fixed pretrained diffusion model optimal.
+
+\ecoparagraph{Inverse distillation loss.}
+    The optimality condition in~\eqref{eq:inverse_optimality_condition} is not directly feasible as a training objective, since it requires optimizing parameters $\theta$ through an $\argmin$. Following prior work on inverse distillation~\citep{gushchin2025inverse,kornilov2025universal, selikhanovych2025one}, we use tractable inverse loss
+    \begin{gather}
+    \begin{aligned}
+    \LC_{\text{inv}}(\theta)
+    \vcentcolon=
+        \LC(f^*, p_{\theta})-
+        \min\nolimits_{f} \LC(f, p_{\theta}).
+    \end{aligned}
+    \label{eq:inverse optimization problem}
+    \end{gather}
+    The inner minimization defines a \emph{fake} diffusion model trained on samples from $p_\theta$. The term $\LC(f^*,p_\theta)$ measures the teacher denoiser's performance on samples from $p_\theta$, while $\min_f \LC(f,p_\theta)$ is the best achievable denoising loss for a diffusion model trained on $p_\theta$. The generator is therefore optimized by minimizing this gap. By construction, $\LC_{\text{inv}}(\theta)\geq0$, and if $p_\theta=p^*$ then $\LC_{\text{inv}}(\theta)=0$. The converse is not guaranteed for this general objective.
+
+\ecoparagraph{Connection to this work.}
+    In \emph{continuous} space, inverse distillation was extensively explored by prior works~\citep{gushchin2025inverse,kornilov2025universal, selikhanovych2025one}. Our main goal is to extend this idea to the \emph{discrete} domain. However, it presents several challenges, stemming from the inherent characteristics of discrete spaces. These include \underline{theoretical concerns} regarding the validity of the training objective, due to the non-uniqueness of its minimizers, as well as \underline{practical difficulties} related to the non-differentiability of discrete sampling.

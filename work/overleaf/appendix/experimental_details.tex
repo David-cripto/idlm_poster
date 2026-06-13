@@ -1,0 +1,73 @@
+\section{Experimental Details.}
+\label{app: experimental details}
+
+\subsection{Unconditional Generation on OpenWebText}
+\label{app:owt-experimental-details}
+
+\noindent \textbf{Codebase}. Our implementation builds upon the original Duo~\href{https://github.com/s-sahoo/duo}{repository}~\citep{sahoo2025the} and the SEDD~\href{https://github.com/louaaron/Score-Entropy-Discrete-Diffusion}{repository}~\citep{lou2024discrete}, which serve as the primary codebases for our experiments. We extend these repositories to incorporate our proposed training framework, \reviewchange{with the main algorithmic details provided in Algorithm~\ref{alg:idlm}.}
+
+\noindent \textbf{Teacher checkpoints}. We use pretrained checkpoints for the distillation of MDLM and Duo models obtained from the Duo~\href{https://github.com/s-sahoo/duo}{repository}~\citep{sahoo2025the}, and a pretrained checkpoint for SEDD distillation from the SEDD~\href{https://github.com/louaaron/Score-Entropy-Discrete-Diffusion}{repository}~\citep{lou2024discrete}. Unfortunately, for SEDD, only a checkpoint corresponding to the absorbing process was available.
+
+\noindent \textbf{Model architecture}. We follow~\citep{sahoo2025the} for distilling MDLM and Duo, and design the denoising model to operate on both continuous and discrete latents. We use a Transformer~\citep{vaswani2017attention} in which the first-layer token representations are computed via a matrix multiplication with the embedding matrix. For discrete inputs, we perform standard embedding lookups. In contrast, continuous inputs correspond to “soft lookups,” producing a convex combination of vocabulary embeddings. For SEDD distillation, we follow~\citep{lou2024discrete} and use a model that only accepts one-hot vectors. For all setups we use small models with $169$M parameters, specifically with $12$ layers, $12$ heads, hidden size $768$, sequence length $1024$, and dropout $0.1$.
+
+\noindent \textbf{Training hyperparameters}.  
+Across all experimental settings, we employed a per-device batch size of 8, resulting in a global batch size of 512. Optimization was performed using the AdamW optimizer~\citep{loshchilov2017decoupled}, with a fixed learning rate of $1 \times 10^{-6}$ for MDLM and Duo, and $3 \times 10^{-7}$ for SEDD. A constant learning rate schedule was used with 2500 warmup steps for all configurations. We adopted the log-linear noise formulation from~\citep{lou2024discrete} in the loss function, and applied exponential moving average (EMA) with a decay rate of 0.9999 throughout training.
+
+
+\noindent \textbf{Evaluation protocol}. 
+As observed by~\citep{zheng2024masked}, the GenPPL metric is sensitive to floating-point precision. To ensure consistency and numerical stability, we follow the protocol of~\citep{sahoo2025the} and perform all sampling experiments using \texttt{float64} precision. All evaluation metrics are computed using the official codebase provided in the Duo~\citep{sahoo2025the} repository.
+
+\phantomsection\label{app:metric-definitions}
+\noindent \textbf{Metric definitions}.
+Let \(x_0^{1:L}\sim p_\theta\) denote generated samples and let \(p^*\) denote the validation-data distribution. For a finite generated set \(\mathcal{S}_\theta\), generative perplexity (GenPPL) is computed by scoring each generated sequence with a fixed GPT-2 Large autoregressive evaluator \(p_{\mathrm{AR}}\)~\citep{radford2019language}:
+\[
+\mathrm{GenPPL}
+=
+\exp\!\left(
+-\frac{1}{M}
+\sum_{x_0^{1:L}\in\mathcal{S}_\theta}
+\sum_{i=1}^{L}
+\log p_{\mathrm{AR}}(x_0^i\mid x_0^{1:i-1})
+\right),
+\]
+where \(M\) is the total number of evaluated tokens. Lower GenPPL means that the evaluator assigns higher likelihood to generated samples, and we report it together with diversity metrics to avoid favoring overly repetitive text. Entropy is the empirical token entropy of generated samples:
+\[
+\mathrm{Entropy}
+=
+-\sum_{v\in\VC}\hat{p}_\theta(v)\log \hat{p}_\theta(v),
+\]
+where \(\hat{p}_\theta(v)\) is the generated-token frequency of token \(v\in\VC\); higher entropy means greater token-level diversity. MAUVE~\citep{lou2024discrete} compares samples from \(p_\theta\) with validation samples from \(p^*\) in language-model embedding space, higher values mean that the two distributions are closer. Finally, GM denotes the GPT-2 Gradient Moment metric~\citep{hoogeboom2026beyond}:
+\[
+\mathrm{GM}(p_\theta,p^*)
+=
+\left\|
+\EE_{x_0^{1:L}\sim p_\theta}\nabla_{\psi}\log p_{\mathrm{AR},\psi}(x_0^{1:L})
+-
+\EE_{x_0^{1:L}\sim p^*}\nabla_{\psi}\log p_{\mathrm{AR},\psi}(x_0^{1:L})
+\right\|_2^2,
+\]
+estimated with independent minibatches. Lower GM means that generated samples induce reference-model gradients closer to those induced by validation data.
+
+\noindent \textbf{Dataset preparation}.
+Following prior work~\citep{sahoo2024simple, sahoo2025the, lou2024discrete}, we preprocess the One Billion Words dataset using the detokenization procedure described by~\citet{lou2024discrete} and~\citet{sahoo2024simple}, with the official implementation available at \href{https://github.com/louaaron/Score-Entropy-Discrete-Diffusion/blob/main/data.py}{this link}. For the OpenWebText dataset, we utilize the \texttt{GPT2} tokenizer and apply a similar concatenation and wrapping procedure as in the previous works~\citep{sahoo2024simple, sahoo2025the}, targeting a sequence length of 1,024 tokens. During wrapping, \texttt{eos} tokens are inserted between consecutive sequences. As OpenWebText does not include an official validation split, we reserve the final 100{,}000 documents from the dataset as a validation set.
+
+\noindent \textbf{Other baselines}.
+Our primary baselines are SDTT~\citep{deschenaux2024beyond} and Duo-DCD~\citep{sahoo2025the}. Performance metrics for both methods are reported using values provided in the Duo~\citep{sahoo2025the}, corresponding to the best-performing results obtained after 5 rounds of distillation, described in~\citep{sahoo2025the}. While a valid pretrained checkpoint was available for Duo-DCD, we were unable to identify a usable checkpoint for SDTT~\citep{deschenaux2024beyond}, which precluded a fair comparison or distillation of this model within our experimental framework.
+
+\subsection{Conditional Generation on TinyGSM}
+\label{app:tinygsm-experimental-details}
+
+\noindent \textbf{Dataset preparation}.
+We use TinyGSM for training and validation and tokenize examples with the \texttt{HuggingFaceTB/SmolLM-135M} tokenizer. Following the conditional-generation setup, examples are kept at sequence length $512$ without document wrapping. We insert \texttt{eos} tokens, use a newline separator between the problem and solution fields, filter examples that exceed the maximum length, and reserve $1\%$ of the data for validation with seed $42$. The problem prompt is treated as conditioning context and is excluded from the training loss, while padding tokens are included.
+
+\noindent \textbf{Model and teacher checkpoint}.
+We use the same small denoising Transformer architecture as in the OpenWebText experiments: $12$ layers, $12$ attention heads, hidden size $768$, sequence length $512$, and dropout $0.1$. IDLM-MDLM uses the MDLM \textsc{subs} parameterization with log-linear noise and is initialized from the TinyGSM MDLM teacher checkpoint. IDLM-Duo uses uniform diffusion with the mean parameterization, time conditioning, and adaptive layer normalization; the student is initialized from the TinyGSM Duo teacher, using the teacher EMA weights.
+
+\noindent \textbf{Training hyperparameters}.
+Both IDLM-MDLM and IDLM-Duo are trained with adversarial distillation enabled at every update. We use a global batch size of $512$, $4$ GPUs, DDP training, and AdamW with learning rate $1\times10^{-6}$, weight decay $0$, $\beta_1=0.9$, $\beta_2=0.999$, and $\epsilon=10^{-8}$. IDLM-MDLM uses per-device batch size $32$ and bfloat16 precision, while IDLM-Duo uses per-device batch size $16$ and float32 precision. We train for $250{,}000$ steps with a constant learning-rate schedule after $2{,}500$ warmup steps, use antithetic time sampling, and maintain an EMA copy of the model with decay $0.9999$.
+
+\noindent \textbf{Evaluation protocol}.
+We follow the conditional-generation protocol of~\citet{deschenaux2026language}. Each GSM8K evaluation instance is formatted as a problem prompt followed by a solution region. During sampling, the problem prompt is clamped and the model generates only the solution region. We evaluate IDLM-MDLM and IDLM-Duo with $32$, $64$, and $128$ reverse steps and compare them against the corresponding $1024$-step teachers. IDLM-MDLM uses the cached ancestral predictor, IDLM-Duo uses the ancestral sampler, and both use \texttt{float64} precision at sampling time.
+
+\noindent \textbf{Metric}.
+For each problem, we generate one completion and use the execution-based TinyGSM/GSM8K scorer to extract the predicted numerical answer. We report exact-match accuracy against the GSM8K ground-truth answer in Table~\ref{tab:tinygsm}.

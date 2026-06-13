@@ -1,0 +1,90 @@
+\begin{figure*}[t]
+    \centering
+    \begin{minipage}[t]{0.47\textwidth}
+      \centering
+      \includegraphics[width=0.85\linewidth]{images/mdlm_bars_2.pdf}
+    \end{minipage}\hfill
+    \begin{minipage}[t]{0.47\textwidth}
+      \centering
+      \includegraphics[width=0.85\linewidth]{images/duo_greedy_bars_2.pdf}
+    \end{minipage}
+    \vspace{1mm}
+
+    \begin{minipage}[t]{0.49\textwidth}
+      \centering
+      \textbf{Masked Diffusion}\\[0.5mm]
+      \scriptsize
+      \renewcommand{\arraystretch}{1.05}
+      \setlength{\tabcolsep}{3pt}
+      \resizebox{\linewidth}{!}{%
+      \begin{tabular}{llccccc}
+          \toprule
+          && {\scriptsize Steps} & {\scriptsize GenPPL $\downarrow$} & {\scriptsize MAUVE $\uparrow$} & {\scriptsize Entropy $\uparrow$} & {\scriptsize GM $\downarrow$} \\
+          \midrule
+          & MDLM (Teacher)~\citep{sahoo2024simple} & 1024 & 41.29 & 0.89 $\pm$ 0.01 & 5.28 & 0.672 \\
+          \midrule
+          & SDTT~\citep{deschenaux2024beyond} & \multirow{5}{*}{32} & 41.45 & 0.91 $\pm$ 0.03 & \textbf{5.31} & -- \\
+          & SDTT + Di4C$^2$~\citep{hayakawa2025distillation} & & 31.51 & \textbf{0.93} $\pm$ 0.02 & 5.28 & -- \\
+          & DiDi-Instruct~\citep{zheng2026ultrafast} & & 24.97 & -- & 5.18 & -- \\
+          & D-MMD~\citep{hoogeboom2026beyond} & & 72.1 & -- & \textbf{5.57} & \textbf{0.578} \\
+          & IDLM-MDLM (\textbf{Ours}) & & \textbf{20.45} $\pm$ 1.88 & 0.91 $\pm$ 0.01 & 5.23 $\pm$ 0.06 & 0.629 \\
+          \midrule
+          & SDTT~\citep{deschenaux2024beyond} & \multirow{5}{*}{16} & 61.34 & 0.88 $\pm$ 0.03 & 5.36 & -- \\
+          & SDTT + Di4C$^2$~\citep{hayakawa2025distillation} & & 44.82 & 0.90 $\pm$ 0.01 & 5.34 & -- \\
+          & DiDi-Instruct~\citep{zheng2026ultrafast} & & 38.19 & -- & 5.21 & -- \\
+          & D-MMD~\citep{hoogeboom2026beyond} & & 67.7 & -- & \textbf{5.57} & 0.558 \\
+          & IDLM-MDLM (\textbf{Ours}) & & \textbf{32.75} $\pm$ 1.62 & \textbf{0.93} $\pm$ 0.01 & 5.42 $\pm$ 0.06 & \textbf{0.527} \\
+          \midrule
+          & SDTT~\citep{deschenaux2024beyond} & \multirow{4}{*}{8} & 121.31 & 0.89 $\pm$ 0.03 & 5.39 & -- \\
+          & SDTT + Di4C$^2$~\citep{hayakawa2025distillation} & & 84.15 & 0.90 $\pm$ 0.04 & 5.38 & -- \\
+          & DiDi-Instruct~\citep{zheng2026ultrafast} & & \textbf{62.24} & -- & 5.17 & -- \\
+          & IDLM-MDLM (\textbf{Ours}) & & 79.75 $\pm$ 5.61 & \textbf{0.91} $\pm$ 0.01 & \textbf{5.61} $\pm$ 0.04 & \textbf{0.835} \\
+          \bottomrule
+      \end{tabular}}
+    \end{minipage}\hfill
+    \begin{minipage}[t]{0.49\textwidth}
+      \centering
+      \textbf{Uniform \& Continuous Diffusion}\\[0.5mm]
+      \scriptsize
+      \renewcommand{\arraystretch}{0.90}
+      \setlength{\tabcolsep}{7pt}
+      \resizebox{\linewidth}{!}{%
+      \begin{tabular}{lcccc}
+          \toprule
+           & {\scriptsize Steps} & {\scriptsize GenPPL $\downarrow$} & {\scriptsize MAUVE $\uparrow$} & {\scriptsize Entropy $\uparrow$} \\
+          \midrule
+          FLM~\citep{lee2026flow} & \multirow{2}{*}{1024} & \textbf{62.23} & - & \textbf{5.33} \\
+          Duo$^{\mathrm{g}}$ (Teacher)~\citep{sahoo2025the} &  & 71.72 & 0.90 $\pm$ 0.02 & 5.22 \\
+          \midrule
+          ELF~\citep{hu2026elf} & \multirow{4}{*}{32} & \textbf{24.08} $\pm$ 0.16 & -- & 5.14 \\
+          FMLM~\citep{lee2026flow} &  & 45.09  & -- & 5.25 \\
+          Duo-DCD$^{\mathrm{g}}$~\citep{sahoo2025the} & & 46.31 & \textbf{0.96} $\pm$ 0.01 & \textbf{5.38} \\
+          IDLM-DCD$^{\mathrm{g}}$ (\textbf{Ours}) & & 39.34 $\pm$ 8.51 & 0.92 $\pm$ 0.01 & 5.35 $\pm$ 0.11 \\
+          \midrule
+          ELF~\citep{hu2026elf} & \multirow{4}{*}{16} & \textbf{33.66} $\pm$ 1.09 & -- & 5.16 \\
+          FMLM~\citep{lee2026flow} &  & 63.63  & -- & 5.29 \\
+          Duo-DCD$^{\mathrm{g}}$~\citep{sahoo2025the} & & 54.11 & \textbf{0.96} $\pm$ 0.01 & 5.37 \\
+          IDLM-DCD$^{\mathrm{g}}$ (\textbf{Ours}) & & 43.36 $\pm$ 3.76 & 0.94 $\pm$ 0.01 & \textbf{5.41} $\pm$ 0.04 \\
+          \midrule
+          ELF~\citep{hu2026elf} & \multirow{4}{*}{8} & 67.32 $\pm$ 2.25 & -- & 5.14 \\
+          FMLM~\citep{lee2026flow} &  & 86.5  & -- & 5.36  \\
+          Duo-DCD$^{\mathrm{g}}$~\citep{sahoo2025the} & & 69.58 & 0.93 $\pm$ 0.01 & 5.30 \\
+          IDLM-DCD$^{\mathrm{g}}$ (\textbf{Ours}) & & \textbf{53.61} $\pm$ 3.08 & \textbf{0.96} $\pm$ 0.01 & \textbf{5.41} $\pm$ 0.03 \\
+          \midrule
+          FMLM~\citep{lee2026flow} & \multirow{3}{*}{4} & 111.31 & -- & 5.26 \\
+          Duo-DCD$^{\mathrm{g}}$~\citep{sahoo2025the} & & 96.24 & 0.69 $\pm$ 0.02 & 4.93 \\
+          IDLM-DCD$^{\mathrm{g}}$ (\textbf{Ours}) & & \textbf{77.47} $\pm$ 4.43 & \textbf{0.89} $\pm$ 0.01 & \textbf{5.28} $\pm$ 0.06 \\
+          \bottomrule
+      \end{tabular}}
+    \end{minipage}
+    \caption{\textbf{OWT distillation.} IDLM preserves the quality/diversity tradeoff while using far fewer reverse steps for both masked and uniform diffusion. The strongest gains appear in the low-step regime.}
+    \label{fig:owt-main-results}
+    \vspace{-3mm}
+\end{figure*}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{images/owt_genppl_entropy_tradeoff.pdf}
+\caption{\textbf{GenPPL--Entropy tradeoff on OWT.} Each point denotes a Method/Sampling steps. Lower GenPPL and higher entropy are preferred.}
+\label{fig:owt-entropy-frontier}
+\end{figure}

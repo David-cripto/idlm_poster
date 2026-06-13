@@ -1,0 +1,107 @@
+\section{General Functional Formulation for Discrete Diffusion Models objectives}
+\label{app:unversal loss}
+    To extend the Inverse Distillation framework on discrete diffusion models, we begin by establishing a general functional formulation of popular DLM's objectives that captures a wide range of training objectives used in discrete diffusion models. Prior work has introduced various parameterizations and the form of loss objectives~\citep{lou2024discrete,sahoo2024simple,schiff2024discreteguidance,sahoo2025the}. Although these methods differ in form, from a mathematical point of view, all of these approaches ultimately aim to estimate a function derived from the diffusion process. In this section, we formalize this objective by introducing a general optimization problem that abstracts these methods into a general training framework. Note, we do not revisit the equivalence between different loss formulations, as these relationships have already been established in prior work~\citep{sahoo2024simple, schiff2024discreteguidance}. Instead, we focus on introducing a generalized formulation that serves as the foundation for our proposed distillation method presented in Section~\ref{sec:idlm}. 
+    
+    As previously discussed in the \wasyparagraph~\ref{sec:discrete diffusion models}, diffusion process defines a family of time-dependent distributions $p_t(x_t)$. These distributions induce a function $f(x_t, t)$ that characterizes key quantity of interest, such as score function or posterior distribution, and serves as the primary target of estimation. Each conditional distribution $p_{t \mid 0}(x_t \mid x_0)$ similarly induces a conditional function $f(x_t, t \mid x_0)$ for each $x_0$, which is tractable and can be computed explicitly. The function $f$ is then given by the expectation $f(x_t, t) = \EE_{x_0 \sim p_{0 \mid t}} f(x_t, t \mid x_0).$ Since $f$ is generally intractable, our objective is to approximate it using a parametric function $\widehat{f}$. To formalize this within the Inverse Distillation framework introduced in Section~\ref{sec:idlm}, we define:
+    \begin{Box1}{Teacher model training, $\LC_{\text{teach.}}(\widehat{f}, x_0) \vcentcolon=$}
+    \vspace{-8pt}
+    \begin{align}
+      \label{eq:forward optimization problem}
+      \!\!\!\! \int_0^1 \!\! \EE_{p_{t|0}(x_t|x_0)} \!\! \sum_{y \neq x_t}\!  w_t^y 
+      \DC_{F\circ\psi_t^y}\!\left(f(x_t, t \!\mid\! x_0), \widehat{f}(x_t, t)\right) \!dt,
+    \end{align}
+    \end{Box1}
+    where $w_t^y$ is a positive weighting coefficient, $\DC_{F\circ\psi_t^y}$ is the Bregman divergence associated
+with the composition of a strictly convex function $F$ and the transformation $\psi_t$ i.e. $\DC_{F\circ\psi_t^y}(\cdot,\cdot) = \DC_{F}(\psi_t^y(\cdot), \psi_t^y(\cdot))$ and $\psi_t^y$ is a transformation incorporating $x_t$ and $y$.
+    We now show that the objective~\eqref{eq:forward optimization problem} generalizes the aforementioned objectives of SEDD~\eqref{eq:sedd loss}, MDLM~\eqref{eq:mdlm loss}, and UDLM~\eqref{eq:udlm loss} and recovers their optimal solutions under mild conditions.
+    \begin{proposition}[Generalized functional form]
+    \label{prop:optimum of universal loss}
+    The SEDD~\eqref{eq:sedd loss}, MDLM~\eqref{eq:mdlm loss}, and UDLM~\eqref{eq:udlm loss} losses are special cases of~\eqref{eq:forward optimization problem}. Moreover, if $\psi_t$ is linear function, the optimal solution $f^* \vcentcolon= \arg\min_{\widehat{f}} \LC_{\text{FOP}}(\widehat{f}, p^*)$ is given as:
+    \begin{gather}
+      f^*(x_t, t) = \EE_{x_0 \sim p_{0\mid t}(x_0 \mid x_t)} f(x_t, t \mid x_0) = f(x_t, t). \nonumber
+    \end{gather}
+    \end{proposition}
+    %
+    \begin{remark}
+      To show that the Forward Optimization Problem in equation~\eqref{eq:forward optimization problem} generalizes previous loss functions, we substitute specific hyperparameters and function parameterizations for each case. For clarity, all configurations are listed in Table~\ref{tab:generalization}.
+    \end{remark}
+    %
+    The proof of this proposition is provided in Appendix~\ref{app: proofs}. Building on this generalized framework, we now proceed to introduce our distillation method.
+    \begin{table*}[t]
+      \centering
+      \caption{
+        Unifying discrete diffusion objectives under the proposed Forward Optimization framework.
+        This table maps the components of the general objective in Equation~\eqref{eq:forward optimization problem}
+        to existing methods. By selecting a specific \textit{weighting} $w_t$, \textit{Bregman function} $F(z)$,
+        and \textit{variable transform} $\psi_t$, the framework recovers the exact loss functions of SEDD, MDLM, and UDLM.
+        The last two columns specify the \textit{model parametrization} $\widehat{f}$ and the ground truth
+        \textit{regression target} $f$ for each approach.
+      }
+      \label{tab:generalization}
+      \resizebox{\linewidth}{!}{
+      \begin{tabular}{lccccc}
+        \hline
+        &  \text{ Weighting} & \text{\small Bregman} & \text{ Transform} & \text{\small Model} & \text{\small Regression} \\
+         &  & \text{\small Function} &  & \text{\small Param.} & \text{\small Target} \\
+        & $w_t$ & $F(z)$ &  $\psi_t(\cdot)$ & $\widehat{f}(x_t, t)$ & $f(x_t, t \mid x_0)$  \\ \hline
+        \textit{\textbf{Method}} & & & & & \\
+        SEDD~\citep{lou2024discrete} & $\langle x_t, y\rangle_{Q_t}$ & $z\log z$ & $\langle\cdot, y\rangle$ & $\widehat{s}(x_t, t)$ & $s(x_t, t \mid x_0)$  \\
+        MDLM~\citep{sahoo2024simple} & $\frac{1}{p_{t \mid 0}(x_t \mid x_0)}\langle x_t, y\rangle_{Q_t}$ & $z \log z$ & $p_{t\mid0}(y \mid \cdot)$ & $\widehat{x}_0(x_t, t)$ & $x_0$ \\
+        UDLM~\citep{schiff2024discreteguidance} & $\frac{1}{(N - 1) p_{t \mid 0}(x_t \mid x_0)} \langle x_t, y\rangle_{Q_t}$ & $N z \log z - \log z$ & $p_{t \mid 0}(x_t \mid \cdot)$ & $\widehat{x}_0(x_t, t)$ & $x_0$  \\ \hline
+      \end{tabular}
+      }
+    \end{table*}
+    \subsection{Generalized loss}
+    \label{app: generalized loss}
+        In this section, we establish a connection between the generalized teacher loss defined in Equation~\eqref{eq:forward optimization problem} and the training objectives previously proposed in SEDD~\eqref{eq:sedd loss}, MDLM~\eqref{eq:mdlm loss}, and UDLM~\eqref{eq:udlm loss}. Although pairwise equivalences between these losses have been derived—specifically, between SEDD and MDLM~\citep[Appendix C]{sahoo2024simple} and between SEDD and UDLM~\citep[Appendix C]{schiff2024discreteguidance}—each formulation relies on distinct model parameterizations and objective structures. Our goal is to unify these losses and their corresponding parameterizations within a single, coherent framework that both simplifies and generalizes all previously proposed objectives. This unified perspective also yields new insights into the structure of the UDLM loss~\eqref{eq:udlm loss}, which we show can be expressed as a combination of the Kullback--Leibler and Itakura--Saito divergences. Central to this unification is the observation that all considered losses can be formulated in terms of a \textbf{Bregman divergence}. Given a continuously differentiable, strictly convex \textbf{Bregman function} $F : \Omega \to \mathbb{R}$ defined on a convex set $\Omega$, the associated Bregman divergence is defined as
+        \begin{equation}
+        \label{eq:bregman divergence}
+            \mathcal{D}_{F}(a, b) \coloneqq F(a) - F(b) - \langle \nabla F(b), a - b \rangle.
+        \end{equation}
+        In this work, we focus on two specific choices of the Bregman function: $F(z) = z \log z$ and $F(z) = -\log z$. The corresponding Bregman divergences are given by
+        \begin{equation}
+        \label{eq:bregman likelihood}
+            \mathcal{D}_{F}(a, b) = a \log \frac{a}{b} - a + b,
+        \end{equation}
+        and
+        \begin{equation}
+            \mathcal{D}_{F}(a, b) = \log \frac{b}{a} + \frac{a}{b} - 1, 
+        \end{equation}
+        respectively. 
+        We begin by establishing the connection to the SEDD loss.
+        \begin{proposition}
+            The teacher loss defined in Equation~\eqref{eq:forward optimization problem} is equivalent to the SEDD loss in Equation~\eqref{eq:sedd loss}, up to an additive constant, under the parameter choices specified in Table~\ref{tab:generalization}. 
+        \end{proposition}
+        \begin{proof}
+            Substituting the parameter values listed in Table~\ref{tab:generalization} into the general loss defined in Equation~\eqref{eq:forward optimization problem} for the SEDD case yields the following expression:
+            \begin{gather}
+                \LC_{\text{teach.}}(\widehat{s}, x_0) = \int_0^1 \!\! \EE_{p_{t|0}(x_t|x_0)} \!\! \sum_{y \neq x_t}\!  \langle x_t, y\rangle_{Q_t} \DC_{F\circ\psi_t}\!\left(s(x_t, t \!\mid\! x_0), \widehat{s}(x_t, t)\right) \!dt = 
+                \nonumber\\
+                \int_0^1 \!\! \EE_{p_{t|0}(x_t|x_0)} \!\! \sum_{y \neq x_t}\!  \langle x_t, y\rangle_{Q_t} \DC_{F}\!\left(\psi_t(s(x_t, t \!\mid\! x_0)), \psi_t(\widehat{s}(x_t, t)\right)) dt = 
+                \nonumber\\
+                \int_0^1 \!\! \EE_{p_{t|0}(x_t|x_0)} \!\! \sum_{y \neq x_t}\!  \langle x_t, y\rangle_{Q_t} \underbrace{\DC_{F(z) = z \log z}\!\left(\langle s(x_t, t \!\mid\! x_0), y\rangle, \langle \widehat{s}(x_t, t), y \rangle\right)}_{\text{use equation~\eqref{eq:bregman likelihood}}} dt =
+                \nonumber\\
+                \int_0^1 \!\! \EE_{p_{t|0}(x_t|x_0)} \!\! \sum_{y \neq x_t}\!  \langle x_t, y\rangle_{Q_t} \left(\langle s(x_t, t \!\mid\! x_0), y\rangle \log \frac{\langle s(x_t, t \!\mid\! x_0), y\rangle}{\langle \widehat{s}(x_t, t), y \rangle} -\langle s(x_t, t \!\mid\! x_0), y\rangle + \langle \widehat{s}(x_t, t), y \rangle \right) dt =
+                \nonumber\\
+                \int_0^1 \!\! \EE_{p_{t|0}(x_t|x_0)} \!\! \sum_{y \neq x_t}\!  \langle x_t, y\rangle_{Q_t} \left(\langle \widehat{s}(x_t, t), y \rangle - \langle s(x_t, t \!\mid\! x_0), y\rangle \log \langle \widehat{s}(x_t, t), y \rangle - \right. \nonumber\\
+                                                                                                             \left. \underbrace{\langle s(x_t, t \!\mid\! x_0), y\rangle + \langle s(x_t, t \!\mid\! x_0), y\rangle \log \langle s(x_t, t \!\mid\! x_0), y\rangle}_{\text{does not depend on } \widehat{s}} \right) \!\! dt =
+                \nonumber\\
+                \int_0^1 \!\! \EE_{p_{t|0}(x_t|x_0)} \!\! \sum_{y \neq x_t}\!  \langle x_t, y\rangle_{Q_t} \left(\langle \widehat{s}(x_t, t), y \rangle - \langle s(x_t, t \!\mid\! x_0), y\rangle \log \langle \widehat{s}(x_t, t), y \rangle + C \right) dt
+            \end{gather}
+        \end{proof}
+        Now we establish connection with MDLM loss.
+        \begin{proposition}
+            The teacher loss defined in Equation~\eqref{eq:forward optimization problem} is equivalent to the MDLM loss in Equation~\eqref{eq:mdlm loss}, up to an additive constant, under the parameter choices specified in Table~\ref{tab:generalization}. 
+        \end{proposition}
+        \begin{proof}
+            Substituting the parameter values listed in Table~\ref{tab:generalization} into the general loss defined in Equation~\eqref{eq:forward optimization problem} for the MDLM case yields the following expression:
+            \begin{gather}
+                \LC_{\text{teach.}}(\widehat{x}_0, x_0) = \int_0^1 \!\! \EE_{p_{t|0}(x_t|x_0)} \!\! \sum_{y \neq x_t}\!  \langle x_t, y\rangle_{Q_t} \DC_{F\circ\psi_t}\!\left(x_0, \widehat{x}_0(x_t, t)\right) \!dt = 
+                \nonumber\\
+                \int_0^1 \!\! \EE_{p_{t|0}(x_t|x_0)} \!\! \sum_{y \neq x_t}\!  \langle x_t, y\rangle_{Q_t} \DC_{F}\!\left(\psi_t(x_0), \psi_t(\widehat{x}_0(x_t, t)\right)) dt = 
+                \nonumber\\
+                \int_0^1 \!\! \EE_{p_{t|0}(x_t|x_0)} \!\! \sum_{y \neq x_t}\!  \langle x_t, y\rangle_{Q_t} \underbrace{\DC_{F(z) = z\log z}\!\left(p_{t\mid 0}(y\mid x_0), p_{t\mid 0}(y\mid \widehat{x}_0 (x_t, t))\right)}_{\text{use equation~\eqref{eq:bregman likelihood}}} dt = 
+                \nonumber\\
+                \int_0^1 \!\! \EE_{p_{t|0}(x_t|x_0)} \!\! \sum_{y \neq x_t}\!  \langle x_t, y\rangle_{Q_t} \left( p_{t\mid 0}(y\mid x_0) \log \frac{p_{t\mid 0}(y\mid x_0)}{p_{t\mid 0}(y\mid \widehat{x}_0 (x_t, t))} - p_{t\mid 0}(y\mid x_0) + p_{t\mid 0}(y\mid \widehat{x}_0 (x_t, t))\right) dt 
+            \end{gather}
+        \end{proof}
