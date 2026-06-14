@@ -1851,6 +1851,7 @@
     .story-panel {
       grid-column: 1;
       grid-row: 2;
+      align-self: start;
     }
 
     .loop-panel {
@@ -2346,8 +2347,10 @@
     }
 
     .jump-box img {
+      display: block;
       width: 100%;
       height: 1.82in;
+      margin-top: 0.09in;
       object-fit: contain;
       object-position: center;
       border: 1px solid rgba(246, 251, 255, 0.12);
@@ -2383,60 +2386,6 @@
 
     .jump-eq math {
       max-width: 100%;
-    }
-
-    .takeaway-card {
-      border-color: rgba(255, 211, 107, 0.36);
-      background:
-        radial-gradient(circle at 82% 0%, rgba(255, 211, 107, 0.14), transparent 38%),
-        linear-gradient(135deg, rgba(25, 198, 255, 0.08), rgba(184, 107, 255, 0.09)),
-        rgba(1, 6, 22, 0.62);
-    }
-
-    .takeaway-card h3 {
-      color: var(--gold);
-    }
-
-    .takeaway-flow {
-      display: grid;
-      grid-template-columns: 1fr 0.45in 1fr;
-      gap: 0.12in;
-      align-items: center;
-      margin-top: 0.20in;
-    }
-
-    .domain-pill {
-      min-height: 1.60in;
-      display: grid;
-      align-content: center;
-      gap: 0.06in;
-      border: 1px solid rgba(94, 217, 255, 0.20);
-      border-radius: 0.12in;
-      background: rgba(2, 8, 24, 0.60);
-      padding: 0.12in;
-      text-align: center;
-    }
-
-    .domain-pill b {
-      color: var(--ink);
-      font-size: 0.24in;
-      line-height: 1.10;
-    }
-
-    .domain-pill span {
-      color: var(--muted);
-      font-size: 0.16in;
-      line-height: 1.22;
-      font-weight: 850;
-    }
-
-    .domain-pill.target {
-      border-color: rgba(181, 240, 124, 0.38);
-      background: rgba(181, 240, 124, 0.08);
-    }
-
-    .domain-pill.target b {
-      color: var(--lime);
     }
 
     .path-rail {
@@ -3567,7 +3516,6 @@
             <div class="jump-compare">
               <div class="jump-box">
                 <strong>large discrete jump</strong>
-                <img src="idlm-factorization-large-step-last.png" alt="Final frame showing a large factorized text diffusion jump">
                 <div class="jump-eq">
                   <math display="block">
                     <semantics>
@@ -3594,10 +3542,10 @@
                     </semantics>
                   </math>
                 </div>
+                <img src="idlm-factorization-large-step-last.png" alt="Final frame showing a large factorized text diffusion jump">
               </div>
               <div class="jump-box safe">
                 <strong>many small corrections</strong>
-                <img src="idlm-factorization-small-steps-last.png" alt="Final frame showing smaller denoising steps preserving structure">
                 <div class="jump-eq">
                   <math display="block">
                     <semantics>
@@ -3621,21 +3569,7 @@
                     </semantics>
                   </math>
                 </div>
-              </div>
-            </div>
-          </div>
-          <div class="path-card takeaway-card">
-            <h3>Takeaway: transfer distillation from images to discrete text</h3>
-            <p>Image diffusion already reduces long teacher chains using distillation. IDLM keeps that motivation, but moves it into the discrete language setting where token correlations cannot be ignored.</p>
-            <div class="takeaway-flow">
-              <div class="domain-pill">
-                <b>Image domain</b>
-                <span>distill many teacher steps into a few student steps</span>
-              </div>
-              <div class="mini-arrow">-&gt;</div>
-              <div class="domain-pill target">
-                <b>Language domain</b>
-                <span>learn few-step text generation without correlation break</span>
+                <img src="idlm-factorization-small-steps-last.png" alt="Final frame showing smaller denoising steps preserving structure">
               </div>
             </div>
           </div>
