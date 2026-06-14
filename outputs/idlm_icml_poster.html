@@ -2205,8 +2205,8 @@
 
     .diffusion-mini-steps {
       display: grid;
-      grid-template-columns: 1.05fr 1fr 1fr 0.22fr 1fr 1fr;
-      gap: 0.13in;
+      grid-template-columns: minmax(0, 1.05fr) 0.14in minmax(0, 1fr) 0.14in minmax(0, 1fr) 0.64in minmax(0, 1fr) 0.14in minmax(0, 1fr);
+      gap: 0.08in;
       align-items: start;
     }
 
@@ -2218,31 +2218,24 @@
       gap: 0.08in;
     }
 
-    .diff-node:not(:last-child)::after {
-      content: ">";
-      position: absolute;
-      top: 0.86in;
-      right: -0.145in;
-      color: var(--peach);
-      font-size: 0.2in;
-      line-height: 1;
-      font-weight: 90;
-    }
-
-    .diff-node.dots {
+    .diff-arrow,
+    .diff-skip {
       align-self: start;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.08in;
-      padding-top: 0.84in;
+      padding-top: 0.97in;
+      color: var(--peach);
+      font-size: 0.20in;
+      line-height: 1;
+      font-weight: 900;
     }
 
-    .diff-node.dots::after {
-      content: none;
+    .diff-skip {
+      gap: 0.06in;
     }
 
-    .diff-node.dots span {
+    .diff-skip span {
       color: var(--quiet);
       font-size: 0.30in;
       line-height: 1;
@@ -2250,7 +2243,7 @@
       letter-spacing: 0.04in;
     }
 
-    .diff-node.dots b {
+    .diff-skip b {
       color: var(--peach);
       font-size: 0.20in;
       line-height: 1;
@@ -3510,7 +3503,6 @@
 
       <article class="panel story-panel">
         <p class="kicker">1. Diffusion Language models are slow</p>
-        <h2>Diffusion Language models are slow</h2>
         <div class="path-stack">
           <div class="path-card">
             <h3>A language DLM denoises through a long reverse chain</h3>
@@ -3536,6 +3528,7 @@
                     <span>V4</span><span>@T</span><span>9B</span>
                   </div>
                 </div>
+                <div class="diff-arrow" aria-hidden="true">&gt;</div>
                 <div class="diff-node">
                   <span class="diff-node-label">Step 1</span>
                   <div class="diff-token-board">
@@ -3545,6 +3538,7 @@
                   </div>
                   <span class="diff-model">Denoising model</span>
                 </div>
+                <div class="diff-arrow" aria-hidden="true">&gt;</div>
                 <div class="diff-node">
                   <span class="diff-node-label">Step 2</span>
                   <div class="diff-token-board">
@@ -3554,7 +3548,7 @@
                   </div>
                   <span class="diff-model">Denoising model</span>
                 </div>
-                <div class="diff-node dots" aria-hidden="true"><span>...</span><b>&gt;</b></div>
+                <div class="diff-skip" aria-hidden="true"><b>&gt;</b><span>...</span><b>&gt;</b></div>
                 <div class="diff-node">
                   <span class="diff-node-label">Step T-1</span>
                   <div class="diff-token-board">
@@ -3564,6 +3558,7 @@
                   </div>
                   <span class="diff-model">Denoising model</span>
                 </div>
+                <div class="diff-arrow" aria-hidden="true">&gt;</div>
                 <div class="diff-node final">
                   <span class="diff-node-label">Step T</span>
                   <div class="diff-token-board final">
