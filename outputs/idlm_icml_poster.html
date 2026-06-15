@@ -66,7 +66,7 @@
       position: relative;
       width: 60in;
       height: 36in;
-      padding: 0.55in 0.62in 0.5in;
+      padding: 0.55in 0 0.5in 0.62in;
       isolation: isolate;
     }
 
@@ -234,7 +234,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: 15.2in 25.8in 16.2in;
+      grid-template-columns: 15.2in 25.8in 17.62in;
       grid-template-rows: 7.55in 9.6in 9.5in 2.55in;
       gap: 0.38in;
       padding-top: 0.42in;
@@ -1832,7 +1832,7 @@
 
     /* Clean revision: one story, one loop, one evidence column */
     .grid {
-      grid-template-columns: 15.5in 25.7in 16.4in;
+      grid-template-columns: 15.5in 25.7in 17.05in;
       grid-template-rows: 7.72in 21.58in;
       gap: 0.36in;
       padding-top: 0.36in;
@@ -1851,7 +1851,6 @@
     .story-panel {
       grid-column: 1;
       grid-row: 2;
-      align-self: start;
     }
 
     .loop-panel {
@@ -1861,11 +1860,12 @@
 
     .evidence-panel {
       grid-column: 3;
-      grid-row: 2;
+      grid-row: 2 / 5;
+      padding: 0.32in 0 0.32in 0.32in;
     }
 
     .footer {
-      grid-column: 1 / 4;
+      grid-column: 1 / 3;
       grid-row: 3;
       grid-template-columns: 2fr 1.35fr 1.55fr;
     }
@@ -2181,10 +2181,33 @@
       overflow: hidden;
     }
 
+    .diffusion-mini-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.20in;
+      margin-bottom: 0.16in;
+    }
+
+    .diffusion-mini-head span {
+      color: var(--quiet);
+      font-size: 0.18in;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .diffusion-mini-head strong {
+      color: var(--peach);
+      font-size: 0.17in;
+      line-height: 1.2;
+      font-weight: 900;
+      text-align: right;
+    }
+
     .diffusion-mini-steps {
       display: grid;
-      grid-template-columns: minmax(0, 1.05fr) 0.14in minmax(0, 1fr) 0.14in minmax(0, 1fr) 0.64in minmax(0, 1fr) 0.14in minmax(0, 1fr);
-      gap: 0.08in;
+      grid-template-columns: 1.05fr 1fr 1fr 0.22fr 1fr 1fr;
+      gap: 0.13in;
       align-items: start;
     }
 
@@ -2196,36 +2219,28 @@
       gap: 0.08in;
     }
 
-    .diff-arrow,
-    .diff-skip {
-      align-self: start;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding-top: 0.97in;
+    .diff-node:not(:last-child)::after {
+      content: ">";
+      position: absolute;
+      top: 0.86in;
+      right: -0.145in;
       color: var(--peach);
-      font-size: 0.20in;
+      font-size: 0.2in;
       line-height: 1;
-      font-weight: 900;
+      font-weight: 90;
     }
 
-    .diff-skip {
-      gap: 0.06in;
-    }
-
-    .diff-skip span {
+    .diff-node.dots {
+      align-self: center;
+      padding-top: 0.84in;
       color: var(--quiet);
       font-size: 0.30in;
-      line-height: 1;
       font-weight: 900;
       letter-spacing: 0.04in;
     }
 
-    .diff-skip b {
-      color: var(--peach);
-      font-size: 0.20in;
-      line-height: 1;
-      font-weight: 900;
+    .diff-node.dots::after {
+      top: 0.86in;
     }
 
     .diff-node-label {
@@ -2313,7 +2328,7 @@
     .jump-box strong {
       display: block;
       margin-bottom: 0.08in;
-      color: #ff5f7d;
+      color: var(--peach);
       font-size: 0.18in;
       line-height: 1.12;
       font-weight: 900;
@@ -2324,10 +2339,8 @@
     }
 
     .jump-box img {
-      display: block;
       width: 100%;
-      height: 1.82in;
-      margin-top: 0.09in;
+      height: 2.12in;
       object-fit: contain;
       object-position: center;
       border: 1px solid rgba(246, 251, 255, 0.12);
@@ -2335,36 +2348,67 @@
       background: #061226;
     }
 
-    .jump-eq {
-      display: grid;
-      place-items: center;
-      min-height: 0.62in;
-      margin-top: 0.09in;
-      border: 1px solid rgba(94, 217, 255, 0.20);
-      border-radius: 0.08in;
-      background: rgba(15, 22, 66, 0.70);
-      color: #dff7ff;
-      font-size: 0.165in;
-      line-height: 1.05;
+    .break-eq {
+      margin-top: 0.16in;
+      color: #fff0c4;
+      font-size: 0.28in;
+      line-height: 1.24;
       font-weight: 900;
       text-align: center;
-      overflow: hidden;
     }
 
-    .jump-box:not(.safe) .jump-eq {
-      border-color: rgba(255, 143, 212, 0.38);
-      background: rgba(255, 143, 212, 0.08);
-      color: #f8f4ff;
+    .takeaway-card {
+      border-color: rgba(255, 211, 107, 0.36);
+      background:
+        radial-gradient(circle at 82% 0%, rgba(255, 211, 107, 0.14), transparent 38%),
+        linear-gradient(135deg, rgba(25, 198, 255, 0.08), rgba(184, 107, 255, 0.09)),
+        rgba(1, 6, 22, 0.62);
     }
 
-    .jump-box.safe .jump-eq {
-      border-color: rgba(255, 143, 212, 0.38);
-      background: rgba(255, 143, 212, 0.08);
-      color: #f8f4ff;
+    .takeaway-card h3 {
+      color: var(--gold);
     }
 
-    .jump-eq math {
-      max-width: 100%;
+    .takeaway-flow {
+      display: grid;
+      grid-template-columns: 1fr 0.45in 1fr;
+      gap: 0.12in;
+      align-items: center;
+      margin-top: 0.20in;
+    }
+
+    .domain-pill {
+      min-height: 1.60in;
+      display: grid;
+      align-content: center;
+      gap: 0.06in;
+      border: 1px solid rgba(94, 217, 255, 0.20);
+      border-radius: 0.12in;
+      background: rgba(2, 8, 24, 0.60);
+      padding: 0.12in;
+      text-align: center;
+    }
+
+    .domain-pill b {
+      color: var(--ink);
+      font-size: 0.24in;
+      line-height: 1.10;
+    }
+
+    .domain-pill span {
+      color: var(--muted);
+      font-size: 0.16in;
+      line-height: 1.22;
+      font-weight: 850;
+    }
+
+    .domain-pill.target {
+      border-color: rgba(181, 240, 124, 0.38);
+      background: rgba(181, 240, 124, 0.08);
+    }
+
+    .domain-pill.target b {
+      color: var(--lime);
     }
 
     .path-rail {
@@ -2853,6 +2897,933 @@
       color: var(--gold);
       font-size: 0.27in;
       line-height: 1.0;
+    }
+
+    .result-section {
+      border: 1px solid rgba(94, 217, 255, 0.17);
+      border-radius: 0.15in;
+      background:
+        radial-gradient(circle at 82% 2%, rgba(94, 217, 255, 0.08), transparent 34%),
+        rgba(1, 6, 22, 0.48);
+      padding: 0.22in;
+      margin-top: 0.24in;
+    }
+
+    .result-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.12in;
+      margin-bottom: 0.16in;
+    }
+
+    .result-head h3 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 0.29in;
+      line-height: 1.08;
+    }
+
+    .result-head span {
+      color: var(--quiet);
+      font-size: 0.15in;
+      font-weight: 900;
+      line-height: 1.1;
+      text-transform: uppercase;
+      text-align: right;
+    }
+
+    .result-examples {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.15in;
+      margin-bottom: 0.18in;
+    }
+
+    .example-card {
+      min-width: 0;
+      border: 1px solid rgba(255, 211, 107, 0.24);
+      border-radius: 0.12in;
+      background: rgba(255, 211, 107, 0.065);
+      padding: 0.15in;
+    }
+
+    .example-card.open {
+      border-color: rgba(181, 240, 124, 0.26);
+      background: rgba(181, 240, 124, 0.06);
+    }
+
+    .example-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.08in;
+      margin-bottom: 0.11in;
+      color: var(--peach);
+      font-size: 0.17in;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .example-top b {
+      color: var(--gold);
+      font-size: 0.21in;
+    }
+
+    .prompt-mini,
+    .sample-mini {
+      margin: 0;
+      color: #d7e6ff;
+      font-size: 0.15in;
+      line-height: 1.28;
+      font-weight: 800;
+    }
+
+    .prompt-mini b {
+      display: inline-block;
+      margin-right: 0.05in;
+      border: 1px solid rgba(255, 211, 107, 0.30);
+      border-radius: 0.055in;
+      background: rgba(255, 211, 107, 0.10);
+      padding: 0.018in 0.045in;
+      color: var(--gold);
+      font-weight: 900;
+    }
+
+    .program-mini {
+      margin-top: 0.12in;
+      border: 1px solid rgba(94, 217, 255, 0.14);
+      border-radius: 0.08in;
+      background: rgba(1, 6, 22, 0.72);
+      padding: 0.12in;
+      color: #e8fbff;
+      font-size: 0.14in;
+      line-height: 1.22;
+      font-weight: 850;
+      white-space: pre-wrap;
+    }
+
+    .example-card:not(.open) .program-mini {
+      font-size: 0.118in;
+      line-height: 1.20;
+    }
+
+    .program-mini code {
+      display: block;
+      width: max-content;
+      max-width: 100%;
+      margin: 0;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+    }
+
+    .code-label {
+      display: block;
+      width: max-content;
+      max-width: 100%;
+      margin-top: 0.12in;
+      border: 1px solid rgba(94, 217, 255, 0.34);
+      border-radius: 0.055in;
+      background: rgba(94, 217, 255, 0.12);
+      padding: 0.03in 0.08in;
+      color: #7ee7ff;
+      font-size: 0.13in;
+      line-height: 1;
+      font-weight: 900;
+      text-transform: uppercase;
+      box-shadow: 0 0 0.12in rgba(94, 217, 255, 0.12);
+    }
+
+    .py-kw {
+      color: #ffa780;
+    }
+
+    .py-fn,
+    .py-num {
+      color: var(--gold);
+    }
+
+    .py-type {
+      color: var(--lime);
+    }
+
+    .py-name {
+      color: #a9c7f5;
+    }
+
+    .py-op {
+      color: #7ee7ff;
+    }
+
+    .metric-chips {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.09in;
+      margin-bottom: 0.12in;
+    }
+
+    .metric-chip {
+      border: 1px solid rgba(94, 217, 255, 0.18);
+      border-radius: 0.08in;
+      background: rgba(94, 217, 255, 0.07);
+      padding: 0.07in 0.09in;
+      color: var(--muted);
+      font-size: 0.125in;
+      font-weight: 900;
+      line-height: 1.12;
+      text-align: center;
+    }
+
+    .metric-chip b {
+      color: #e8fbff;
+      font-size: 0.12in;
+      line-height: 1;
+    }
+
+    .metric-chip em {
+      margin-left: 0.04in;
+      color: #cde0f8;
+      font-style: normal;
+      font-size: 0.12in;
+      line-height: 1;
+    }
+
+    .example-card.open .sample-mini {
+      font-size: 0.125in;
+      line-height: 1.34;
+    }
+
+    .example-card.open .example-top span {
+      color: #b5f07c;
+    }
+
+    .example-card.open .example-top b {
+      color: #b5f07c;
+    }
+
+    .example-top sup {
+      font-size: 0.10in;
+      line-height: 0;
+    }
+
+    .gsm8k-mini-chart {
+      border: 1px solid rgba(94, 217, 255, 0.16);
+      border-radius: 0.12in;
+      background:
+        radial-gradient(circle at 72% 8%, rgba(255, 143, 212, 0.10), transparent 34%),
+        rgba(2, 8, 24, 0.58);
+      padding: 0.16in;
+    }
+
+    .gsm8k-mini-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.14in;
+      margin-bottom: 0.13in;
+    }
+
+    .gsm8k-mini-head h4 {
+      margin: 0;
+      color: #f6fbff;
+      font-size: 0.30in;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .gsm8k-mini-legend {
+      display: flex;
+      gap: 0.08in;
+      color: var(--muted);
+      font-size: 0.12in;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .gsm8k-mini-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.05in;
+      border: 1px solid rgba(94, 217, 255, 0.14);
+      border-radius: 0.07in;
+      background: rgba(1, 6, 22, 0.54);
+      padding: 0.055in 0.075in;
+    }
+
+    .gsm8k-mini-legend span::before {
+      content: "";
+      width: 0.10in;
+      height: 0.10in;
+      border-radius: 0.03in;
+      background: #7edfff;
+    }
+
+    .gsm8k-mini-legend .student::before {
+      background: #ffd36b;
+    }
+
+    .gsm8k-mini-body {
+      display: grid;
+      grid-template-columns: 0.50in minmax(0, 1fr);
+      gap: 0.12in;
+    }
+
+    .gsm8k-mini-y {
+      display: grid;
+      grid-template-rows: repeat(4, 1fr);
+      height: 2.55in;
+      padding-top: 0.30in;
+      color: var(--quiet);
+      font-size: 0.125in;
+      font-weight: 900;
+      line-height: 1;
+      text-align: right;
+    }
+
+    .gsm8k-mini-bars {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.16in;
+      align-items: end;
+      height: 2.55in;
+      padding: 0.30in 0.08in 0;
+      border-bottom: 1px solid rgba(94, 217, 255, 0.30);
+      background:
+        linear-gradient(rgba(94, 217, 255, 0.16), rgba(94, 217, 255, 0.16)) 0 0.30in / 100% 1px no-repeat,
+        linear-gradient(rgba(94, 217, 255, 0.14), rgba(94, 217, 255, 0.14)) 0 1.05in / 100% 1px no-repeat,
+        linear-gradient(rgba(94, 217, 255, 0.12), rgba(94, 217, 255, 0.12)) 0 1.80in / 100% 1px no-repeat;
+    }
+
+    .gsm8k-mini-col {
+      min-width: 0;
+      height: 100%;
+      display: grid;
+      grid-template-rows: 0.30in 1fr;
+      align-items: end;
+      text-align: center;
+    }
+
+    .gsm8k-mini-score {
+      color: #dffaff;
+      font-size: 0.15in;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .gsm8k-mini-stick {
+      align-self: end;
+      justify-self: center;
+      width: 0.46in;
+      height: var(--h);
+      border-radius: 0.09in 0.09in 0.03in 0.03in;
+      background: linear-gradient(180deg, #7edfff, #6d93ff);
+      box-shadow: 0 0 0.20in rgba(110, 232, 255, 0.17);
+    }
+
+    .gsm8k-mini-col.student .gsm8k-mini-stick {
+      background: linear-gradient(180deg, #ff8fd4, #ffd36b 47%, #b5f07c);
+      box-shadow: 0 0 0.22in rgba(255, 143, 212, 0.17);
+    }
+
+    .gsm8k-mini-labels {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.16in;
+      margin: 0.10in 0.08in 0;
+      text-align: center;
+    }
+
+    .gsm8k-mini-labels span {
+      color: var(--muted);
+      font-size: 0.105in;
+      line-height: 1.12;
+      font-weight: 900;
+    }
+
+    .gsm8k-mini-labels b,
+    .gsm8k-mini-labels em,
+    .gsm8k-mini-labels small {
+      display: block;
+    }
+
+    .gsm8k-mini-labels b {
+      margin-bottom: 0.03in;
+      color: #7edfff;
+      font-size: 0.105in;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .gsm8k-mini-labels em {
+      color: #f6fbff;
+      font-style: normal;
+      font-size: 0.125in;
+      line-height: 1.05;
+    }
+
+    .gsm8k-mini-labels small {
+      color: #cde0f8;
+      font-size: 0.095in;
+      font-weight: 850;
+    }
+
+    .gsm8k-mini-labels .student b {
+      color: var(--gold);
+    }
+
+    .owt-blog-chart {
+      margin: 0;
+      border: 1px solid rgba(94, 217, 255, 0.16);
+      border-radius: 0.12in;
+      background:
+        radial-gradient(circle at 74% 14%, rgba(255, 143, 212, 0.10), transparent 34%),
+        rgba(2, 8, 24, 0.58);
+      padding: 0.16in;
+    }
+
+    .owt-blog-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.14in;
+      margin-bottom: 0.14in;
+    }
+
+    .owt-blog-head h4 {
+      margin: 0;
+      color: #f6fbff;
+      font-size: 0.30in;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .owt-blog-legend {
+      display: flex;
+      gap: 0.08in;
+      color: var(--muted);
+      font-size: 0.12in;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .owt-blog-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.05in;
+      border: 1px solid rgba(94, 217, 255, 0.14);
+      border-radius: 0.07in;
+      background: rgba(1, 6, 22, 0.54);
+      padding: 0.055in 0.075in;
+    }
+
+    .owt-blog-legend span::before {
+      content: "";
+      width: 0.10in;
+      height: 0.10in;
+      border-radius: 0.03in;
+      background: #7edfff;
+    }
+
+    .owt-blog-legend .student::before {
+      background: #ffd36b;
+    }
+
+    .owt-blog-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.15in;
+    }
+
+    .owt-blog-panel {
+      min-width: 0;
+      border: 1px solid rgba(94, 217, 255, 0.14);
+      border-radius: 0.11in;
+      background: rgba(1, 6, 22, 0.52);
+      padding: 0.14in;
+    }
+
+    .owt-blog-panel h5 {
+      margin: 0 0 0.11in;
+      color: #f6fbff;
+      font-size: 0.17in;
+      line-height: 1.05;
+    }
+
+    .owt-blog-plot {
+      display: grid;
+      grid-template-columns: 0.24in 0.30in minmax(0, 1fr);
+      gap: 0.09in;
+      align-items: start;
+    }
+
+    .owt-blog-ylabel {
+      height: 2.25in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #d9eaff;
+      font-size: 0.10in;
+      line-height: 1;
+      font-weight: 900;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+
+    .owt-blog-axis {
+      display: grid;
+      grid-template-rows: repeat(6, minmax(0, 1fr));
+      height: 2.25in;
+      padding: 0.24in 0 0;
+      color: var(--quiet);
+      font-size: 0.105in;
+      line-height: 1;
+      font-weight: 900;
+      text-align: right;
+      align-items: end;
+    }
+
+    .owt-blog-axis.uniform {
+      grid-template-rows: repeat(5, minmax(0, 1fr));
+    }
+
+    .owt-blog-area {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+      gap: 0.14in;
+      height: 2.25in;
+      padding: 0.24in 0.06in 0;
+      border-bottom: 1px solid rgba(94, 217, 255, 0.30);
+      background:
+        linear-gradient(rgba(94, 217, 255, 0.16), rgba(94, 217, 255, 0.16)) 0 0.24in / 100% 1px no-repeat,
+        linear-gradient(rgba(94, 217, 255, 0.13), rgba(94, 217, 255, 0.13)) 0 0.70in / 100% 1px no-repeat,
+        linear-gradient(rgba(94, 217, 255, 0.12), rgba(94, 217, 255, 0.12)) 0 1.16in / 100% 1px no-repeat,
+        linear-gradient(rgba(94, 217, 255, 0.10), rgba(94, 217, 255, 0.10)) 0 1.62in / 100% 1px no-repeat,
+        linear-gradient(rgba(94, 217, 255, 0.10), rgba(94, 217, 255, 0.10)) 0 2.08in / 100% 1px no-repeat;
+      overflow: hidden;
+    }
+
+    .owt-blog-col {
+      min-width: 0;
+      position: relative;
+      height: 100%;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .owt-blog-score {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(var(--h) + 0.08in);
+      color: #dffaff;
+      font-size: 0.14in;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .owt-blog-stick {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: 0.42in;
+      height: var(--h);
+      border-radius: 0.08in 0.08in 0 0;
+      background: linear-gradient(180deg, #7edfff, #6d93ff);
+      box-shadow: 0 0 0.18in rgba(110, 232, 255, 0.15);
+    }
+
+    .owt-blog-col.student .owt-blog-stick {
+      background: linear-gradient(180deg, #ff8fd4, #ffd36b 47%, #b5f07c);
+      box-shadow: 0 0 0.20in rgba(255, 143, 212, 0.16);
+    }
+
+    .owt-blog-labels {
+      display: grid;
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+      gap: 0.14in;
+      margin: 0.10in 0.06in 0;
+      text-align: center;
+    }
+
+    .owt-blog-labels span {
+      color: var(--muted);
+      font-size: 0.10in;
+      line-height: 1.12;
+      font-weight: 900;
+    }
+
+    .owt-blog-labels b,
+    .owt-blog-labels em,
+    .owt-blog-labels small {
+      display: block;
+    }
+
+    .owt-blog-labels b {
+      margin-bottom: 0.025in;
+      color: #7edfff;
+      font-size: 0.105in;
+      text-transform: uppercase;
+    }
+
+    .owt-blog-labels .student b {
+      color: var(--gold);
+    }
+
+    .owt-blog-labels em {
+      color: #f6fbff;
+      font-style: normal;
+      font-size: 0.125in;
+      line-height: 1.05;
+    }
+
+    .owt-blog-labels sup {
+      font-size: 0.075in;
+    }
+
+    .owt-blog-labels small {
+      color: #cde0f8;
+      font-size: 0.095in;
+      font-weight: 850;
+    }
+
+    .owt-entropy-pill {
+      display: inline-block;
+      margin-top: 0.055in;
+      border: 1px solid rgba(255, 211, 107, 0.23);
+      border-radius: 0.07in;
+      background: rgba(255, 211, 107, 0.095);
+      padding: 0.035in 0.055in;
+      color: #cfe0f4;
+      font-size: 0.09in;
+      line-height: 1;
+    }
+
+    .owt-entropy-pill b {
+      display: inline;
+      margin-right: 0.03in;
+      color: var(--peach);
+      font-size: inherit;
+      text-transform: none;
+    }
+
+    .frontier-card {
+      display: block;
+      padding: 0.22in;
+    }
+
+    .frontier-frame {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 7.25in;
+      overflow: hidden;
+      border: 1px solid rgba(246, 251, 255, 0.12);
+      border-radius: 0.10in;
+      background: #ffffff;
+    }
+
+    .frontier-card img {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .frontier-caption {
+      margin: -0.03in 0 0.12in;
+      color: #cde0f8;
+      font-size: 0.145in;
+      line-height: 1.15;
+      font-weight: 850;
+    }
+
+    .frontier-caption b {
+      color: var(--gold);
+      font-weight: 900;
+    }
+
+    .evidence-panel .result-section {
+      padding: 0.21in 0.12in 0.21in 0.21in;
+      margin-top: 0.20in;
+    }
+
+    .evidence-panel .result-head {
+      margin-bottom: 0.14in;
+    }
+
+    .evidence-panel .result-head h3 {
+      color: var(--peach);
+      font-size: 0.37in;
+      line-height: 1.2;
+      font-weight: 900;
+    }
+
+    .evidence-panel .result-head span {
+      font-size: 0.135in;
+    }
+
+    .evidence-panel .result-examples {
+      gap: 0.17in;
+      margin-bottom: 0.17in;
+    }
+
+    .evidence-panel .example-card {
+      padding: 0.17in;
+    }
+
+    .evidence-panel .example-top {
+      margin-bottom: 0.10in;
+      font-size: 0.17in;
+    }
+
+    .evidence-panel .example-top b {
+      font-size: 0.22in;
+    }
+
+    .evidence-panel .prompt-mini {
+      font-size: 0.146in;
+      line-height: 1.24;
+    }
+
+    .evidence-panel .sample-mini,
+    .evidence-panel .example-card.open .sample-mini {
+      font-size: 0.136in;
+      line-height: 1.32;
+    }
+
+    .evidence-panel .code-label {
+      margin: 0.11in 0 0;
+      font-size: 0.135in;
+      text-align: left;
+    }
+
+    .evidence-panel .example-card:not(.open) .program-mini {
+      width: 99%;
+      margin: 0.085in 0 0;
+      padding: 0.13in 0.13in 0.13in 0.18in;
+      font-size: 0.129in;
+      line-height: 1.20;
+    }
+
+    .evidence-panel .metric-chips {
+      gap: 0.06in;
+      margin-bottom: 0.07in;
+    }
+
+    .evidence-panel .metric-chip {
+      padding: 0.045in 0.055in;
+      font-size: 0.085in;
+    }
+
+    .evidence-panel .metric-chip b,
+    .evidence-panel .metric-chip em {
+      font-size: 0.085in;
+    }
+
+    .evidence-panel .gsm8k-mini-chart,
+    .evidence-panel .owt-blog-chart {
+      padding: 0.16in;
+    }
+
+    .evidence-panel .gsm8k-mini-head,
+    .evidence-panel .owt-blog-head {
+      margin-bottom: 0.10in;
+    }
+
+    .evidence-panel .gsm8k-mini-head h4,
+    .evidence-panel .owt-blog-head h4 {
+      font-size: 0.31in;
+    }
+
+    .evidence-panel .gsm8k-mini-legend,
+    .evidence-panel .owt-blog-legend {
+      font-size: 0.10in;
+      gap: 0.06in;
+    }
+
+    .evidence-panel .gsm8k-mini-legend span,
+    .evidence-panel .owt-blog-legend span {
+      padding: 0.035in 0.045in;
+      gap: 0.03in;
+    }
+
+    .evidence-panel .gsm8k-mini-legend span::before,
+    .evidence-panel .owt-blog-legend span::before {
+      width: 0.07in;
+      height: 0.07in;
+    }
+
+    .evidence-panel .gsm8k-mini-y,
+    .evidence-panel .gsm8k-mini-bars {
+      height: 2.05in;
+    }
+
+    .evidence-panel .gsm8k-mini-body {
+      grid-template-columns: 0.46in minmax(0, 1fr);
+      gap: 0.10in;
+    }
+
+    .evidence-panel .gsm8k-mini-y {
+      padding-top: 0.16in;
+      font-size: 0.105in;
+    }
+
+    .evidence-panel .gsm8k-mini-bars {
+      gap: 0.15in;
+      padding: 0.16in 0.04in 0;
+    }
+
+    .evidence-panel .gsm8k-mini-col {
+      grid-template-rows: 0.22in 1fr;
+    }
+
+    .evidence-panel .gsm8k-mini-score {
+      font-size: 0.125in;
+    }
+
+    .evidence-panel .gsm8k-mini-stick {
+      width: 0.54in;
+    }
+
+    .evidence-panel .gsm8k-mini-labels {
+      gap: 0.11in;
+      margin-top: 0.045in;
+    }
+
+    .evidence-panel .gsm8k-mini-labels span {
+      font-size: 0.098in;
+    }
+
+    .evidence-panel .gsm8k-mini-labels b {
+      font-size: 0.105in;
+      line-height: 1.05;
+    }
+
+    .evidence-panel .gsm8k-mini-labels em {
+      font-size: 0.148in;
+      line-height: 1.02;
+    }
+
+    .evidence-panel .gsm8k-mini-labels small {
+      font-size: 0.102in;
+      line-height: 1.05;
+    }
+
+    .evidence-panel .owt-blog-grid {
+      gap: 0.14in;
+    }
+
+    .evidence-panel .owt-blog-panel {
+      padding: 0.12in;
+    }
+
+    .evidence-panel .owt-blog-panel h5 {
+      margin-bottom: 0.11in;
+      font-size: 0.17in;
+    }
+
+    .evidence-panel .owt-blog-plot {
+      grid-template-columns: 0.42in 0.31in minmax(0, 1fr);
+      gap: 0.07in;
+    }
+
+    .evidence-panel .owt-blog-ylabel,
+    .evidence-panel .owt-blog-axis,
+    .evidence-panel .owt-blog-area {
+      height: 2.55in;
+    }
+
+    .evidence-panel .owt-blog-ylabel {
+      color: #dff2ff;
+      font-size: 0.175in;
+      letter-spacing: 0;
+      text-shadow: 0 0 0.12in rgba(94, 217, 255, 0.22);
+    }
+
+    .evidence-panel .owt-blog-axis {
+      padding-top: 0.18in;
+      font-size: 0.108in;
+    }
+
+    .evidence-panel .owt-blog-area {
+      gap: 0.14in;
+      padding: 0.18in 0.035in 0;
+      background:
+        linear-gradient(rgba(94, 217, 255, 0.16), rgba(94, 217, 255, 0.16)) 0 0.18in / 100% 1px no-repeat,
+        linear-gradient(rgba(94, 217, 255, 0.13), rgba(94, 217, 255, 0.13)) 0 0.78in / 100% 1px no-repeat,
+        linear-gradient(rgba(94, 217, 255, 0.12), rgba(94, 217, 255, 0.12)) 0 1.32in / 100% 1px no-repeat,
+        linear-gradient(rgba(94, 217, 255, 0.10), rgba(94, 217, 255, 0.10)) 0 1.86in / 100% 1px no-repeat,
+        linear-gradient(rgba(94, 217, 255, 0.10), rgba(94, 217, 255, 0.10)) 0 2.40in / 100% 1px no-repeat;
+    }
+
+    .evidence-panel .owt-blog-score {
+      font-size: 0.12in;
+      bottom: calc(var(--h) + 0.07in);
+    }
+
+    .evidence-panel .owt-blog-stick {
+      width: 0.54in;
+    }
+
+    .evidence-panel .owt-blog-labels {
+      gap: 0.08in;
+      margin-top: 0.055in;
+    }
+
+    .evidence-panel .owt-blog-labels span {
+      font-size: 0.098in;
+    }
+
+    .evidence-panel .owt-blog-labels b {
+      font-size: 0.105in;
+      line-height: 1.05;
+    }
+
+    .evidence-panel .owt-blog-labels small {
+      font-size: 0.102in;
+      line-height: 1.05;
+    }
+
+    .evidence-panel .owt-entropy-pill {
+      font-size: 0.090in;
+    }
+
+    .evidence-panel .owt-blog-labels em {
+      font-size: 0.148in;
+      line-height: 1.02;
+    }
+
+    .evidence-panel .owt-entropy-pill {
+      display: inline-block;
+      width: max-content;
+      height: 0.215in;
+      box-sizing: border-box;
+      margin: 0.035in auto 0;
+      padding: 0.028in 0.080in 0;
+      border-color: rgba(255, 167, 118, 0.48);
+      border-radius: 0.090in;
+      background: rgba(255, 167, 118, 0.13);
+      line-height: 1;
+    }
+
+    .evidence-panel .frontier-card {
+      padding: 0.15in;
+      margin-top: 0.22in;
+    }
+
+    .evidence-panel .frontier-frame {
+      height: 9.35in;
+    }
+
+    .evidence-panel .frontier-caption {
+      font-size: 0.135in;
+      margin-bottom: 0.10in;
     }
 
     .clean-hero {
@@ -3421,11 +4392,24 @@
       </article>
 
       <article class="panel story-panel">
-        <p class="kicker">1. Diffusion Language models are slow</p>
+        <p class="kicker">1. Diffusion inference problem</p>
+        <h2>Text diffusion is slow because every reverse step must coordinate many tokens.</h2>
         <div class="path-stack">
           <div class="path-card">
             <h3>A language DLM denoises through a long reverse chain</h3>
             <div class="diffusion-mini" aria-label="Compact language diffusion generation timeline">
+              <div class="diffusion-mini-head">
+                <span>Language diffusion generation</span>
+                <strong>
+                  <math display="inline">
+                    <semantics>
+                      <mi>T</mi>
+                      <annotation encoding="application/x-tex">T</annotation>
+                    </semantics>
+                  </math>
+                  sequential token-denoising steps
+                </strong>
+              </div>
               <div class="diffusion-mini-steps">
                 <div class="diff-node">
                   <span class="diff-node-label">Random tokens</span>
@@ -3435,7 +4419,6 @@
                     <span>V4</span><span>@T</span><span>9B</span>
                   </div>
                 </div>
-                <div class="diff-arrow" aria-hidden="true">&gt;</div>
                 <div class="diff-node">
                   <span class="diff-node-label">Step 1</span>
                   <div class="diff-token-board">
@@ -3445,7 +4428,6 @@
                   </div>
                   <span class="diff-model">Denoising model</span>
                 </div>
-                <div class="diff-arrow" aria-hidden="true">&gt;</div>
                 <div class="diff-node">
                   <span class="diff-node-label">Step 2</span>
                   <div class="diff-token-board">
@@ -3455,7 +4437,7 @@
                   </div>
                   <span class="diff-model">Denoising model</span>
                 </div>
-                <div class="diff-skip" aria-hidden="true"><b>&gt;</b><span>...</span><b>&gt;</b></div>
+                <div class="diff-node dots" aria-hidden="true">...</div>
                 <div class="diff-node">
                   <span class="diff-node-label">Step T-1</span>
                   <div class="diff-token-board">
@@ -3465,7 +4447,6 @@
                   </div>
                   <span class="diff-model">Denoising model</span>
                 </div>
-                <div class="diff-arrow" aria-hidden="true">&gt;</div>
                 <div class="diff-node final">
                   <span class="diff-node-label">Step T</span>
                   <div class="diff-token-board final">
@@ -3483,60 +4464,39 @@
             <div class="jump-compare">
               <div class="jump-box">
                 <strong>large discrete jump</strong>
-                <div class="jump-eq">
-                  <math display="block">
-                    <semantics>
-                      <mrow>
-                        <msub><mi>p</mi><mi>&theta;</mi></msub>
-                        <mo>(</mo>
-                        <msubsup><mi>x</mi><mrow><mi>t</mi><mo>-</mo><mi>&Delta;</mi></mrow><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
-                        <mo>|</mo>
-                        <msubsup><mi>x</mi><mi>t</mi><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
-                        <mo>)</mo>
-                        <mo>&#x2249;</mo>
-                        <munderover><mo>&#x220F;</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>L</mi></munderover>
-                        <msub><mi>p</mi><mi>&theta;</mi></msub>
-                        <mo>(</mo>
-                        <msubsup><mi>x</mi><mrow><mi>t</mi><mo>-</mo><mi>&Delta;</mi></mrow><mrow><mo>(</mo><mi>i</mi><mo>)</mo></mrow></msubsup>
-                        <mo>|</mo>
-                        <msubsup><mi>x</mi><mi>t</mi><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
-                        <mo>)</mo>
-                        <mo>,</mo>
-                        <mspace width="0.18em"></mspace>
-                        <mi>&Delta;</mi><mo>&#x226B;</mo><mn>1</mn>
-                      </mrow>
-                      <annotation encoding="application/x-tex">p_\theta(x_{t-\Delta}^{1:L}\mid x_t^{1:L}) \not\approx \prod_{i=1}^{L} p_\theta(x_{t-\Delta}^{(i)}\mid x_t^{1:L}),\ \Delta \gg 1</annotation>
-                    </semantics>
-                  </math>
-                </div>
-                <img src="idlm-factorization-large-step-last.png" alt="Final frame showing a large factorized text diffusion jump">
+                <img src="idlm-factorization-large-step.gif" alt="Blog visualization of a large factorized text diffusion jump">
               </div>
               <div class="jump-box safe">
                 <strong>many small corrections</strong>
-                <div class="jump-eq">
-                  <math display="block">
-                    <semantics>
-                      <mrow>
-                        <msub><mi>p</mi><mi>&theta;</mi></msub>
-                        <mo>(</mo>
-                        <msubsup><mi>x</mi><mrow><mi>t</mi><mo>-</mo><mn>1</mn></mrow><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
-                        <mo>|</mo>
-                        <msubsup><mi>x</mi><mi>t</mi><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
-                        <mo>)</mo>
-                        <mo>=</mo>
-                        <munderover><mo>&#x220F;</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>L</mi></munderover>
-                        <msub><mi>p</mi><mi>&theta;</mi></msub>
-                        <mo>(</mo>
-                        <msubsup><mi>x</mi><mrow><mi>t</mi><mo>-</mo><mn>1</mn></mrow><mrow><mo>(</mo><mi>i</mi><mo>)</mo></mrow></msubsup>
-                        <mo>|</mo>
-                        <msubsup><mi>x</mi><mi>t</mi><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
-                        <mo>)</mo>
-                      </mrow>
-                      <annotation encoding="application/x-tex">p_\theta(x_{t-1}^{1:L}\mid x_t^{1:L}) = \prod_{i=1}^{L} p_\theta(x_{t-1}^{(i)}\mid x_t^{1:L})</annotation>
-                    </semantics>
-                  </math>
-                </div>
-                <img src="idlm-factorization-small-steps-last.png" alt="Final frame showing smaller denoising steps preserving structure">
+                <img src="idlm-factorization-small-steps.gif" alt="Blog visualization of smaller denoising steps preserving structure">
+              </div>
+            </div>
+            <div class="break-eq">
+              <math display="inline">
+                <semantics>
+                  <mrow>
+                    <mi>p</mi><mo>(</mo><msub><mi>x</mi><mn>0</mn></msub><mo>|</mo><msub><mi>x</mi><mi>T</mi></msub><mo>)</mo>
+                    <mo>&#x2260;</mo>
+                    <munder><mo>&#x220F;</mo><mi>i</mi></munder>
+                    <mi>p</mi><mo>(</mo><msubsup><mi>x</mi><mn>0</mn><mi>i</mi></msubsup><mo>|</mo><msub><mi>x</mi><mi>T</mi></msub><mo>)</mo>
+                  </mrow>
+                  <annotation encoding="application/x-tex">p(x_0 \mid x_T) \ne \prod_i p(x_0^i \mid x_T)</annotation>
+                </semantics>
+              </math>
+            </div>
+          </div>
+          <div class="path-card takeaway-card">
+            <h3>Takeaway: transfer distillation from images to discrete text</h3>
+            <p>Image diffusion already reduces long teacher chains using distillation. IDLM keeps that motivation, but moves it into the discrete language setting where token correlations cannot be ignored.</p>
+            <div class="takeaway-flow">
+              <div class="domain-pill">
+                <b>Image domain</b>
+                <span>distill many teacher steps into a few student steps</span>
+              </div>
+              <div class="mini-arrow">-&gt;</div>
+              <div class="domain-pill target">
+                <b>Language domain</b>
+                <span>learn few-step text generation without correlation break</span>
               </div>
             </div>
           </div>
@@ -3650,39 +4610,190 @@
       </article>
 
       <article class="panel evidence-panel">
-        <p class="kicker">3. Evidence</p>
-        <h2>The few-step student stays competitive.</h2>
-        <div class="evidence-metrics">
-          <div class="evidence-metric"><b>16</b>calls instead of 1024</div>
-          <div class="evidence-metric"><b>32.75</b>GenPPL on masked OWT</div>
-          <div class="evidence-metric"><b>21.38%</b>GSM8K best shown</div>
-        </div>
-        <div class="simple-chart">
-          <h3>OpenWebText masked diffusion: lower GenPPL is better</h3>
-          <div class="big-bars">
-            <div class="big-bar"><b>41.29</b><i class="bar-stick" style="--h:2.65in"></i><span>MDLM<br>1024 steps</span></div>
-            <div class="big-bar"><b>41.98</b><i class="bar-stick" style="--h:2.70in"></i><span>SDTT<br>128 steps</span></div>
-            <div class="big-bar"><b>32.75</b><i class="bar-stick idlm" style="--h:2.10in"></i><span>IDLM-MDLM<br>16 steps</span></div>
+        <p class="kicker">4. Experimental Results</p>
+
+        <section class="result-section">
+          <div class="result-head">
+            <h3>Conditional generation: TinyGSM -> GSM8K</h3>
+            <span>programs must execute to the right answer</span>
           </div>
-        </div>
-        <div class="simple-chart">
-          <h3>TinyGSM/GSM8K conditional generation</h3>
-          <div class="accuracy-clean">
-            <div class="acc-clean-row"><span>MDLM teacher, 1024</span><div class="acc-clean-track"><i style="--w:84%"></i></div><b>18.0%</b></div>
-            <div class="acc-clean-row"><span>IDLM-MDLM, 128</span><div class="acc-clean-track"><i style="--w:93%"></i></div><b>19.86%</b></div>
-            <div class="acc-clean-row"><span>Duo teacher, 1024</span><div class="acc-clean-track"><i style="--w:80%"></i></div><b>17.2%</b></div>
-            <div class="acc-clean-row"><span>IDLM-Duo, 128</span><div class="acc-clean-track"><i style="--w:100%"></i></div><b>21.38%</b></div>
-            <div class="acc-clean-row"><span>IDLM-Duo, 64</span><div class="acc-clean-track"><i style="--w:89%"></i></div><b>19.03%</b></div>
+          <div class="result-examples">
+            <article class="example-card">
+              <div class="example-top"><span>IDLM-MDLM</span><b>128 steps</b></div>
+              <p class="prompt-mini"><b>Prompt:</b> A baseball coach buys 9 baseballs for &#36;3 each, and a basketball coach buys 8 basketballs for &#36;14 each. How much more did the basketball coach spend?</p>
+              <span class="code-label">Generated program</span>
+              <pre class="program-mini"><code><span class="py-kw">def</span> <span class="py-fn">simple_math_problem</span>() <span class="py-op">-&gt;</span> <span class="py-type">int</span>:
+    <span class="py-name">baseball_cost</span> <span class="py-op">=</span> <span class="py-num">9</span> <span class="py-op">*</span> <span class="py-num">3</span>
+    <span class="py-name">basketball_cost</span> <span class="py-op">=</span> <span class="py-num">8</span> <span class="py-op">*</span> <span class="py-num">14</span>
+    <span class="py-name">difference</span> <span class="py-op">=</span> <span class="py-name">basketball_cost</span> <span class="py-op">-</span> <span class="py-name">baseball_cost</span>
+    <span class="py-name">result</span> <span class="py-op">=</span> <span class="py-name">difference</span>
+    <span class="py-kw">return</span> <span class="py-name">result</span></code></pre>
+            </article>
+            <article class="example-card">
+              <div class="example-top"><span>IDLM-Duo</span><b>64 steps</b></div>
+              <p class="prompt-mini"><b>Prompt:</b> The red car is 40% cheaper than the blue car. The price of the blue car is &#36;100. How much do both cars cost?</p>
+              <span class="code-label">Generated program</span>
+              <pre class="program-mini"><code><span class="py-kw">def</span> <span class="py-fn">simple_math_problem</span>() <span class="py-op">-&gt;</span> <span class="py-type">int</span>:
+    <span class="py-name">blue_car</span> <span class="py-op">=</span> <span class="py-num">100</span>
+    <span class="py-name">red_car</span> <span class="py-op">=</span> <span class="py-name">blue_car</span> <span class="py-op">*</span> <span class="py-num">0.60</span>
+    <span class="py-name">total_cost</span> <span class="py-op">=</span> <span class="py-name">blue_car</span> <span class="py-op">+</span> <span class="py-name">red_car</span>
+    <span class="py-name">result</span> <span class="py-op">=</span> <span class="py-name">total_cost</span>
+    <span class="py-kw">return</span> <span class="py-name">result</span></code></pre>
+            </article>
           </div>
-        </div>
-        <div class="simple-chart">
-          <h3>Quality guardrails</h3>
-          <div class="guardrails">
-            <div class="guardrail"><b>5.42</b>entropy</div>
-            <div class="guardrail"><b>0.93</b>MAUVE</div>
-            <div class="guardrail"><b>not</b>collapse</div>
+          <div class="gsm8k-mini-chart" aria-label="GSM8K exact-match accuracy">
+            <div class="gsm8k-mini-head">
+              <h4>GSM8K accuracy</h4>
+              <div class="gsm8k-mini-legend" aria-hidden="true">
+                <span>Teacher</span>
+                <span class="student">IDLM student</span>
+              </div>
+            </div>
+            <div class="gsm8k-mini-body">
+              <div class="gsm8k-mini-y" aria-hidden="true">
+                <span>22%</span>
+                <span>20%</span>
+                <span>18%</span>
+                <span>16%</span>
+              </div>
+              <div>
+                <div class="gsm8k-mini-bars">
+                  <div class="gsm8k-mini-col teacher" style="--h:33.3%;">
+                    <strong class="gsm8k-mini-score">18.0%</strong>
+                    <i class="gsm8k-mini-stick"></i>
+                  </div>
+                  <div class="gsm8k-mini-col student" style="--h:64.3%;">
+                    <strong class="gsm8k-mini-score">19.86%</strong>
+                    <i class="gsm8k-mini-stick"></i>
+                  </div>
+                  <div class="gsm8k-mini-col teacher" style="--h:20%;">
+                    <strong class="gsm8k-mini-score">17.2%</strong>
+                    <i class="gsm8k-mini-stick"></i>
+                  </div>
+                  <div class="gsm8k-mini-col student" style="--h:89.7%;">
+                    <strong class="gsm8k-mini-score">21.38%</strong>
+                    <i class="gsm8k-mini-stick"></i>
+                  </div>
+                  <div class="gsm8k-mini-col student" style="--h:50.5%;">
+                    <strong class="gsm8k-mini-score">19.03%</strong>
+                    <i class="gsm8k-mini-stick"></i>
+                  </div>
+                </div>
+                <div class="gsm8k-mini-labels">
+                  <span class="teacher"><b>Teacher</b><em>MDLM</em><small>1024 steps</small></span>
+                  <span class="student"><b>Student</b><em>IDLM-MDLM</em><small>128 steps</small></span>
+                  <span class="teacher"><b>Teacher</b><em>Duo</em><small>1024 steps</small></span>
+                  <span class="student"><b>Student</b><em>IDLM-Duo</em><small>128 steps</small></span>
+                  <span class="student"><b>Student</b><em>IDLM-Duo</em><small>64 steps</small></span>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
+
+        <section class="result-section">
+          <div class="result-head">
+            <h3>Unconditional generation: OpenWebText</h3>
+            <span>1024-token samples from noise</span>
+          </div>
+          <div class="result-examples">
+            <article class="example-card open">
+              <div class="example-top"><span>IDLM-MDLM</span><b>16 steps</b></div>
+              <p class="sample-mini">&hellip; In the wake of angry remarks from the media, Sam Kicks Radio decided to take a shot, claiming that he had only ever learned how to get away with something bad. I want to get over it, he says, while the exchange returns to the same public dispute. &hellip;</p>
+            </article>
+            <article class="example-card open">
+              <div class="example-top"><span>IDLM-DCD<sup>g</sup></span><b>4 steps</b></div>
+              <p class="sample-mini">&hellip; This device is not the only way to use features in this article. People who conduct interviews in secure environments are attracted by a two-way monitor, making it an ideal candidate for an interviewee who can adapt to secure systems. &hellip;</p>
+            </article>
+          </div>
+          <figure class="owt-blog-chart" aria-label="OpenWebText GenPPL and entropy comparison">
+            <div class="owt-blog-head">
+              <h4>OpenWebText generation</h4>
+              <div class="owt-blog-legend" aria-hidden="true">
+                <span>Teacher</span>
+                <span class="student">IDLM student</span>
+              </div>
+            </div>
+            <div class="owt-blog-grid">
+              <article class="owt-blog-panel">
+                <h5>Masked Diffusion</h5>
+                <div class="owt-blog-plot">
+                  <div class="owt-blog-ylabel" aria-hidden="true">GenPPL &darr;</div>
+                  <div class="owt-blog-axis" aria-hidden="true">
+                    <span>50</span>
+                    <span>40</span>
+                    <span>30</span>
+                    <span>20</span>
+                    <span>10</span>
+                    <span>0</span>
+                  </div>
+                  <div>
+                    <div class="owt-blog-area" style="--cols:2">
+                      <div class="owt-blog-col teacher">
+                        <strong class="owt-blog-score">41.29</strong>
+                        <i class="owt-blog-stick" style="--h:2.02in"></i>
+                      </div>
+                      <div class="owt-blog-col student">
+                        <strong class="owt-blog-score">32.75</strong>
+                        <i class="owt-blog-stick" style="--h:1.60in"></i>
+                      </div>
+                    </div>
+                    <div class="owt-blog-labels" style="--cols:2">
+                      <span class="teacher"><b>Teacher</b><em>MDLM</em><small>1024 steps</small><small class="owt-entropy-pill"><b>Entropy</b>5.3</small></span>
+                      <span class="student"><b>Student</b><em>IDLM-MDLM</em><small>16 steps</small><small class="owt-entropy-pill"><b>Entropy</b>5.4</small></span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+              <article class="owt-blog-panel">
+                <h5>Uniform Diffusion</h5>
+                <div class="owt-blog-plot">
+                  <div class="owt-blog-ylabel" aria-hidden="true">GenPPL &darr;</div>
+                  <div class="owt-blog-axis uniform" aria-hidden="true">
+                    <span>80</span>
+                    <span>60</span>
+                    <span>40</span>
+                    <span>20</span>
+                    <span>0</span>
+                  </div>
+                  <div>
+                    <div class="owt-blog-area" style="--cols:3">
+                      <div class="owt-blog-col teacher">
+                        <strong class="owt-blog-score">71.72</strong>
+                        <i class="owt-blog-stick" style="--h:1.95in"></i>
+                      </div>
+                      <div class="owt-blog-col student">
+                        <strong class="owt-blog-score">68.04</strong>
+                        <i class="owt-blog-stick" style="--h:1.85in"></i>
+                      </div>
+                      <div class="owt-blog-col student">
+                        <strong class="owt-blog-score">77.47</strong>
+                        <i class="owt-blog-stick" style="--h:2.11in"></i>
+                      </div>
+                    </div>
+                    <div class="owt-blog-labels" style="--cols:3">
+                      <span class="teacher"><b>Teacher</b><em>Duo<sup>g</sup></em><small>1024 steps</small><small class="owt-entropy-pill"><b>Entropy</b>5.2</small></span>
+                      <span class="student"><b>Student</b><em>IDLM-Duo<sup>g</sup></em><small>16 steps</small><small class="owt-entropy-pill"><b>Entropy</b>5.6</small></span>
+                      <span class="student"><b>Student</b><em>IDLM-DCD<sup>g</sup></em><small>4 steps</small><small class="owt-entropy-pill"><b>Entropy</b>5.3</small></span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </figure>
+        </section>
+
+        <section class="result-section frontier-card">
+          <div>
+            <div class="result-head">
+              <h3>GenPPL-entropy frontier</h3>
+            </div>
+            <p class="frontier-caption">Each point is annotated by <b>Method / Sampling steps</b>.</p>
+            <div class="frontier-frame">
+              <img src="idlm-owt-frontier-cropped-2x.png" alt="OpenWebText GenPPL and entropy frontier">
+            </div>
+          </div>
+        </section>
       </article>
 
     </section>
