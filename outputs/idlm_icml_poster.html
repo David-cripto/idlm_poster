@@ -2181,29 +2181,6 @@
       overflow: hidden;
     }
 
-    .diffusion-mini-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 0.20in;
-      margin-bottom: 0.16in;
-    }
-
-    .diffusion-mini-head span {
-      color: var(--quiet);
-      font-size: 0.18in;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    .diffusion-mini-head strong {
-      color: var(--peach);
-      font-size: 0.17in;
-      line-height: 1.2;
-      font-weight: 900;
-      text-align: right;
-    }
-
     .diffusion-mini-steps {
       display: grid;
       grid-template-columns: minmax(0, 1.05fr) 0.14in minmax(0, 1fr) 0.14in minmax(0, 1fr) 0.64in minmax(0, 1fr) 0.14in minmax(0, 1fr);
@@ -3449,18 +3426,6 @@
           <div class="path-card">
             <h3>A language DLM denoises through a long reverse chain</h3>
             <div class="diffusion-mini" aria-label="Compact language diffusion generation timeline">
-              <div class="diffusion-mini-head">
-                <span>Language diffusion generation</span>
-                <strong>
-                  <math display="inline">
-                    <semantics>
-                      <mi>T</mi>
-                      <annotation encoding="application/x-tex">T</annotation>
-                    </semantics>
-                  </math>
-                  sequential token-denoising steps
-                </strong>
-              </div>
               <div class="diffusion-mini-steps">
                 <div class="diff-node">
                   <span class="diff-node-label">Random tokens</span>
