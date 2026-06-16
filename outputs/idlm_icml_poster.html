@@ -2078,6 +2078,13 @@
       padding: 0.25in;
     }
 
+    .path-card.story-chain-card {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+    }
+
     .path-card h3 {
       margin-bottom: 0.14in;
       font-size: 0.31in;
@@ -2181,27 +2188,11 @@
       overflow: hidden;
     }
 
-    .diffusion-mini-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 0.20in;
-      margin-bottom: 0.16in;
-    }
-
-    .diffusion-mini-head span {
-      color: var(--quiet);
-      font-size: 0.18in;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    .diffusion-mini-head strong {
-      color: var(--peach);
-      font-size: 0.17in;
-      line-height: 1.2;
-      font-weight: 900;
-      text-align: right;
+    .story-chain-card .diffusion-mini {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
     }
 
     .diffusion-mini-steps {
@@ -2346,69 +2337,6 @@
       border: 1px solid rgba(246, 251, 255, 0.12);
       border-radius: 0.08in;
       background: #061226;
-    }
-
-    .break-eq {
-      margin-top: 0.16in;
-      color: #fff0c4;
-      font-size: 0.28in;
-      line-height: 1.24;
-      font-weight: 900;
-      text-align: center;
-    }
-
-    .takeaway-card {
-      border-color: rgba(255, 211, 107, 0.36);
-      background:
-        radial-gradient(circle at 82% 0%, rgba(255, 211, 107, 0.14), transparent 38%),
-        linear-gradient(135deg, rgba(25, 198, 255, 0.08), rgba(184, 107, 255, 0.09)),
-        rgba(1, 6, 22, 0.62);
-    }
-
-    .takeaway-card h3 {
-      color: var(--gold);
-    }
-
-    .takeaway-flow {
-      display: grid;
-      grid-template-columns: 1fr 0.45in 1fr;
-      gap: 0.12in;
-      align-items: center;
-      margin-top: 0.20in;
-    }
-
-    .domain-pill {
-      min-height: 1.60in;
-      display: grid;
-      align-content: center;
-      gap: 0.06in;
-      border: 1px solid rgba(94, 217, 255, 0.20);
-      border-radius: 0.12in;
-      background: rgba(2, 8, 24, 0.60);
-      padding: 0.12in;
-      text-align: center;
-    }
-
-    .domain-pill b {
-      color: var(--ink);
-      font-size: 0.24in;
-      line-height: 1.10;
-    }
-
-    .domain-pill span {
-      color: var(--muted);
-      font-size: 0.16in;
-      line-height: 1.22;
-      font-weight: 850;
-    }
-
-    .domain-pill.target {
-      border-color: rgba(181, 240, 124, 0.38);
-      background: rgba(181, 240, 124, 0.08);
-    }
-
-    .domain-pill.target b {
-      color: var(--lime);
     }
 
     .path-rail {
@@ -4395,21 +4323,9 @@
         <p class="kicker">1. Diffusion inference problem</p>
         <h2>Text diffusion is slow because every reverse step must coordinate many tokens.</h2>
         <div class="path-stack">
-          <div class="path-card">
+          <div class="path-card story-chain-card">
             <h3>A language DLM denoises through a long reverse chain</h3>
             <div class="diffusion-mini" aria-label="Compact language diffusion generation timeline">
-              <div class="diffusion-mini-head">
-                <span>Language diffusion generation</span>
-                <strong>
-                  <math display="inline">
-                    <semantics>
-                      <mi>T</mi>
-                      <annotation encoding="application/x-tex">T</annotation>
-                    </semantics>
-                  </math>
-                  sequential token-denoising steps
-                </strong>
-              </div>
               <div class="diffusion-mini-steps">
                 <div class="diff-node">
                   <span class="diff-node-label">Random tokens</span>
@@ -4464,39 +4380,60 @@
             <div class="jump-compare">
               <div class="jump-box">
                 <strong>large discrete jump</strong>
-                <img src="idlm-factorization-large-step.gif" alt="Blog visualization of a large factorized text diffusion jump">
+                <div class="jump-eq">
+                  <math display="block">
+                    <semantics>
+                      <mrow>
+                        <msub><mi>p</mi><mi>&theta;</mi></msub>
+                        <mo stretchy="false">(</mo>
+                        <msubsup><mi>x</mi><mrow><mi>t</mi><mo>-</mo><mi>&Delta;</mi></mrow><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
+                        <mo>|</mo>
+                        <msubsup><mi>x</mi><mi>t</mi><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
+                        <mo stretchy="false">)</mo>
+                        <mo>&#x2249;</mo>
+                        <munderover><mo>&#x220F;</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>L</mi></munderover>
+                        <msub><mi>p</mi><mi>&theta;</mi></msub>
+                        <mo stretchy="false">(</mo>
+                        <msubsup><mi>x</mi><mrow><mi>t</mi><mo>-</mo><mi>&Delta;</mi></mrow><mrow><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow></msubsup>
+                        <mo>|</mo>
+                        <msubsup><mi>x</mi><mi>t</mi><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
+                        <mo stretchy="false">)</mo>
+                        <mo>,</mo>
+                        <mspace width="0.18em"></mspace>
+                        <mi>&Delta;</mi><mo>&#x226B;</mo><mn>1</mn>
+                      </mrow>
+                      <annotation encoding="application/x-tex">p_\theta(x_{t-\Delta}^{1:L}\mid x_t^{1:L}) \not\approx \prod_{i=1}^{L} p_\theta(x_{t-\Delta}^{(i)}\mid x_t^{1:L}),\ \Delta \gg 1</annotation>
+                    </semantics>
+                  </math>
+                </div>
+                <img src="idlm-factorization-large-step-last.png" alt="Final frame showing a large factorized text diffusion jump">
               </div>
               <div class="jump-box safe">
                 <strong>many small corrections</strong>
-                <img src="idlm-factorization-small-steps.gif" alt="Blog visualization of smaller denoising steps preserving structure">
-              </div>
-            </div>
-            <div class="break-eq">
-              <math display="inline">
-                <semantics>
-                  <mrow>
-                    <mi>p</mi><mo>(</mo><msub><mi>x</mi><mn>0</mn></msub><mo>|</mo><msub><mi>x</mi><mi>T</mi></msub><mo>)</mo>
-                    <mo>&#x2260;</mo>
-                    <munder><mo>&#x220F;</mo><mi>i</mi></munder>
-                    <mi>p</mi><mo>(</mo><msubsup><mi>x</mi><mn>0</mn><mi>i</mi></msubsup><mo>|</mo><msub><mi>x</mi><mi>T</mi></msub><mo>)</mo>
-                  </mrow>
-                  <annotation encoding="application/x-tex">p(x_0 \mid x_T) \ne \prod_i p(x_0^i \mid x_T)</annotation>
-                </semantics>
-              </math>
-            </div>
-          </div>
-          <div class="path-card takeaway-card">
-            <h3>Takeaway: transfer distillation from images to discrete text</h3>
-            <p>Image diffusion already reduces long teacher chains using distillation. IDLM keeps that motivation, but moves it into the discrete language setting where token correlations cannot be ignored.</p>
-            <div class="takeaway-flow">
-              <div class="domain-pill">
-                <b>Image domain</b>
-                <span>distill many teacher steps into a few student steps</span>
-              </div>
-              <div class="mini-arrow">-&gt;</div>
-              <div class="domain-pill target">
-                <b>Language domain</b>
-                <span>learn few-step text generation without correlation break</span>
+                <div class="jump-eq">
+                  <math display="block">
+                    <semantics>
+                      <mrow>
+                        <msub><mi>p</mi><mi>&theta;</mi></msub>
+                        <mo stretchy="false">(</mo>
+                        <msubsup><mi>x</mi><mrow><mi>t</mi><mo>-</mo><mn>1</mn></mrow><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
+                        <mo>|</mo>
+                        <msubsup><mi>x</mi><mi>t</mi><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
+                        <mo stretchy="false">)</mo>
+                        <mo>=</mo>
+                        <munderover><mo>&#x220F;</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>L</mi></munderover>
+                        <msub><mi>p</mi><mi>&theta;</mi></msub>
+                        <mo stretchy="false">(</mo>
+                        <msubsup><mi>x</mi><mrow><mi>t</mi><mo>-</mo><mn>1</mn></mrow><mrow><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow></msubsup>
+                        <mo>|</mo>
+                        <msubsup><mi>x</mi><mi>t</mi><mrow><mn>1</mn><mo>:</mo><mi>L</mi></mrow></msubsup>
+                        <mo stretchy="false">)</mo>
+                      </mrow>
+                      <annotation encoding="application/x-tex">p_\theta(x_{t-1}^{1:L}\mid x_t^{1:L}) = \prod_{i=1}^{L} p_\theta(x_{t-1}^{(i)}\mid x_t^{1:L})</annotation>
+                    </semantics>
+                  </math>
+                </div>
+                <img src="idlm-factorization-small-steps-last.png" alt="Final frame showing smaller denoising steps preserving structure">
               </div>
             </div>
           </div>
@@ -4547,12 +4484,12 @@
               <math class="math-display" display="block">
                 <semantics>
                   <mrow>
-                    <msub><mi mathvariant="script">L</mi><mtext>IDLM</mtext></msub><mo>(</mo><mi>&theta;</mi><mo>)</mo>
+                    <msub><mi mathvariant="script">L</mi><mtext>IDLM</mtext></msub><mo stretchy="false">(</mo><mi>&theta;</mi><mo stretchy="false">)</mo>
                     <mo>=</mo>
-                    <mi mathvariant="script">L</mi><mo>(</mo><msup><mi>f</mi><mo>&#x22C6;</mo></msup><mo>,</mo><msub><mi>p</mi><mi>&theta;</mi></msub><mo>)</mo>
+                    <mi mathvariant="script">L</mi><mo stretchy="false">(</mo><msup><mi>f</mi><mo>&#x22C6;</mo></msup><mo>,</mo><msub><mi>p</mi><mi>&theta;</mi></msub><mo stretchy="false">)</mo>
                     <mo>-</mo>
                     <munder><mi>min</mi><mover accent="true"><mi>f</mi><mo>^</mo></mover></munder>
-                    <mi mathvariant="script">L</mi><mo>(</mo><mover accent="true"><mi>f</mi><mo>^</mo></mover><mo>,</mo><msub><mi>p</mi><mi>&theta;</mi></msub><mo>)</mo>
+                    <mi mathvariant="script">L</mi><mo stretchy="false">(</mo><mover accent="true"><mi>f</mi><mo>^</mo></mover><mo>,</mo><msub><mi>p</mi><mi>&theta;</mi></msub><mo stretchy="false">)</mo>
                   </mrow>
                   <annotation encoding="application/x-tex">\mathcal{L}_{\mathrm{IDLM}}(\theta)=\mathcal{L}(f^\star,p_\theta)-\min_{\hat f}\mathcal{L}(\hat f,p_\theta)</annotation>
                 </semantics>
@@ -4572,9 +4509,9 @@
               <math class="math-display" display="block">
                 <semantics>
                   <mrow>
-                    <msub><mi mathvariant="script">L</mi><mtext>IDLM</mtext></msub><mo>(</mo><mi>&theta;</mi><mo>)</mo>
+                    <msub><mi mathvariant="script">L</mi><mtext>IDLM</mtext></msub><mo stretchy="false">(</mo><mi>&theta;</mi><mo stretchy="false">)</mo>
                     <mo>&ge;</mo>
-                    <mtext>KL</mtext><mo>(</mo><msub><mi>p</mi><mi>&theta;</mi></msub><mo>&#x2225;</mo><msup><mi>p</mi><mo>&#x22C6;</mo></msup><mo>)</mo>
+                    <mtext>KL</mtext><mo stretchy="false">(</mo><msub><mi>p</mi><mi>&theta;</mi></msub><mo>&#x2225;</mo><msup><mi>p</mi><mo>&#x22C6;</mo></msup><mo stretchy="false">)</mo>
                     <mo>&ge;</mo><mn>0</mn>
                   </mrow>
                   <annotation encoding="application/x-tex">\mathcal{L}_{\mathrm{IDLM}}(\theta)\ge \mathrm{KL}(p_\theta\|p^\star)\ge 0</annotation>
@@ -4585,7 +4522,7 @@
               <math class="math-display" display="block">
                 <semantics>
                   <mrow>
-                    <msub><mi mathvariant="script">L</mi><mtext>IDLM</mtext></msub><mo>(</mo><mi>&theta;</mi><mo>)</mo>
+                    <msub><mi mathvariant="script">L</mi><mtext>IDLM</mtext></msub><mo stretchy="false">(</mo><mi>&theta;</mi><mo stretchy="false">)</mo>
                     <mo>=</mo><mn>0</mn>
                     <mo>&#x21D4;</mo>
                     <msub><mi>p</mi><mi>&theta;</mi></msub>
