@@ -2204,8 +2204,9 @@
 
     .diffusion-mini-steps {
       display: grid;
-      grid-template-columns: 1.05fr 1fr 1fr 0.22fr 1fr 1fr;
-      gap: 0.13in;
+      grid-template-columns: 1.05fr 0.16in 1fr 0.16in 1fr 0.16in 0.34in 0.16in 1fr 0.16in 1fr;
+      column-gap: 0.06in;
+      row-gap: 0;
       align-items: start;
     }
 
@@ -2217,28 +2218,29 @@
       gap: 0.08in;
     }
 
-    .diff-node:not(:last-child)::after {
-      content: ">";
-      position: absolute;
-      top: 0.86in;
-      right: -0.145in;
+    .diff-arrow {
+      display: grid;
+      place-items: center;
+      align-self: start;
+      height: 1.18in;
+      margin-top: 0.46in;
       color: var(--peach);
       font-size: 0.2in;
       line-height: 1;
-      font-weight: 90;
+      font-weight: 900;
+      text-align: center;
     }
 
     .diff-node.dots {
-      align-self: center;
-      padding-top: 0.84in;
+      align-self: start;
+      height: 1.18in;
+      margin-top: 0.46in;
+      display: grid;
+      place-items: center;
       color: var(--quiet);
-      font-size: 0.30in;
+      font-size: 0.28in;
       font-weight: 900;
-      letter-spacing: 0.04in;
-    }
-
-    .diff-node.dots::after {
-      top: 0.86in;
+      letter-spacing: 0.02in;
     }
 
     .diff-node-label {
@@ -4364,6 +4366,7 @@
                     <span>V4</span><span>@T</span><span>9B</span>
                   </div>
                 </div>
+                <div class="diff-arrow" aria-hidden="true">&gt;</div>
                 <div class="diff-node">
                   <span class="diff-node-label">Step 1</span>
                   <div class="diff-token-board">
@@ -4373,6 +4376,7 @@
                   </div>
                   <span class="diff-model">Denoising model</span>
                 </div>
+                <div class="diff-arrow" aria-hidden="true">&gt;</div>
                 <div class="diff-node">
                   <span class="diff-node-label">Step 2</span>
                   <div class="diff-token-board">
@@ -4382,7 +4386,9 @@
                   </div>
                   <span class="diff-model">Denoising model</span>
                 </div>
+                <div class="diff-arrow" aria-hidden="true">&gt;</div>
                 <div class="diff-node dots" aria-hidden="true">...</div>
+                <div class="diff-arrow" aria-hidden="true">&gt;</div>
                 <div class="diff-node">
                   <span class="diff-node-label">Step T-1</span>
                   <div class="diff-token-board">
@@ -4392,6 +4398,7 @@
                   </div>
                   <span class="diff-model">Denoising model</span>
                 </div>
+                <div class="diff-arrow" aria-hidden="true">&gt;</div>
                 <div class="diff-node final">
                   <span class="diff-node-label">Step T</span>
                   <div class="diff-token-board final">
