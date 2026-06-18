@@ -2235,14 +2235,19 @@
       justify-self: stretch;
       align-self: start;
       height: 1.18in;
-      margin-top: 0.56in;
-      display: grid;
-      place-items: center;
+      margin-top: 0.46in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.075in;
       color: var(--quiet);
-      font-size: 0.28in;
-      font-weight: 900;
-      letter-spacing: 0.02in;
-      text-align: center;
+    }
+
+    .diff-node.dots span {
+      width: 0.045in;
+      height: 0.045in;
+      border-radius: 50%;
+      background: var(--quiet);
     }
 
     .diff-node-label {
@@ -4390,7 +4395,9 @@
                   <span class="diff-model">Denoising model</span>
                 </div>
                 <div class="diff-arrow" aria-hidden="true">&gt;</div>
-                <div class="diff-node dots" aria-hidden="true">...</div>
+                <div class="diff-node dots" aria-hidden="true">
+                  <span></span><span></span><span></span>
+                </div>
                 <div class="diff-arrow" aria-hidden="true">&gt;</div>
                 <div class="diff-node">
                   <span class="diff-node-label">Step T-1</span>
